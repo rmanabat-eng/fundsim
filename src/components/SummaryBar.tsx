@@ -28,7 +28,7 @@ export function SummaryBar({
       gradient: "from-emerald-500 to-teal-600",
     },
     {
-      label: "Investments",
+      label: "Companies",
       value: `${count} / 15`,
       gradient: "from-amber-500 to-orange-600",
     },

@@ -1,26 +1,36 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { ownershipAfterRounds } from "@/lib/fund-math";
 import { SummaryBar } from "@/components/SummaryBar";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { InvestmentTable } from "@/components/InvestmentTable";
+import { CompanyTable, type CompanyRow } from "@/components/CompanyTable";
 import { ClearAllButton } from "@/components/ClearAllButton";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default async function Home() {
-  const investments = await prisma.investment.findMany({
-    orderBy: { investmentDate: "desc" },
+  const companies = await prisma.company.findMany({
+    include: { rounds: { orderBy: { date: "asc" } } },
   });
 
-  const deployed = investments.reduce((sum, inv) => sum + inv.checkSize, 0);
+  const deployed = companies
+    .flatMap((c) => c.rounds)
+    .reduce((sum, r) => sum + r.yourCheck, 0);
 
-  const rows = investments.map((inv) => ({
-    id: inv.id,
-    companyName: inv.companyName,
-    sector: inv.sector,
-    stage: inv.stage as string,
-    checkSize: inv.checkSize,
-    postMoneyValuation: inv.postMoneyValuation,
-    investmentDate: inv.investmentDate.toISOString(),
-  }));
+  const rows: CompanyRow[] = companies
+    .filter((c) => c.rounds.length > 0)
+    .map((c) => {
+      const latest = c.rounds[c.rounds.length - 1];
+      return {
+        id: c.id,
+        name: c.name,
+        sector: c.sector,
+        latestStage: latest.stage,
+        invested: c.rounds.reduce((sum, r) => sum + r.yourCheck, 0),
+        latestPostMoney: latest.postMoney,
+        ownershipPct: ownershipAfterRounds(c.rounds),
+        roundCount: c.rounds.length,
+        latestDate: latest.date.toISOString(),
+      };
+    });
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
@@ -34,11 +44,13 @@ export default async function Home() {
             <p className="text-sm text-white/90 mt-3 leading-relaxed">
               You&apos;re the fund manager. Every check you write buys a slice of a
               company — and every dollar deployed is a dollar you can&apos;t use on the
-              next deal. By running this fund you&apos;re learning the three mechanics
-              every VC lives by: <strong>ownership</strong> (what a check buys at a given
-              valuation), <strong>deployment pacing</strong> (spreading limited capital
-              across enough bets), and <strong>portfolio construction</strong> (balancing
-              sectors, stages, and check sizes).
+              next deal. By running this fund you&apos;re learning the mechanics every VC
+              lives by: <strong>ownership</strong> (what a check buys at a given
+              valuation), <strong>dilution</strong> (how later rounds shrink your stake
+              unless you follow on), <strong>deployment pacing</strong> (spreading
+              limited capital across enough bets), and{" "}
+              <strong>portfolio construction</strong> (balancing sectors, stages, and
+              check sizes).
             </p>
           </div>
           <ThemeToggle />
@@ -46,26 +58,26 @@ export default async function Home() {
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-8">
-        <SummaryBar deployed={deployed} count={investments.length} />
+        <SummaryBar deployed={deployed} count={companies.length} />
 
         <div className="mt-8 flex items-center justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
             Portfolio
           </h2>
           <div className="flex items-center gap-3">
-            {investments.length > 0 && <ClearAllButton />}
-            {investments.length < 15 && (
+            {companies.length > 0 && <ClearAllButton />}
+            {companies.length < 15 && (
               <Link
-                href="/investments/new"
+                href="/companies/new"
                 className="rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-4 py-2 text-sm font-semibold shadow-sm hover:from-indigo-500 hover:to-violet-500 transition-colors"
               >
-                + Add investment
+                + Back a company
               </Link>
             )}
           </div>
         </div>
 
-        <InvestmentTable investments={rows} />
+        <CompanyTable companies={rows} />
 
         <section className="mt-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -78,10 +90,10 @@ export default async function Home() {
               </span>
               <span>
                 <strong className="text-slate-800 dark:text-slate-200">
-                  Add an investment
+                  Back a company
                 </strong>{" "}
-                with the company&apos;s name, sector, stage, your check size, and the
-                post-money valuation from the term sheet.
+                with its name, sector, and the details of the first round you invest in:
+                stage, total raised, post-money valuation, and your check.
               </span>
             </li>
             <li className="flex gap-3">
@@ -92,7 +104,7 @@ export default async function Home() {
                 <strong className="text-slate-800 dark:text-slate-200">
                   Ownership is calculated for you
                 </strong>
-                : check size ÷ post-money valuation. A $250,000 check at an $8M
+                : your check ÷ post-money valuation. A $250,000 check at an $8M
                 post-money buys 3.13% of the company.
               </span>
             </li>
@@ -102,10 +114,11 @@ export default async function Home() {
               </span>
               <span>
                 <strong className="text-slate-800 dark:text-slate-200">
-                  Watch your deployment pacing
+                  Add follow-on rounds
                 </strong>{" "}
-                in the cards above — total deployed and remaining capital update with
-                every deal. You can&apos;t deploy past the $10M fund size.
+                from a company&apos;s page as it raises again. Each new round dilutes
+                your stake by (post-money − raised) ÷ post-money — unless you write
+                another check to defend your ownership.
               </span>
             </li>
             <li className="flex gap-3">
@@ -114,10 +127,10 @@ export default async function Home() {
               </span>
               <span>
                 <strong className="text-slate-800 dark:text-slate-200">
-                  Edit or delete
+                  Watch your deployment pacing
                 </strong>{" "}
-                any deal from the table to correct mistakes — the fund math recalculates
-                instantly.
+                in the cards above — every check, first or follow-on, comes out of the
+                same $10M fund.
               </span>
             </li>
           </ol>

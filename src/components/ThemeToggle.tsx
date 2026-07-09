@@ -1,18 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
+// Stateless: the icon is chosen by CSS from the `dark` class on <html>,
+// so there's nothing to hydrate and no flash. The click handler just
+// flips the class and persists the choice.
 export function ThemeToggle() {
-  // null until mounted so the server render never guesses the theme
-  const [dark, setDark] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    setDark(document.documentElement.classList.contains("dark"));
-  }, []);
-
   function toggle() {
-    const next = !dark;
-    setDark(next);
+    const next = !document.documentElement.classList.contains("dark");
     document.documentElement.classList.toggle("dark", next);
     localStorage.theme = next ? "dark" : "light";
   }
@@ -21,11 +14,12 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={toggle}
-      title={dark ? "Switch to light mode" : "Switch to dark mode"}
+      title="Toggle dark mode"
       aria-label="Toggle dark mode"
       className="rounded-full bg-white/20 p-2 text-lg leading-none hover:bg-white/30 transition-colors"
     >
-      {dark === null ? "…" : dark ? "🌙" : "☀️"}
+      <span className="dark:hidden">☀️</span>
+      <span className="hidden dark:inline">🌙</span>
     </button>
   );
 }

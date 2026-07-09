@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { deleteAllInvestments } from "@/app/actions";
+import { deleteAllCompanies } from "@/app/actions";
 
 export function ClearAllButton() {
   const [confirming, setConfirming] = useState(false);
@@ -11,12 +11,12 @@ export function ClearAllButton() {
     return (
       <div className="flex items-center gap-2">
         <span className="text-xs text-slate-600 dark:text-slate-400">
-          Delete every investment? This can&apos;t be undone.
+          Delete every company and round? This can&apos;t be undone.
         </span>
         <button
           onClick={() =>
             startTransition(async () => {
-              await deleteAllInvestments();
+              await deleteAllCompanies();
               setConfirming(false);
             })
           }

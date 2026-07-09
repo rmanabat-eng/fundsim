@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { deleteInvestment } from "@/app/actions";
+import { deleteCompany } from "@/app/actions";
 
-export function DeleteInvestmentButton({
+export function DeleteCompanyButton({
   id,
   companyName,
 }: {
@@ -16,9 +16,11 @@ export function DeleteInvestmentButton({
   if (confirming) {
     return (
       <div className="flex items-center gap-2 justify-end">
-        <span className="text-xs text-slate-600 dark:text-slate-400">Delete {companyName}?</span>
+        <span className="text-xs text-slate-600 dark:text-slate-400">
+          Delete {companyName} and all its rounds?
+        </span>
         <button
-          onClick={() => startTransition(() => deleteInvestment(id))}
+          onClick={() => startTransition(() => deleteCompany(id))}
           disabled={pending}
           className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline disabled:opacity-50"
         >

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { InvestmentForm } from "@/components/InvestmentForm";
+import { CompanyForm, type CompanyFormValues } from "@/components/CompanyForm";
 import { STARTUP_PRESETS } from "@/lib/presets";
 import { generateRandomStartup } from "@/lib/random-startup";
 import { SECTOR_STYLES } from "@/lib/badges";
@@ -9,19 +9,10 @@ import { STAGE_LABELS } from "@/lib/constants";
 import { formatDollars } from "@/lib/fund-math";
 import type { FormState } from "@/app/actions";
 
-type FormValues = {
-  companyName: string;
-  sector: string;
-  stage: string;
-  checkSize: number;
-  postMoneyValuation: number;
-  investmentDate: string;
-};
-
 type Selection =
   | { kind: "blank" }
   | { kind: "preset"; name: string }
-  | { kind: "random"; values: FormValues; nonce: number };
+  | { kind: "random"; values: CompanyFormValues & { companyName: string }; nonce: number };
 
 export function StartupPicker({
   action,
@@ -33,7 +24,7 @@ export function StartupPicker({
   const today = new Date().toISOString().slice(0, 10);
 
   let formKey = "blank";
-  let defaultValues: FormValues | undefined;
+  let defaultValues: CompanyFormValues | undefined;
 
   if (selection.kind === "preset") {
     const preset = STARTUP_PRESETS.find((p) => p.companyName === selection.name);
@@ -43,9 +34,10 @@ export function StartupPicker({
         companyName: preset.companyName,
         sector: preset.sector,
         stage: preset.stage,
-        checkSize: preset.checkSize,
-        postMoneyValuation: preset.postMoneyValuation,
-        investmentDate: today,
+        raised: preset.raised,
+        yourCheck: preset.checkSize,
+        postMoney: preset.postMoneyValuation,
+        date: today,
       };
     }
   } else if (selection.kind === "random") {
@@ -79,7 +71,9 @@ export function StartupPicker({
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-semibold text-slate-900 dark:text-slate-100">{p.companyName}</span>
+                  <span className="font-semibold text-slate-900 dark:text-slate-100">
+                    {p.companyName}
+                  </span>
                   <span
                     className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
                       SECTOR_STYLES[p.sector] ?? "bg-slate-100 text-slate-800"
@@ -88,7 +82,9 @@ export function StartupPicker({
                     {p.sector}
                   </span>
                 </div>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{p.blurb}</p>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  {p.blurb}
+                </p>
                 <p className="mt-2 text-xs font-medium text-violet-700 dark:text-violet-400">
                   {STAGE_LABELS[p.stage]} · {formatDollars(p.checkSize)} at{" "}
                   {formatDollars(p.postMoneyValuation)} post
@@ -117,13 +113,22 @@ export function StartupPicker({
           </button>
           <button
             type="button"
-            onClick={() =>
+            onClick={() => {
+              const r = generateRandomStartup();
               setSelection({
                 kind: "random",
-                values: generateRandomStartup(),
+                values: {
+                  companyName: r.companyName,
+                  sector: r.sector,
+                  stage: r.stage,
+                  raised: r.raised,
+                  yourCheck: r.checkSize,
+                  postMoney: r.postMoneyValuation,
+                  date: r.investmentDate,
+                },
                 nonce: Date.now(),
-              })
-            }
+              });
+            }}
             className={`rounded-xl border px-4 py-2 text-sm font-medium transition-all ${
               selection.kind === "random"
                 ? "border-fuchsia-500 bg-fuchsia-50 text-fuchsia-700 ring-2 ring-fuchsia-200 dark:bg-fuchsia-950 dark:text-fuchsia-300 dark:ring-fuchsia-800"
@@ -135,16 +140,19 @@ export function StartupPicker({
         </div>
         {selection.kind === "random" && (
           <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-            Rolled <strong className="text-fuchsia-600">{selection.values.companyName}</strong> —
-            click again for a new one, or tweak the form below.
+            Rolled{" "}
+            <strong className="text-fuchsia-600">
+              {selection.values.companyName}
+            </strong>{" "}
+            — click again for a new one, or tweak the form below.
           </p>
         )}
       </div>
 
-      <InvestmentForm
+      <CompanyForm
         key={formKey}
         action={action}
-        submitLabel="Add investment"
+        submitLabel="Back this company"
         defaultValues={defaultValues}
       />
     </div>
