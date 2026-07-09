@@ -18,10 +18,19 @@ export default async function Home() {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <header className="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600">
         <div className="mx-auto max-w-5xl px-6 py-8 flex items-center justify-between">
-          <div>
+          <div className="max-w-2xl">
             <h1 className="text-3xl font-bold text-white tracking-tight">FundSim</h1>
             <p className="text-sm text-white/80 mt-1">
               Simulating a $10M venture fund
+            </p>
+            <p className="text-sm text-white/90 mt-3 leading-relaxed">
+              You&apos;re the fund manager. Every check you write buys a slice of a
+              company — and every dollar deployed is a dollar you can&apos;t use on the
+              next deal. By running this fund you&apos;re learning the three mechanics
+              every VC lives by: <strong>ownership</strong> (what a check buys at a given
+              valuation), <strong>deployment pacing</strong> (spreading limited capital
+              across enough bets), and <strong>portfolio construction</strong> (balancing
+              sectors, stages, and check sizes).
             </p>
           </div>
           {investments.length < 15 && (
