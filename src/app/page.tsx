@@ -33,28 +33,28 @@ export default async function Home() {
               sectors, stages, and check sizes).
             </p>
           </div>
-          {investments.length < 15 && (
-            <Link
-              href="/investments/new"
-              className="rounded-lg bg-white text-violet-700 px-4 py-2 text-sm font-semibold shadow-sm hover:bg-violet-50 transition-colors"
-            >
-              + Add investment
-            </Link>
-          )}
         </div>
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-8">
         <SummaryBar deployed={deployed} count={investments.length} />
 
-        {investments.length > 0 && (
-          <div className="mt-8 flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Portfolio
-            </h2>
-            <ClearAllButton />
+        <div className="mt-8 flex items-center justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Portfolio
+          </h2>
+          <div className="flex items-center gap-3">
+            {investments.length > 0 && <ClearAllButton />}
+            {investments.length < 15 && (
+              <Link
+                href="/investments/new"
+                className="rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-4 py-2 text-sm font-semibold shadow-sm hover:from-indigo-500 hover:to-violet-500 transition-colors"
+              >
+                + Add investment
+              </Link>
+            )}
           </div>
-        )}
+        </div>
 
         <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
           <table className="w-full text-sm bg-white">
