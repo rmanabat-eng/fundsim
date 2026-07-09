@@ -3,20 +3,55 @@
 import { useState } from "react";
 import { InvestmentForm } from "@/components/InvestmentForm";
 import { STARTUP_PRESETS } from "@/lib/presets";
+import { generateRandomStartup } from "@/lib/random-startup";
 import { SECTOR_STYLES } from "@/lib/badges";
 import { STAGE_LABELS } from "@/lib/constants";
 import { formatDollars } from "@/lib/fund-math";
 import type { FormState } from "@/app/actions";
+
+type FormValues = {
+  companyName: string;
+  sector: string;
+  stage: string;
+  checkSize: number;
+  postMoneyValuation: number;
+  investmentDate: string;
+};
+
+type Selection =
+  | { kind: "blank" }
+  | { kind: "preset"; name: string }
+  | { kind: "random"; values: FormValues; nonce: number };
 
 export function StartupPicker({
   action,
 }: {
   action: (state: FormState, formData: FormData) => Promise<FormState>;
 }) {
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selection, setSelection] = useState<Selection>({ kind: "blank" });
 
-  const preset = STARTUP_PRESETS.find((p) => p.companyName === selected);
   const today = new Date().toISOString().slice(0, 10);
+
+  let formKey = "blank";
+  let defaultValues: FormValues | undefined;
+
+  if (selection.kind === "preset") {
+    const preset = STARTUP_PRESETS.find((p) => p.companyName === selection.name);
+    if (preset) {
+      formKey = `preset-${preset.companyName}`;
+      defaultValues = {
+        companyName: preset.companyName,
+        sector: preset.sector,
+        stage: preset.stage,
+        checkSize: preset.checkSize,
+        postMoneyValuation: preset.postMoneyValuation,
+        investmentDate: today,
+      };
+    }
+  } else if (selection.kind === "random") {
+    formKey = `random-${selection.nonce}`;
+    defaultValues = selection.values;
+  }
 
   return (
     <div className="space-y-6">
@@ -30,12 +65,13 @@ export function StartupPicker({
         </p>
         <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {STARTUP_PRESETS.map((p) => {
-            const isActive = selected === p.companyName;
+            const isActive =
+              selection.kind === "preset" && selection.name === p.companyName;
             return (
               <button
                 key={p.companyName}
                 type="button"
-                onClick={() => setSelected(p.companyName)}
+                onClick={() => setSelection({ kind: "preset", name: p.companyName })}
                 className={`rounded-xl border p-4 text-left transition-all ${
                   isActive
                     ? "border-violet-500 bg-violet-50 ring-2 ring-violet-200 shadow-sm"
@@ -67,37 +103,49 @@ export function StartupPicker({
         <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
           &hellip;or create your own
         </h2>
-        <div className="mt-3">
+        <div className="mt-3 flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={() => setSelected(null)}
+            onClick={() => setSelection({ kind: "blank" })}
             className={`rounded-xl border px-4 py-2 text-sm font-medium transition-all ${
-              selected === null
+              selection.kind === "blank"
                 ? "border-violet-500 bg-violet-50 text-violet-700 ring-2 ring-violet-200"
                 : "border-slate-200 bg-white text-slate-600 hover:border-violet-300"
             }`}
           >
             Start from a blank form
           </button>
+          <button
+            type="button"
+            onClick={() =>
+              setSelection({
+                kind: "random",
+                values: generateRandomStartup(),
+                nonce: Date.now(),
+              })
+            }
+            className={`rounded-xl border px-4 py-2 text-sm font-medium transition-all ${
+              selection.kind === "random"
+                ? "border-fuchsia-500 bg-fuchsia-50 text-fuchsia-700 ring-2 ring-fuchsia-200"
+                : "border-slate-200 bg-white text-slate-600 hover:border-fuchsia-300"
+            }`}
+          >
+            🎲 Randomize a fake startup
+          </button>
         </div>
+        {selection.kind === "random" && (
+          <p className="mt-2 text-xs text-slate-400">
+            Rolled <strong className="text-fuchsia-600">{selection.values.companyName}</strong> —
+            click again for a new one, or tweak the form below.
+          </p>
+        )}
       </div>
 
       <InvestmentForm
-        key={selected ?? "blank"}
+        key={formKey}
         action={action}
         submitLabel="Add investment"
-        defaultValues={
-          preset
-            ? {
-                companyName: preset.companyName,
-                sector: preset.sector,
-                stage: preset.stage,
-                checkSize: preset.checkSize,
-                postMoneyValuation: preset.postMoneyValuation,
-                investmentDate: today,
-              }
-            : undefined
-        }
+        defaultValues={defaultValues}
       />
     </div>
   );
