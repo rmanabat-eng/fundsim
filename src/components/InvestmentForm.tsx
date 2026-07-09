@@ -14,6 +14,9 @@ type InvestmentFormValues = {
   investmentDate: string;
 };
 
+const inputClasses =
+  "w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-200 transition-colors";
+
 export function InvestmentForm({
   action,
   defaultValues,
@@ -26,9 +29,12 @@ export function InvestmentForm({
   const [state, formAction, pending] = useActionState(action, null);
 
   return (
-    <form action={formAction} className="space-y-4 max-w-lg">
+    <form
+      action={formAction}
+      className="space-y-4 max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+    >
       <div>
-        <label className="block text-sm font-medium mb-1" htmlFor="companyName">
+        <label className="block text-sm font-medium mb-1 text-slate-700" htmlFor="companyName">
           Company name
         </label>
         <input
@@ -37,12 +43,12 @@ export function InvestmentForm({
           type="text"
           required
           defaultValue={defaultValues?.companyName}
-          className="w-full rounded border border-gray-300 px-3 py-2"
+          className={inputClasses}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1" htmlFor="sector">
+        <label className="block text-sm font-medium mb-1 text-slate-700" htmlFor="sector">
           Sector
         </label>
         <select
@@ -50,7 +56,7 @@ export function InvestmentForm({
           name="sector"
           required
           defaultValue={defaultValues?.sector ?? ""}
-          className="w-full rounded border border-gray-300 px-3 py-2"
+          className={inputClasses}
         >
           <option value="" disabled>
             Select a sector
@@ -64,7 +70,7 @@ export function InvestmentForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1" htmlFor="stage">
+        <label className="block text-sm font-medium mb-1 text-slate-700" htmlFor="stage">
           Stage
         </label>
         <select
@@ -72,7 +78,7 @@ export function InvestmentForm({
           name="stage"
           required
           defaultValue={defaultValues?.stage ?? ""}
-          className="w-full rounded border border-gray-300 px-3 py-2"
+          className={inputClasses}
         >
           <option value="" disabled>
             Select a stage
@@ -86,7 +92,7 @@ export function InvestmentForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1" htmlFor="checkSize">
+        <label className="block text-sm font-medium mb-1 text-slate-700" htmlFor="checkSize">
           Check size (USD)
         </label>
         <input
@@ -97,12 +103,15 @@ export function InvestmentForm({
           step="1"
           required
           defaultValue={defaultValues?.checkSize}
-          className="w-full rounded border border-gray-300 px-3 py-2"
+          className={inputClasses}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1" htmlFor="postMoneyValuation">
+        <label
+          className="block text-sm font-medium mb-1 text-slate-700"
+          htmlFor="postMoneyValuation"
+        >
           Post-money valuation (USD)
         </label>
         <input
@@ -113,12 +122,15 @@ export function InvestmentForm({
           step="1"
           required
           defaultValue={defaultValues?.postMoneyValuation}
-          className="w-full rounded border border-gray-300 px-3 py-2"
+          className={inputClasses}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1" htmlFor="investmentDate">
+        <label
+          className="block text-sm font-medium mb-1 text-slate-700"
+          htmlFor="investmentDate"
+        >
           Investment date
         </label>
         <input
@@ -127,27 +139,27 @@ export function InvestmentForm({
           type="date"
           required
           defaultValue={defaultValues?.investmentDate}
-          className="w-full rounded border border-gray-300 px-3 py-2"
+          className={inputClasses}
         />
       </div>
 
       {state?.error && (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700" role="alert">
           {state.error}
         </p>
       )}
 
-      <div className="flex gap-3">
+      <div className="flex gap-3 pt-2">
         <button
           type="submit"
           disabled={pending}
-          className="rounded bg-black text-white px-4 py-2 text-sm font-medium disabled:opacity-50"
+          className="rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-4 py-2 text-sm font-semibold shadow-sm hover:from-indigo-500 hover:to-violet-500 transition-colors disabled:opacity-50"
         >
           {pending ? "Saving..." : submitLabel}
         </button>
         <Link
           href="/"
-          className="rounded border border-gray-300 px-4 py-2 text-sm font-medium"
+          className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
         >
           Cancel
         </Link>

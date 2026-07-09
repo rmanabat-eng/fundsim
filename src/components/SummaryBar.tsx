@@ -9,24 +9,58 @@ export function SummaryBar({
   count: number;
 }) {
   const remaining = FUND_SIZE - deployed;
+  const pctDeployed = (deployed / FUND_SIZE) * 100;
 
   const stats = [
-    { label: "Fund size", value: formatDollars(FUND_SIZE) },
-    { label: "Total deployed", value: formatDollars(deployed) },
-    { label: "Remaining capital", value: formatDollars(remaining) },
-    { label: "Investments", value: `${count} / 15` },
+    {
+      label: "Fund size",
+      value: formatDollars(FUND_SIZE),
+      gradient: "from-indigo-500 to-indigo-600",
+    },
+    {
+      label: "Total deployed",
+      value: formatDollars(deployed),
+      gradient: "from-violet-500 to-fuchsia-600",
+    },
+    {
+      label: "Remaining capital",
+      value: formatDollars(remaining),
+      gradient: "from-emerald-500 to-teal-600",
+    },
+    {
+      label: "Investments",
+      value: `${count} / 15`,
+      gradient: "from-amber-500 to-orange-600",
+    },
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-      {stats.map((stat) => (
-        <div key={stat.label}>
-          <p className="text-xs uppercase tracking-wide text-gray-500">
-            {stat.label}
-          </p>
-          <p className="text-lg font-semibold">{stat.value}</p>
+    <div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {stats.map((stat) => (
+          <div
+            key={stat.label}
+            className={`rounded-xl bg-gradient-to-br ${stat.gradient} p-4 text-white shadow-sm`}
+          >
+            <p className="text-xs uppercase tracking-wide text-white/80">
+              {stat.label}
+            </p>
+            <p className="text-xl font-semibold">{stat.value}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4">
+        <div className="flex justify-between text-xs text-slate-500 mb-1">
+          <span>Capital deployed</span>
+          <span>{pctDeployed.toFixed(1)}%</span>
         </div>
-      ))}
+        <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-600 transition-all"
+            style={{ width: `${Math.min(pctDeployed, 100)}%` }}
+          />
+        </div>
+      </div>
     </div>
   );
 }
