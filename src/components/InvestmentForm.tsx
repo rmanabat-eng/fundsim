@@ -15,7 +15,7 @@ type InvestmentFormValues = {
 };
 
 const inputClasses =
-  "w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-200 transition-colors";
+  "w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-200 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-violet-900";
 
 export function InvestmentForm({
   action,
@@ -31,10 +31,10 @@ export function InvestmentForm({
   return (
     <form
       action={formAction}
-      className="space-y-4 max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+      className="space-y-4 max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
     >
       <div>
-        <label className="block text-sm font-medium mb-1 text-slate-700" htmlFor="companyName">
+        <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300" htmlFor="companyName">
           Company name
         </label>
         <input
@@ -48,7 +48,7 @@ export function InvestmentForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1 text-slate-700" htmlFor="sector">
+        <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300" htmlFor="sector">
           Sector
         </label>
         <select
@@ -70,7 +70,7 @@ export function InvestmentForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1 text-slate-700" htmlFor="stage">
+        <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300" htmlFor="stage">
           Stage
         </label>
         <select
@@ -92,7 +92,7 @@ export function InvestmentForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1 text-slate-700" htmlFor="checkSize">
+        <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300" htmlFor="checkSize">
           Check size (USD)
         </label>
         <input
@@ -109,7 +109,7 @@ export function InvestmentForm({
 
       <div>
         <label
-          className="block text-sm font-medium mb-1 text-slate-700"
+          className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300"
           htmlFor="postMoneyValuation"
         >
           Post-money valuation (USD)
@@ -128,7 +128,7 @@ export function InvestmentForm({
 
       <div>
         <label
-          className="block text-sm font-medium mb-1 text-slate-700"
+          className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300"
           htmlFor="investmentDate"
         >
           Investment date
@@ -144,7 +144,7 @@ export function InvestmentForm({
       </div>
 
       {state?.error && (
-        <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700" role="alert">
+        <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-950 dark:text-rose-300" role="alert">
           {state.error}
         </p>
       )}
@@ -159,7 +159,7 @@ export function InvestmentForm({
         </button>
         <Link
           href="/"
-          className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+          className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
         >
           Cancel
         </Link>

@@ -16,17 +16,17 @@ export function DeleteInvestmentButton({
   if (confirming) {
     return (
       <div className="flex items-center gap-2 justify-end">
-        <span className="text-xs text-gray-600">Delete {companyName}?</span>
+        <span className="text-xs text-slate-600 dark:text-slate-400">Delete {companyName}?</span>
         <button
           onClick={() => startTransition(() => deleteInvestment(id))}
           disabled={pending}
-          className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50"
+          className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline disabled:opacity-50"
         >
           {pending ? "Deleting..." : "Confirm"}
         </button>
         <button
           onClick={() => setConfirming(false)}
-          className="text-xs font-medium text-gray-600 hover:underline"
+          className="text-xs font-medium text-slate-600 dark:text-slate-400 hover:underline"
         >
           Cancel
         </button>
@@ -37,7 +37,7 @@ export function DeleteInvestmentButton({
   return (
     <button
       onClick={() => setConfirming(true)}
-      className="text-xs font-medium text-red-600 hover:underline"
+      className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline"
     >
       Delete
     </button>

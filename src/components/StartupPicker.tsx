@@ -56,10 +56,10 @@ export function StartupPicker({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           Pick a real startup&hellip;
         </h2>
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
           Numbers approximate each company&apos;s actual early round — tweak anything
           before investing.
         </p>
@@ -74,12 +74,12 @@ export function StartupPicker({
                 onClick={() => setSelection({ kind: "preset", name: p.companyName })}
                 className={`rounded-xl border p-4 text-left transition-all ${
                   isActive
-                    ? "border-violet-500 bg-violet-50 ring-2 ring-violet-200 shadow-sm"
-                    : "border-slate-200 bg-white hover:border-violet-300 hover:shadow-sm"
+                    ? "border-violet-500 bg-violet-50 ring-2 ring-violet-200 shadow-sm dark:bg-violet-950 dark:ring-violet-800"
+                    : "border-slate-200 bg-white hover:border-violet-300 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:hover:border-violet-700"
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-semibold text-slate-900">{p.companyName}</span>
+                  <span className="font-semibold text-slate-900 dark:text-slate-100">{p.companyName}</span>
                   <span
                     className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
                       SECTOR_STYLES[p.sector] ?? "bg-slate-100 text-slate-800"
@@ -88,8 +88,8 @@ export function StartupPicker({
                     {p.sector}
                   </span>
                 </div>
-                <p className="mt-1 text-xs text-slate-500">{p.blurb}</p>
-                <p className="mt-2 text-xs font-medium text-violet-700">
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{p.blurb}</p>
+                <p className="mt-2 text-xs font-medium text-violet-700 dark:text-violet-400">
                   {STAGE_LABELS[p.stage]} · {formatDollars(p.checkSize)} at{" "}
                   {formatDollars(p.postMoneyValuation)} post
                 </p>
@@ -100,7 +100,7 @@ export function StartupPicker({
       </div>
 
       <div>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           &hellip;or create your own
         </h2>
         <div className="mt-3 flex flex-wrap gap-3">
@@ -109,8 +109,8 @@ export function StartupPicker({
             onClick={() => setSelection({ kind: "blank" })}
             className={`rounded-xl border px-4 py-2 text-sm font-medium transition-all ${
               selection.kind === "blank"
-                ? "border-violet-500 bg-violet-50 text-violet-700 ring-2 ring-violet-200"
-                : "border-slate-200 bg-white text-slate-600 hover:border-violet-300"
+                ? "border-violet-500 bg-violet-50 text-violet-700 ring-2 ring-violet-200 dark:bg-violet-950 dark:text-violet-300 dark:ring-violet-800"
+                : "border-slate-200 bg-white text-slate-600 hover:border-violet-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-violet-700"
             }`}
           >
             Start from a blank form
@@ -126,15 +126,15 @@ export function StartupPicker({
             }
             className={`rounded-xl border px-4 py-2 text-sm font-medium transition-all ${
               selection.kind === "random"
-                ? "border-fuchsia-500 bg-fuchsia-50 text-fuchsia-700 ring-2 ring-fuchsia-200"
-                : "border-slate-200 bg-white text-slate-600 hover:border-fuchsia-300"
+                ? "border-fuchsia-500 bg-fuchsia-50 text-fuchsia-700 ring-2 ring-fuchsia-200 dark:bg-fuchsia-950 dark:text-fuchsia-300 dark:ring-fuchsia-800"
+                : "border-slate-200 bg-white text-slate-600 hover:border-fuchsia-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-fuchsia-700"
             }`}
           >
             🎲 Randomize a fake startup
           </button>
         </div>
         {selection.kind === "random" && (
-          <p className="mt-2 text-xs text-slate-400">
+          <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
             Rolled <strong className="text-fuchsia-600">{selection.values.companyName}</strong> —
             click again for a new one, or tweak the form below.
           </p>

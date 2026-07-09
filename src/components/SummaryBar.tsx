@@ -50,11 +50,11 @@ export function SummaryBar({
         ))}
       </div>
       <div className="mt-4">
-        <div className="flex justify-between text-xs text-slate-500 mb-1">
+        <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
           <span>Capital deployed</span>
           <span>{pctDeployed.toFixed(1)}%</span>
         </div>
-        <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+        <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
           <div
             className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-600 transition-all"
             style={{ width: `${Math.min(pctDeployed, 100)}%` }}
