@@ -16,15 +16,25 @@ enum Stage {
   PRE_SEED
   SEED
   SERIES_A
+  SERIES_B
+  SERIES_C
 }
 
-model Investment {
-  id                 String   @id @default(cuid())
-  companyName        String
-  sector             String
-  stage              Stage
-  checkSize          Float
-  postMoneyValuation Float
-  investmentDate     DateTime
-  createdAt          DateTime @default(now())
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  sector    String
+  createdAt DateTime @default(now())
+  rounds    Round[]
+}
+
+model Round {
+  id        String   @id @default(cuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  stage     Stage
+  date      DateTime
+  raised    Float // total new money in the round
+  postMoney Float // company valuation after the round closes
+  yourCheck Float // your fund's participation; 0 if you sat the round out
 }
