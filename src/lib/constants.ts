@@ -9,10 +9,12 @@ export const SECTORS = [
   "Other",
 ] as const;
 
-export const STAGES = ["PRE_SEED", "SEED", "SERIES_A"] as const;
+export const STAGES = ["PRE_SEED", "SEED", "SERIES_A", "SERIES_B", "SERIES_C"] as const;
 
 export const STAGE_LABELS: Record<(typeof STAGES)[number], string> = {
   PRE_SEED: "Pre-Seed",
   SEED: "Seed",
   SERIES_A: "Series A",
+  SERIES_B: "Series B",
+  SERIES_C: "Series C",
 };

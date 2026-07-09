@@ -13,4 +13,8 @@ export const STAGE_STYLES: Record<string, string> = {
   SEED: "bg-blue-100 text-blue-700 ring-blue-300 dark:bg-blue-950 dark:text-blue-300 dark:ring-blue-800",
   SERIES_A:
     "bg-purple-100 text-purple-700 ring-purple-300 dark:bg-purple-950 dark:text-purple-300 dark:ring-purple-800",
+  SERIES_B:
+    "bg-fuchsia-100 text-fuchsia-700 ring-fuchsia-300 dark:bg-fuchsia-950 dark:text-fuchsia-300 dark:ring-fuchsia-800",
+  SERIES_C:
+    "bg-pink-100 text-pink-700 ring-pink-300 dark:bg-pink-950 dark:text-pink-300 dark:ring-pink-800",
 };

@@ -3,6 +3,48 @@ export function ownershipPercent(checkSize: number, postMoneyValuation: number):
   return (checkSize / postMoneyValuation) * 100;
 }
 
+export type RoundInput = {
+  date: Date | string;
+  raised: number;
+  postMoney: number;
+  yourCheck: number;
+};
+
+// Walk rounds in date order. Each new round dilutes the stake you already hold
+// by (post - raised) / post — the old shareholders' slice of the new valuation —
+// then adds whatever your new check buys: yourCheck / post.
+export function ownershipAfterRounds(rounds: RoundInput[]): number {
+  const ordered = [...rounds].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+
+  let ownership = 0; // as a fraction, 0..1
+  for (const r of ordered) {
+    if (r.postMoney <= 0) continue;
+    const dilutionFactor = (r.postMoney - r.raised) / r.postMoney;
+    ownership = ownership * dilutionFactor + r.yourCheck / r.postMoney;
+  }
+  return ownership * 100;
+}
+
+// Ownership fraction after each round, for showing the evolution step by step.
+export function ownershipTimeline(rounds: RoundInput[]): number[] {
+  const ordered = [...rounds].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+
+  const timeline: number[] = [];
+  let ownership = 0;
+  for (const r of ordered) {
+    if (r.postMoney > 0) {
+      const dilutionFactor = (r.postMoney - r.raised) / r.postMoney;
+      ownership = ownership * dilutionFactor + r.yourCheck / r.postMoney;
+    }
+    timeline.push(ownership * 100);
+  }
+  return timeline;
+}
+
 export function formatDollars(amount: number): string {
   return amount.toLocaleString("en-US", {
     style: "currency",
