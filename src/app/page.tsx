@@ -5,6 +5,7 @@ import { SECTOR_STYLES, STAGE_STYLES } from "@/lib/badges";
 import { formatDollars, formatPercent, formatDate, ownershipPercent } from "@/lib/fund-math";
 import { SummaryBar } from "@/components/SummaryBar";
 import { DeleteInvestmentButton } from "@/components/DeleteInvestmentButton";
+import { ClearAllButton } from "@/components/ClearAllButton";
 
 export default async function Home() {
   const investments = await prisma.investment.findMany({
@@ -37,7 +38,16 @@ export default async function Home() {
       <main className="mx-auto max-w-5xl px-6 py-8">
         <SummaryBar deployed={deployed} count={investments.length} />
 
-        <div className="mt-8 overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+        {investments.length > 0 && (
+          <div className="mt-8 flex items-center justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+              Portfolio
+            </h2>
+            <ClearAllButton />
+          </div>
+        )}
+
+        <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
           <table className="w-full text-sm bg-white">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">

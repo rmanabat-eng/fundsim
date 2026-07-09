@@ -101,3 +101,8 @@ export async function deleteInvestment(id: string) {
   await prisma.investment.delete({ where: { id } });
   revalidatePath("/");
 }
+
+export async function deleteAllInvestments() {
+  await prisma.investment.deleteMany();
+  revalidatePath("/");
+}
