@@ -45,6 +45,29 @@ $250,000 / $8,000,000 = 3.125%
 
 This is a simplification — it ignores option pool top-ups, existing investor pro-rata rights, and other terms that affect real cap tables — but it captures the core mechanic every VC deal runs on.
 
+### Dilution (V2)
+
+Companies raise more than once. When a company raises a new round, the new
+investors' money buys newly created shares — so everyone who invested earlier
+owns a smaller slice of a (hopefully) more valuable company:
+
+```
+new ownership = old ownership × (post-money − raised) ÷ post-money
+```
+
+Example: you own 2.5% after a seed round. The company raises a $30M Series A at
+a $150M post-money. Your stake becomes 2.5% × ($150M − $30M) ÷ $150M = **2.0%**.
+
+Writing a follow-on check in the new round adds ownership back:
+
+```
+new ownership += your check ÷ post-money
+```
+
+FundSim models each company as a series of rounds. Set your check to $0 on a
+round to sit it out and watch the dilution; write a follow-on check to defend
+your stake. The company page shows your ownership evolving round by round.
+
 ### Deployment pacing
 
 A fund doesn't invest all its capital at once; it deploys it over years across many companies. FundSim tracks this with two numbers:
@@ -56,12 +79,10 @@ FundSim blocks you from adding an investment that would push total deployed past
 
 ## What's out of scope (for now)
 
-This is a V1. It intentionally does not model:
+Not yet modeled:
 
-- Follow-on rounds or dilution across multiple financing rounds
-- Markups/revaluations after the initial investment
-- Returns metrics (TVPI, DPI, IRR)
-- Exits or write-offs
+- Returns metrics (TVPI, DPI, IRR) and current portfolio value from markups
+- Exits and write-offs
 - Charts, dashboards, or multi-user accounts
 
 These are natural V2 features once the core mechanics above are solid.
@@ -76,20 +97,19 @@ These are natural V2 features once the core mechanics above are solid.
 
 ```
 prisma/
-  schema.prisma      # the Investment model
-  seed.ts            # loads 3 sample investments
+  schema.prisma      # Company and Round models
+  seed.ts            # sample portfolio incl. a company with follow-on rounds
 src/
   app/
-    page.tsx                        # home: summary bar + investment table
-    investments/new/page.tsx        # add form
-    investments/[id]/edit/page.tsx  # edit form
-    actions.ts                      # server actions: create/update/delete + validation
-  components/
-    SummaryBar.tsx
-    InvestmentForm.tsx
-    DeleteInvestmentButton.tsx
+    page.tsx                                  # dashboard: summary bar + company table
+    companies/new/page.tsx                    # back a new company (presets/random/blank)
+    companies/[id]/page.tsx                   # company detail: round history + dilution
+    companies/[id]/rounds/new/page.tsx        # add a follow-on round
+    companies/[id]/rounds/[roundId]/edit/...  # edit a round
+    actions.ts                                # server actions + fund validation
+  components/          # tables, forms, pickers, theme toggle
   lib/
     constants.ts       # fund size, sector list, stage list
-    fund-math.ts        # ownership % and formatting helpers
-    prisma.ts           # Prisma client singleton
+    fund-math.ts       # ownership, dilution, and formatting helpers
+    prisma.ts          # Prisma client singleton
 ```
