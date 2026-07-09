@@ -113,6 +113,51 @@ export default async function Home() {
             </tbody>
           </table>
         </div>
+
+        <section className="mt-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-slate-900">How it works</h2>
+          <ol className="mt-4 space-y-3 text-sm text-slate-600">
+            <li className="flex gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700">
+                1
+              </span>
+              <span>
+                <strong className="text-slate-800">Add an investment</strong>{" "}with the
+                company&apos;s name, sector, stage, your check size, and the post-money
+                valuation from the term sheet.
+              </span>
+            </li>
+            <li className="flex gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-700">
+                2
+              </span>
+              <span>
+                <strong className="text-slate-800">Ownership is calculated for you</strong>:
+                check size ÷ post-money valuation. A $250,000 check at an $8M post-money
+                buys 3.13% of the company.
+              </span>
+            </li>
+            <li className="flex gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-fuchsia-100 text-xs font-bold text-fuchsia-700">
+                3
+              </span>
+              <span>
+                <strong className="text-slate-800">Watch your deployment pacing</strong>{" "}in
+                the cards above — total deployed and remaining capital update with every
+                deal. You can&apos;t deploy past the $10M fund size.
+              </span>
+            </li>
+            <li className="flex gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">
+                4
+              </span>
+              <span>
+                <strong className="text-slate-800">Edit or delete</strong>{" "}any deal from the
+                table to correct mistakes — the fund math recalculates instantly.
+              </span>
+            </li>
+          </ol>
+        </section>
       </main>
     </div>
   );
