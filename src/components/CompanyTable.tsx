@@ -64,6 +64,7 @@ export function CompanyTable({ companies }: { companies: CompanyRow[] }) {
   const [companyFilter, setCompanyFilter] = useState("");
   const [sectorFilter, setSectorFilter] = useState("All");
   const [stageFilter, setStageFilter] = useState("All");
+  const [roundsFilter, setRoundsFilter] = useState("All");
   const [sortKey, setSortKey] = useState<SortKey>("latestDate");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
@@ -82,6 +83,8 @@ export function CompanyTable({ companies }: { companies: CompanyRow[] }) {
         return false;
       if (sectorFilter !== "All" && c.sector !== sectorFilter) return false;
       if (stageFilter !== "All" && c.latestStage !== stageFilter) return false;
+      if (roundsFilter === "single" && c.roundCount !== 1) return false;
+      if (roundsFilter === "multiple" && c.roundCount < 2) return false;
       return true;
     });
 
@@ -91,10 +94,13 @@ export function CompanyTable({ companies }: { companies: CompanyRow[] }) {
     return filtered.sort((a, b) =>
       sortDir === "asc" ? valueOf(a) - valueOf(b) : valueOf(b) - valueOf(a)
     );
-  }, [companies, companyFilter, sectorFilter, stageFilter, sortKey, sortDir]);
+  }, [companies, companyFilter, sectorFilter, stageFilter, roundsFilter, sortKey, sortDir]);
 
   const isFiltering =
-    companyFilter !== "" || sectorFilter !== "All" || stageFilter !== "All";
+    companyFilter !== "" ||
+    sectorFilter !== "All" ||
+    stageFilter !== "All" ||
+    roundsFilter !== "All";
 
   return (
     <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200 shadow-sm dark:border-slate-800">
@@ -165,6 +171,15 @@ export function CompanyTable({ companies }: { companies: CompanyRow[] }) {
             </th>
             <th className={headerCell}>
               <span className={headerLabel}>Rounds</span>
+              <select
+                value={roundsFilter}
+                onChange={(e) => setRoundsFilter(e.target.value)}
+                className={filterControl}
+              >
+                <option value="All">All</option>
+                <option value="single">First round only</option>
+                <option value="multiple">Has follow-ons</option>
+              </select>
             </th>
             <th className={headerCell}>
               <SortButton
