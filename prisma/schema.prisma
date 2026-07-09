@@ -1,0 +1,30 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Stage {
+  PRE_SEED
+  SEED
+  SERIES_A
+}
+
+model Investment {
+  id                 String   @id @default(cuid())
+  companyName        String
+  sector             String
+  stage              Stage
+  checkSize          Float
+  postMoneyValuation Float
+  investmentDate     DateTime
+  createdAt          DateTime @default(now())
+}
