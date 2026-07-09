@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { SummaryBar } from "@/components/SummaryBar";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { InvestmentTable } from "@/components/InvestmentTable";
 import { ClearAllButton } from "@/components/ClearAllButton";
 
@@ -40,6 +41,7 @@ export default async function Home() {
               sectors, stages, and check sizes).
             </p>
           </div>
+          <ThemeToggle />
         </div>
       </header>
 
