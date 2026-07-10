@@ -9,6 +9,7 @@ import {
   fundTimeline,
 } from "@/lib/fund-math";
 import { FundChart, type FundChartPoint } from "@/components/FundChart";
+import { FundChartToggle } from "@/components/FundChartToggle";
 import { SummaryBar } from "@/components/SummaryBar";
 import { CompanyTable, type CompanyRow } from "@/components/CompanyTable";
 import { ClearAllButton } from "@/components/ClearAllButton";
@@ -126,10 +127,13 @@ export default async function Home() {
 
         {chartPoints.length >= 2 && (
           <section className="mt-8">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              Fund performance
-            </h2>
-            <div className="mt-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Fund performance
+              </h2>
+              <FundChartToggle />
+            </div>
+            <div className="mt-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 [.chart-hidden_&]:hidden">
               <FundChart points={chartPoints} />
               <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
                 Both lines move only when something happens — a check, a round, an
