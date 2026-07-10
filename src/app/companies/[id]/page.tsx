@@ -16,6 +16,7 @@ import {
 import { DeleteRoundButton } from "@/components/DeleteRoundButton";
 import { UndoExitButton } from "@/components/UndoExitButton";
 import { StakeSparkline } from "@/components/StakeSparkline";
+import { StatCard } from "@/components/StatCard";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default async function CompanyPage({
@@ -119,45 +120,53 @@ export default async function CompanyPage({
         )}
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          <div className="rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 p-4 text-white shadow-sm">
-            <p className="text-xs uppercase tracking-wide text-white/80">
-              Your ownership
-            </p>
-            <p className="text-xl font-semibold">{formatPercent(currentOwnership)}</p>
-          </div>
-          <div className="rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 p-4 text-white shadow-sm">
-            <p className="text-xs uppercase tracking-wide text-white/80">
-              Total invested
-            </p>
-            <p className="text-xl font-semibold">{formatDollars(invested)}</p>
-          </div>
-          <div className="rounded-xl bg-gradient-to-br from-sky-500 to-cyan-600 p-4 text-white shadow-sm">
-            <p className="text-xs uppercase tracking-wide text-white/80">
-              {exited ? "Exit proceeds" : "Stake value"}
-            </p>
-            <p className="text-xl font-semibold">
-              {formatDollars(stakeValue)}{" "}
-              <span className="text-sm font-medium text-white/80">
-                {formatMultiple(multiple)}
-              </span>
-            </p>
-          </div>
-          <div className="rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 p-4 text-white shadow-sm">
-            <p className="text-xs uppercase tracking-wide text-white/80">
-              Latest valuation
-            </p>
-            <p className="text-xl font-semibold">{formatDollars(latest.postMoney)}</p>
-          </div>
-          <div className="rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 p-4 text-white shadow-sm">
-            <p className="text-xs uppercase tracking-wide text-white/80">Rounds</p>
-            <p className="text-xl font-semibold">{company.rounds.length}</p>
-          </div>
-          <div className="rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 p-4 text-white shadow-sm">
-            <p className="text-xs uppercase tracking-wide text-white/80">IRR</p>
-            <p className="text-xl font-semibold">
-              {totalLoss ? "−100%" : irr === null ? "—" : formatPercent(irr * 100)}
-            </p>
-          </div>
+          <StatCard
+            label="Your ownership"
+            value={formatPercent(currentOwnership)}
+            gradient="from-indigo-500 to-indigo-600"
+            hint="Your slice of the company after every round: each check buys check ÷ post-money, and each round you sit out dilutes what you had."
+          />
+          <StatCard
+            label="Total invested"
+            value={formatDollars(invested)}
+            gradient="from-violet-500 to-fuchsia-600"
+            hint="Every check you've written into this company, first and follow-on."
+          />
+          <StatCard
+            label={exited ? "Exit proceeds" : "Stake value"}
+            value={
+              <>
+                {formatDollars(stakeValue)}{" "}
+                <span className="text-sm font-medium text-white/80">
+                  {formatMultiple(multiple)}
+                </span>
+              </>
+            }
+            gradient="from-sky-500 to-cyan-600"
+            hint={
+              exited
+                ? "Cash returned at exit: your ownership × the exit valuation. The multiple is proceeds ÷ invested."
+                : "Your ownership × the latest post-money valuation — paper value, marked to the last round. The multiple is value ÷ invested."
+            }
+          />
+          <StatCard
+            label="Latest valuation"
+            value={formatDollars(latest.postMoney)}
+            gradient="from-emerald-500 to-teal-600"
+            hint="The company's post-money valuation from its most recent round — what the whole company was last priced at."
+          />
+          <StatCard
+            label="Rounds"
+            value={company.rounds.length}
+            gradient="from-amber-500 to-orange-600"
+            hint="Financing rounds logged for this company, including ones you sat out."
+          />
+          <StatCard
+            label="IRR"
+            value={totalLoss ? "−100%" : irr === null ? "—" : formatPercent(irr * 100)}
+            gradient="from-rose-500 to-pink-600"
+            hint="Annualized internal rate of return on this position's dated cash flows. Unlike the multiple, it rewards speed: a quick 2× can beat a slow 3×."
+          />
         </div>
 
         {company.rounds.length >= 2 && (

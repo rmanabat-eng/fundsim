@@ -1,5 +1,6 @@
 import { FUND_SIZE } from "@/lib/constants";
 import { formatDollars, formatMultiple, formatPercent } from "@/lib/fund-math";
+import { StatCard } from "@/components/StatCard";
 
 export function SummaryBar({
   deployed,
@@ -25,41 +26,49 @@ export function SummaryBar({
       label: "Total deployed",
       value: formatDollars(deployed),
       gradient: "from-violet-500 to-fuchsia-600",
+      hint: "Every check you've written so far — first checks and follow-ons — out of the $10M fund.",
     },
     {
       label: "Remaining capital",
       value: formatDollars(remaining),
       gradient: "from-emerald-500 to-teal-600",
+      hint: "Fund size minus deployed. Exits don't refill it — in a real fund, distributions go back to the LPs.",
     },
     {
       label: "Companies",
       value: `${count} / 15`,
       gradient: "from-amber-500 to-orange-600",
+      hint: "Portfolio companies backed, out of a maximum of 15.",
     },
     {
       label: "Portfolio value",
       value: formatDollars(portfolioValue),
       gradient: "from-sky-500 to-cyan-600",
+      hint: "Your active stakes, each marked at its company's latest post-money valuation. Paper value — nothing is cash until an exit.",
     },
     {
       label: "Distributions",
       value: formatDollars(distributions),
       gradient: "from-lime-500 to-green-600",
+      hint: "Cash actually returned to the fund by exits: your ownership × the exit valuation, summed across exited companies.",
     },
     {
       label: "DPI",
       value: dpi === null ? "—" : formatMultiple(dpi),
       gradient: "from-teal-500 to-emerald-600",
+      hint: "Distributions to Paid-In: cash returned ÷ capital deployed. The realized multiple — “you can't eat TVPI.”",
     },
     {
       label: "TVPI",
       value: tvpi === null ? "—" : formatMultiple(tvpi),
       gradient: "from-rose-500 to-pink-600",
+      hint: "Total Value to Paid-In: (portfolio value + distributions) ÷ capital deployed. The headline multiple — paper plus cash per dollar in.",
     },
     {
       label: "IRR (annualized)",
       value: irr === null ? "—" : formatPercent(irr * 100),
       gradient: "from-indigo-500 to-indigo-600",
+      hint: "Internal rate of return: the annualized rate implied by your dated cash flows. Unlike multiples, it rewards getting money back fast.",
     },
   ];
 
@@ -67,15 +76,7 @@ export function SummaryBar({
     <div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {stats.map((stat) => (
-          <div
-            key={stat.label}
-            className={`rounded-xl bg-gradient-to-br ${stat.gradient} p-4 text-white shadow-sm`}
-          >
-            <p className="text-xs uppercase tracking-wide text-white/80">
-              {stat.label}
-            </p>
-            <p className="text-xl font-semibold">{stat.value}</p>
-          </div>
+          <StatCard key={stat.label} {...stat} />
         ))}
       </div>
       <div className="mt-4">
