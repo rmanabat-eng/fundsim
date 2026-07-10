@@ -10,10 +10,14 @@ export default async function NewRoundPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const company = await prisma.company.findUnique({ where: { id } });
+  const company = await prisma.company.findUnique({
+    where: { id },
+    include: { rounds: { orderBy: { date: "asc" } } },
+  });
   if (!company) notFound();
 
   const boundAction = addRound.bind(null, id);
+  const latest = company.rounds[company.rounds.length - 1];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
@@ -37,6 +41,13 @@ export default async function NewRoundPage({
           submitLabel="Add round"
           cancelHref={`/companies/${id}`}
           checkOptional
+          randomizeFrom={
+            latest && {
+              stage: latest.stage,
+              postMoney: latest.postMoney,
+              date: latest.date.toISOString().slice(0, 10),
+            }
+          }
         />
       </main>
     </div>

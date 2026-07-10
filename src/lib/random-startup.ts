@@ -1,4 +1,4 @@
-import { SECTORS } from "@/lib/constants";
+import { SECTORS, STAGES } from "@/lib/constants";
 
 const NAME_PREFIXES = [
   "Nimbus", "Quanta", "Hyper", "Loop", "Verdant", "Pulse", "Atlas", "Ember",
@@ -64,5 +64,49 @@ export function generateRandomStartup() {
     checkSize,
     postMoneyValuation,
     investmentDate: date.toISOString().slice(0, 10),
+  };
+}
+
+// A plausible next round for a company that already raised: usually the next
+// stage at a marked-up valuation, occasionally a down round, and a coin flip
+// on whether your fund follows on or sits out and takes the dilution.
+export function generateRandomFollowOn(latest: {
+  stage: string;
+  postMoney: number;
+  date: Date | string;
+}) {
+  const stageIndex = STAGES.indexOf(latest.stage as (typeof STAGES)[number]);
+  const stage = STAGES[Math.min(stageIndex + 1, STAGES.length - 1)];
+
+  // 1 in 5 rounds is a down round (0.5×–0.9×); the rest mark up 1.5×–4×.
+  const multiplier =
+    Math.random() < 0.2 ? 0.5 + Math.random() * 0.4 : 1.5 + Math.random() * 2.5;
+  const postMoney = Math.max(
+    Math.round((latest.postMoney * multiplier) / 500_000) * 500_000,
+    1_000_000
+  );
+
+  // New investors typically buy 15–30% of the company in a round.
+  const raised = Math.min(
+    Math.max(randomBetween(postMoney * 0.15, postMoney * 0.3, 100_000), 100_000),
+    postMoney - 500_000
+  );
+
+  // Coin flip: sit out (watch the dilution) or defend with a follow-on check.
+  const yourCheck =
+    Math.random() < 0.5
+      ? 0
+      : Math.min(randomBetween(100_000, 1_000_000, 25_000), raised);
+
+  // 9–24 months after the previous round.
+  const date = new Date(latest.date);
+  date.setDate(date.getDate() + 270 + Math.floor(Math.random() * 456));
+
+  return {
+    stage: stage as string,
+    raised,
+    postMoney,
+    yourCheck,
+    date: date.toISOString().slice(0, 10),
   };
 }
