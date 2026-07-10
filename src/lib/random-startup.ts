@@ -110,3 +110,34 @@ export function generateRandomFollowOn(latest: {
     date: date.toISOString().slice(0, 10),
   };
 }
+
+// A plausible outcome for a company, anchored to its last round price.
+// Venture returns are power-law: most companies die or exit sideways, and a
+// few return the fund.
+export function generateRandomExit(latest: {
+  postMoney: number;
+  date: Date | string;
+}) {
+  const roll = Math.random();
+  let writeOff = false;
+  let multiplier = 0;
+  if (roll < 0.3) {
+    writeOff = true; // shut down
+  } else if (roll < 0.75) {
+    multiplier = 0.5 + Math.random() * 1.5; // modest: 0.5×–2× the last round
+  } else {
+    multiplier = 2 + Math.random() * 8; // home run: 2×–10×
+  }
+  const exitValue = writeOff
+    ? 0
+    : Math.max(
+        Math.round((latest.postMoney * multiplier) / 500_000) * 500_000,
+        500_000
+      );
+
+  // 1–4 years after the last round.
+  const date = new Date(latest.date);
+  date.setDate(date.getDate() + 365 + Math.floor(Math.random() * 1096));
+
+  return { writeOff, exitValue, exitDate: date.toISOString().slice(0, 10) };
+}
