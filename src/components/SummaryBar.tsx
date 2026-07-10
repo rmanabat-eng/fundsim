@@ -1,15 +1,17 @@
 import { FUND_SIZE } from "@/lib/constants";
-import { formatDollars, formatMultiple } from "@/lib/fund-math";
+import { formatDollars, formatMultiple, formatPercent } from "@/lib/fund-math";
 
 export function SummaryBar({
   deployed,
   portfolioValue,
   distributions,
+  irr,
   count,
 }: {
   deployed: number;
   portfolioValue: number;
   distributions: number;
+  irr: number | null;
   count: number;
 }) {
   const remaining = FUND_SIZE - deployed;
@@ -17,12 +19,8 @@ export function SummaryBar({
   const tvpi = deployed > 0 ? (portfolioValue + distributions) / deployed : null;
   const dpi = deployed > 0 ? distributions / deployed : null;
 
+  // Fund size ($10M) lives in the page header; the cards track what moves.
   const stats = [
-    {
-      label: "Fund size",
-      value: formatDollars(FUND_SIZE),
-      gradient: "from-indigo-500 to-indigo-600",
-    },
     {
       label: "Total deployed",
       value: formatDollars(deployed),
@@ -57,6 +55,11 @@ export function SummaryBar({
       label: "TVPI",
       value: tvpi === null ? "—" : formatMultiple(tvpi),
       gradient: "from-rose-500 to-pink-600",
+    },
+    {
+      label: "IRR (annualized)",
+      value: irr === null ? "—" : formatPercent(irr * 100),
+      gradient: "from-indigo-500 to-indigo-600",
     },
   ];
 

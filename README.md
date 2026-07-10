@@ -126,6 +126,18 @@ DPI counts only cash actually returned ("you can't eat TVPI"). The gap
 between the two is the unrealized part of the portfolio — value that still
 depends on future exits. The dashboard summary bar tracks both live.
 
+### IRR (V2)
+
+Multiples ignore time: a 3× return in 3 years and a 3× in 12 years score the
+same TVPI, but the first fund is far better. **IRR (internal rate of return)**
+is the annualized rate that makes the fund's dated cash flows net out to zero
+— every check is money out on its round date, every exit is money in on its
+exit date, and (by the standard interim-fund convention) the unrealized
+portfolio counts as a final inflow at its current marked value. FundSim
+solves for the rate numerically (bisection) in `fund-math.ts`, and shows a
+fund-level IRR in the summary bar plus a per-company IRR on each company
+page — watch how a quick modest exit can out-IRR a slow home run.
+
 ### Deployment pacing
 
 A fund doesn't invest all its capital at once; it deploys it over years across many companies. FundSim tracks this with two numbers:
@@ -139,7 +151,6 @@ FundSim blocks you from adding an investment that would push total deployed past
 
 Not yet modeled:
 
-- IRR (time-weighted returns from dated cash flows)
 - Charts, dashboards, or multi-user accounts
 
 These are natural V2 features once the core mechanics above are solid.

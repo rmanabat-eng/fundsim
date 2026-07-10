@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { ownershipAfterRounds, currentValue, exitProceeds } from "@/lib/fund-math";
+import {
+  ownershipAfterRounds,
+  currentValue,
+  exitProceeds,
+  companyCashFlows,
+  xirr,
+} from "@/lib/fund-math";
 import { SummaryBar } from "@/components/SummaryBar";
 import { CompanyTable, type CompanyRow } from "@/components/CompanyTable";
 import { ClearAllButton } from "@/components/ClearAllButton";
@@ -52,6 +58,29 @@ export default async function Home() {
     .filter((r) => r.status !== "active")
     .reduce((sum, r) => sum + r.value, 0);
 
+  // Value active stakes as of the latest date anywhere in the sim (rounds can
+  // be dated in the future), so IRR never has to discount backwards.
+  const asOf = new Date(
+    Math.max(
+      Date.now(),
+      ...companies.flatMap((c) => [
+        ...c.rounds.map((r) => r.date.getTime()),
+        c.exitDate?.getTime() ?? 0,
+      ])
+    )
+  );
+  const irr = xirr(
+    companies.flatMap((c) =>
+      companyCashFlows(
+        c.rounds,
+        c.exitValue !== null
+          ? { value: c.exitValue, date: c.exitDate ?? asOf }
+          : null,
+        asOf
+      )
+    )
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
       <header className="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600">
@@ -82,6 +111,7 @@ export default async function Home() {
           deployed={deployed}
           portfolioValue={portfolioValue}
           distributions={distributions}
+          irr={irr}
           count={companies.length}
         />
 

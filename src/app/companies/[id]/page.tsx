@@ -10,6 +10,8 @@ import {
   formatDate,
   ownershipTimeline,
   valueTimeline,
+  companyCashFlows,
+  xirr,
 } from "@/lib/fund-math";
 import { DeleteRoundButton } from "@/components/DeleteRoundButton";
 import { UndoExitButton } from "@/components/UndoExitButton";
@@ -38,6 +40,22 @@ export default async function CompanyPage({
     : values[values.length - 1] ?? 0;
   const multiple = invested > 0 ? stakeValue / invested : 0;
   const latest = company.rounds[company.rounds.length - 1];
+
+  const asOf = new Date(
+    Math.max(
+      Date.now(),
+      ...company.rounds.map((r) => r.date.getTime()),
+      company.exitDate?.getTime() ?? 0
+    )
+  );
+  const irr = xirr(
+    companyCashFlows(
+      company.rounds,
+      exited ? { value: company.exitValue ?? 0, date: company.exitDate ?? asOf } : null,
+      asOf
+    )
+  );
+  const totalLoss = exited && company.exitValue === 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
@@ -99,7 +117,7 @@ export default async function CompanyPage({
           </div>
         )}
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           <div className="rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 p-4 text-white shadow-sm">
             <p className="text-xs uppercase tracking-wide text-white/80">
               Your ownership
@@ -132,6 +150,12 @@ export default async function CompanyPage({
           <div className="rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 p-4 text-white shadow-sm">
             <p className="text-xs uppercase tracking-wide text-white/80">Rounds</p>
             <p className="text-xl font-semibold">{company.rounds.length}</p>
+          </div>
+          <div className="rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 p-4 text-white shadow-sm">
+            <p className="text-xs uppercase tracking-wide text-white/80">IRR</p>
+            <p className="text-xl font-semibold">
+              {totalLoss ? "−100%" : irr === null ? "—" : formatPercent(irr * 100)}
+            </p>
           </div>
         </div>
 
