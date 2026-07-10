@@ -4,7 +4,12 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { SECTORS, STAGES, STAGE_LABELS } from "@/lib/constants";
 import { SECTOR_STYLES, STAGE_STYLES } from "@/lib/badges";
-import { formatDollars, formatPercent, formatDate } from "@/lib/fund-math";
+import {
+  formatDollars,
+  formatPercent,
+  formatMultiple,
+  formatDate,
+} from "@/lib/fund-math";
 import { DeleteCompanyButton } from "@/components/DeleteCompanyButton";
 
 export type CompanyRow = {
@@ -15,11 +20,18 @@ export type CompanyRow = {
   invested: number; // sum of your checks across rounds
   latestPostMoney: number;
   ownershipPct: number; // current, after all dilution
+  value: number; // ownership × latest post-money
+  multiple: number; // value ÷ invested
   roundCount: number;
   latestDate: string; // ISO
 };
 
-type SortKey = "invested" | "latestPostMoney" | "ownershipPct" | "latestDate";
+type SortKey =
+  | "invested"
+  | "latestPostMoney"
+  | "ownershipPct"
+  | "value"
+  | "latestDate";
 type SortDir = "asc" | "desc";
 
 const headerCell = "py-3 px-4 align-top";
@@ -170,6 +182,14 @@ export function CompanyTable({ companies }: { companies: CompanyRow[] }) {
               />
             </th>
             <th className={headerCell}>
+              <SortButton
+                label="Value"
+                active={sortKey === "value"}
+                dir={sortDir}
+                onClick={() => toggleSort("value")}
+              />
+            </th>
+            <th className={headerCell}>
               <span className={headerLabel}>Rounds</span>
               <select
                 value={roundsFilter}
@@ -196,7 +216,7 @@ export function CompanyTable({ companies }: { companies: CompanyRow[] }) {
           {rows.length === 0 && (
             <tr>
               <td
-                colSpan={9}
+                colSpan={10}
                 className="py-10 text-center text-slate-500 dark:text-slate-400"
               >
                 {isFiltering ? (
@@ -257,6 +277,18 @@ export function CompanyTable({ companies }: { companies: CompanyRow[] }) {
               </td>
               <td className="py-3 px-4 font-semibold text-violet-700 dark:text-violet-400">
                 {formatPercent(c.ownershipPct)}
+              </td>
+              <td className="py-3 px-4 text-slate-700 dark:text-slate-300">
+                {formatDollars(c.value)}
+                <span
+                  className={`ml-2 text-xs font-medium ${
+                    c.multiple >= 1
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-rose-600 dark:text-rose-400"
+                  }`}
+                >
+                  {formatMultiple(c.multiple)}
+                </span>
               </td>
               <td className="py-3 px-4 text-slate-500 dark:text-slate-400">
                 {c.roundCount}

@@ -68,6 +68,40 @@ FundSim models each company as a series of rounds. Set your check to $0 on a
 round to sit it out and watch the dilution; write a follow-on check to defend
 your stake. The company page shows your ownership evolving round by round.
 
+### Markups and current portfolio value (V2)
+
+Venture stakes are illiquid — there's no ticker showing what your slice of a
+startup is worth. The convention the industry uses is **mark-to-market at the
+last round price**: your stake is valued at whatever the company's most recent
+post-money valuation implies.
+
+```
+current value of a stake = ownership % × latest post-money valuation
+```
+
+When a company raises a new round at a higher valuation, your earlier checks
+get **marked up** (worth more on paper, even though you did nothing); a down
+round marks them down. The company page shows your stake's value after each
+round, and the dashboard shows each position's current value alongside its
+multiple (`value ÷ invested`).
+
+These are paper gains only — no cash returns to the fund until a company
+exits.
+
+### TVPI (V2)
+
+**TVPI (Total Value to Paid-In)** is the headline multiple LPs use to judge a
+fund:
+
+```
+TVPI = (current portfolio value + distributions) ÷ total deployed
+```
+
+FundSim doesn't model exits yet, so distributions are zero and TVPI is purely
+unrealized — the sum of every stake's current value divided by every dollar
+deployed. A TVPI of 2.00× means each invested dollar is worth two on paper.
+The dashboard summary bar tracks it live as valuations move.
+
 ### Deployment pacing
 
 A fund doesn't invest all its capital at once; it deploys it over years across many companies. FundSim tracks this with two numbers:
@@ -81,8 +115,7 @@ FundSim blocks you from adding an investment that would push total deployed past
 
 Not yet modeled:
 
-- Returns metrics (TVPI, DPI, IRR) and current portfolio value from markups
-- Exits and write-offs
+- Exits and write-offs (and with them DPI and IRR)
 - Charts, dashboards, or multi-user accounts
 
 These are natural V2 features once the core mechanics above are solid.
@@ -110,6 +143,6 @@ src/
   components/          # tables, forms, pickers, theme toggle
   lib/
     constants.ts       # fund size, sector list, stage list
-    fund-math.ts       # ownership, dilution, and formatting helpers
+    fund-math.ts       # ownership, dilution, mark-to-market, and formatting helpers
     prisma.ts          # Prisma client singleton
 ```

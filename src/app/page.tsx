@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { ownershipAfterRounds } from "@/lib/fund-math";
+import { ownershipAfterRounds, currentValue } from "@/lib/fund-math";
 import { SummaryBar } from "@/components/SummaryBar";
 import { CompanyTable, type CompanyRow } from "@/components/CompanyTable";
 import { ClearAllButton } from "@/components/ClearAllButton";
@@ -19,18 +19,24 @@ export default async function Home() {
     .filter((c) => c.rounds.length > 0)
     .map((c) => {
       const latest = c.rounds[c.rounds.length - 1];
+      const invested = c.rounds.reduce((sum, r) => sum + r.yourCheck, 0);
+      const value = currentValue(c.rounds);
       return {
         id: c.id,
         name: c.name,
         sector: c.sector,
         latestStage: latest.stage,
-        invested: c.rounds.reduce((sum, r) => sum + r.yourCheck, 0),
+        invested,
         latestPostMoney: latest.postMoney,
         ownershipPct: ownershipAfterRounds(c.rounds),
+        value,
+        multiple: invested > 0 ? value / invested : 0,
         roundCount: c.rounds.length,
         latestDate: latest.date.toISOString(),
       };
     });
+
+  const portfolioValue = rows.reduce((sum, r) => sum + r.value, 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
@@ -58,7 +64,11 @@ export default async function Home() {
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-8">
-        <SummaryBar deployed={deployed} count={companies.length} />
+        <SummaryBar
+          deployed={deployed}
+          portfolioValue={portfolioValue}
+          count={companies.length}
+        />
 
         <div className="mt-8 flex items-center justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -131,6 +141,20 @@ export default async function Home() {
                 </strong>{" "}
                 in the cards above — every check, first or follow-on, comes out of the
                 same $10M fund.
+              </span>
+            </li>
+            <li className="flex gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-100 text-xs font-bold text-sky-700 dark:bg-sky-950 dark:text-sky-300">
+                5
+              </span>
+              <span>
+                <strong className="text-slate-800 dark:text-slate-200">
+                  Track your markups and TVPI
+                </strong>
+                : each stake is marked at the company&apos;s latest post-money
+                valuation, and TVPI — total value ÷ paid-in capital — is the headline
+                multiple LPs judge a fund by. It&apos;s all paper gains until companies
+                exit.
               </span>
             </li>
           </ol>

@@ -6,8 +6,10 @@ import { STAGE_STYLES } from "@/lib/badges";
 import {
   formatDollars,
   formatPercent,
+  formatMultiple,
   formatDate,
   ownershipTimeline,
+  valueTimeline,
 } from "@/lib/fund-math";
 import { DeleteRoundButton } from "@/components/DeleteRoundButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -26,8 +28,11 @@ export default async function CompanyPage({
   if (!company) notFound();
 
   const timeline = ownershipTimeline(company.rounds);
+  const values = valueTimeline(company.rounds);
   const invested = company.rounds.reduce((sum, r) => sum + r.yourCheck, 0);
   const currentOwnership = timeline[timeline.length - 1] ?? 0;
+  const stakeValue = values[values.length - 1] ?? 0;
+  const multiple = invested > 0 ? stakeValue / invested : 0;
   const latest = company.rounds[company.rounds.length - 1];
 
   return (
@@ -51,7 +56,7 @@ export default async function CompanyPage({
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-8">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           <div className="rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 p-4 text-white shadow-sm">
             <p className="text-xs uppercase tracking-wide text-white/80">
               Your ownership
@@ -63,6 +68,17 @@ export default async function CompanyPage({
               Total invested
             </p>
             <p className="text-xl font-semibold">{formatDollars(invested)}</p>
+          </div>
+          <div className="rounded-xl bg-gradient-to-br from-sky-500 to-cyan-600 p-4 text-white shadow-sm">
+            <p className="text-xs uppercase tracking-wide text-white/80">
+              Stake value
+            </p>
+            <p className="text-xl font-semibold">
+              {formatDollars(stakeValue)}{" "}
+              <span className="text-sm font-medium text-white/80">
+                {formatMultiple(multiple)}
+              </span>
+            </p>
           </div>
           <div className="rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 p-4 text-white shadow-sm">
             <p className="text-xs uppercase tracking-wide text-white/80">
@@ -98,6 +114,7 @@ export default async function CompanyPage({
                 <th className="py-3 px-4">Post-money</th>
                 <th className="py-3 px-4">Your check</th>
                 <th className="py-3 px-4">Ownership after</th>
+                <th className="py-3 px-4">Stake value</th>
                 <th className="py-3 px-4"></th>
               </tr>
             </thead>
@@ -105,6 +122,7 @@ export default async function CompanyPage({
               {company.rounds.map((round, i) => {
                 const prev = i > 0 ? timeline[i - 1] : null;
                 const delta = prev !== null ? timeline[i] - prev : null;
+                const valueDelta = i > 0 ? values[i] - values[i - 1] : null;
                 return (
                   <tr
                     key={round.id}
@@ -153,6 +171,21 @@ export default async function CompanyPage({
                         </span>
                       )}
                     </td>
+                    <td className="py-3 px-4 text-slate-700 dark:text-slate-300">
+                      {formatDollars(values[i])}
+                      {valueDelta !== null && (
+                        <span
+                          className={`ml-2 text-xs font-medium ${
+                            valueDelta >= 0
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : "text-rose-600 dark:text-rose-400"
+                          }`}
+                        >
+                          {valueDelta >= 0 ? "+" : "−"}
+                          {formatDollars(Math.abs(valueDelta))}
+                        </span>
+                      )}
+                    </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3 justify-end">
                         <Link
@@ -186,6 +219,13 @@ export default async function CompanyPage({
             (post-money − raised) ÷ post-money each round. Writing a follow-on check adds
             your check ÷ post-money back. The &quot;Ownership after&quot; column shows
             your stake evolving round by round.
+          </p>
+          <p className="mt-3 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+            The &quot;Stake value&quot; column is that ownership marked at each
+            round&apos;s post-money valuation — a paper <strong>markup</strong> when the
+            company raises at a higher price, a markdown when it raises a down round. No
+            cash has come back to the fund; the value is only realized when the company
+            exits.
           </p>
         </section>
       </main>

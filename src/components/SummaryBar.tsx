@@ -1,15 +1,18 @@
 import { FUND_SIZE } from "@/lib/constants";
-import { formatDollars } from "@/lib/fund-math";
+import { formatDollars, formatMultiple } from "@/lib/fund-math";
 
 export function SummaryBar({
   deployed,
+  portfolioValue,
   count,
 }: {
   deployed: number;
+  portfolioValue: number;
   count: number;
 }) {
   const remaining = FUND_SIZE - deployed;
   const pctDeployed = (deployed / FUND_SIZE) * 100;
+  const tvpi = deployed > 0 ? portfolioValue / deployed : null;
 
   const stats = [
     {
@@ -28,6 +31,16 @@ export function SummaryBar({
       gradient: "from-emerald-500 to-teal-600",
     },
     {
+      label: "Portfolio value",
+      value: formatDollars(portfolioValue),
+      gradient: "from-sky-500 to-cyan-600",
+    },
+    {
+      label: "TVPI",
+      value: tvpi === null ? "—" : formatMultiple(tvpi),
+      gradient: "from-rose-500 to-pink-600",
+    },
+    {
       label: "Companies",
       value: `${count} / 15`,
       gradient: "from-amber-500 to-orange-600",
@@ -36,7 +49,7 @@ export function SummaryBar({
 
   return (
     <div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         {stats.map((stat) => (
           <div
             key={stat.label}
