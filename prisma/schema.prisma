@@ -21,10 +21,12 @@ enum Stage {
 }
 
 model Company {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   name      String
   sector    String
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+  exitValue Float? // company valuation at exit; 0 means written off; null = still active
+  exitDate  DateTime?
   rounds    Round[]
 }
 

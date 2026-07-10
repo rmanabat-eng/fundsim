@@ -88,7 +88,25 @@ multiple (`value ÷ invested`).
 These are paper gains only — no cash returns to the fund until a company
 exits.
 
-### TVPI (V2)
+### Exits and write-offs (V2)
+
+A venture position ends one of three ways: the company is **acquired**, it
+**IPOs**, or it **dies**. When it's acquired or goes public, your stake
+converts to cash:
+
+```
+exit proceeds = ownership % × exit valuation
+```
+
+That cash is a **distribution** back to the fund. When the company dies,
+that's a **write-off** — an exit at $0. Either way the position stops marking
+to market: record an exit from a company's page and its cap table freezes.
+
+Distributions don't top the fund's deployable capital back up — in a real
+fund they're returned to the LPs, so remaining capital still only shrinks as
+you write checks.
+
+### TVPI and DPI (V2)
 
 **TVPI (Total Value to Paid-In)** is the headline multiple LPs use to judge a
 fund:
@@ -97,10 +115,16 @@ fund:
 TVPI = (current portfolio value + distributions) ÷ total deployed
 ```
 
-FundSim doesn't model exits yet, so distributions are zero and TVPI is purely
-unrealized — the sum of every stake's current value divided by every dollar
-deployed. A TVPI of 2.00× means each invested dollar is worth two on paper.
-The dashboard summary bar tracks it live as valuations move.
+A TVPI of 2.00× means each deployed dollar is worth two — on paper plus in
+cash. Its skeptical sibling is **DPI (Distributions to Paid-In)**:
+
+```
+DPI = distributions ÷ total deployed
+```
+
+DPI counts only cash actually returned ("you can't eat TVPI"). The gap
+between the two is the unrealized part of the portfolio — value that still
+depends on future exits. The dashboard summary bar tracks both live.
 
 ### Deployment pacing
 
@@ -115,7 +139,7 @@ FundSim blocks you from adding an investment that would push total deployed past
 
 Not yet modeled:
 
-- Exits and write-offs (and with them DPI and IRR)
+- IRR (time-weighted returns from dated cash flows)
 - Charts, dashboards, or multi-user accounts
 
 These are natural V2 features once the core mechanics above are solid.
@@ -138,6 +162,7 @@ src/
     companies/new/page.tsx                    # back a new company (presets/random/blank)
     companies/[id]/page.tsx                   # company detail: round history + dilution
     companies/[id]/rounds/new/page.tsx        # add a follow-on round
+    companies/[id]/exit/page.tsx              # record an exit or write-off
     companies/[id]/rounds/[roundId]/edit/...  # edit a round
     actions.ts                                # server actions + fund validation
   components/          # tables, forms, pickers, theme toggle

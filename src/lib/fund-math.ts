@@ -83,6 +83,12 @@ export function valueTimeline(rounds: RoundInput[]): number[] {
   return timeline;
 }
 
+// Cash returned to the fund when a company exits: ownership at exit × exit
+// valuation. A write-off is just an exit at 0.
+export function exitProceeds(rounds: RoundInput[], exitValue: number): number {
+  return (ownershipAfterRounds(rounds) / 100) * exitValue;
+}
+
 export function formatDollars(amount: number): string {
   return amount.toLocaleString("en-US", {
     style: "currency",

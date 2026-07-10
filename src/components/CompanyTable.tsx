@@ -20,8 +20,9 @@ export type CompanyRow = {
   invested: number; // sum of your checks across rounds
   latestPostMoney: number;
   ownershipPct: number; // current, after all dilution
-  value: number; // ownership × latest post-money
+  value: number; // active: ownership × latest post-money; exited: cash proceeds
   multiple: number; // value ÷ invested
+  status: "active" | "exited" | "written-off";
   roundCount: number;
   latestDate: string; // ISO
 };
@@ -248,6 +249,17 @@ export function CompanyTable({ companies }: { companies: CompanyRow[] }) {
                 >
                   {c.name}
                 </Link>
+                {c.status !== "active" && (
+                  <span
+                    className={`ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                      c.status === "exited"
+                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                        : "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
+                    }`}
+                  >
+                    {c.status === "exited" ? "Exited" : "Written off"}
+                  </span>
+                )}
               </td>
               <td className="py-3 px-4">
                 <span

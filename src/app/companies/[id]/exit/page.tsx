@@ -1,24 +1,20 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { RoundForm } from "@/components/RoundForm";
+import { ExitForm } from "@/components/ExitForm";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { addRound } from "@/app/actions";
+import { recordExit } from "@/app/actions";
 
-export default async function NewRoundPage({
+export default async function ExitPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const company = await prisma.company.findUnique({
-    where: { id },
-    include: { rounds: { orderBy: { date: "asc" } } },
-  });
+  const company = await prisma.company.findUnique({ where: { id } });
   if (!company) notFound();
-  if (company.exitValue !== null) redirect(`/companies/${id}`);
 
-  const boundAction = addRound.bind(null, id);
-  const latest = company.rounds[company.rounds.length - 1];
+  const boundAction = recordExit.bind(null, id);
+  const alreadyExited = company.exitValue !== null;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
@@ -26,28 +22,27 @@ export default async function NewRoundPage({
         <div className="mx-auto max-w-5xl px-6 py-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white tracking-tight">
-              Add round — {company.name}
+              {alreadyExited ? "Edit exit" : "Record exit"} — {company.name}
             </h1>
             <p className="text-sm text-white/80 mt-1">
-              Log a new financing round. Set your check to 0 if you sat it out — your
-              stake will dilute.
+              An acquisition or IPO turns your stake into cash: ownership × exit
+              valuation. A write-off ends the position at $0.
             </p>
           </div>
           <ThemeToggle />
         </div>
       </header>
       <main className="mx-auto max-w-5xl px-6 py-8">
-        <RoundForm
+        <ExitForm
           action={boundAction}
-          submitLabel="Add round"
           cancelHref={`/companies/${id}`}
-          checkOptional
-          randomizeFrom={
-            latest && {
-              stage: latest.stage,
-              postMoney: latest.postMoney,
-              date: latest.date.toISOString().slice(0, 10),
-            }
+          defaultValues={
+            alreadyExited
+              ? {
+                  exitValue: company.exitValue ?? undefined,
+                  exitDate: company.exitDate?.toISOString().slice(0, 10),
+                }
+              : undefined
           }
         />
       </main>

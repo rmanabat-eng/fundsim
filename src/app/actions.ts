@@ -111,6 +111,11 @@ export async function addRound(
   _prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
+  const company = await prisma.company.findUnique({ where: { id: companyId } });
+  if (!company) return { error: "Company not found." };
+  if (company.exitValue !== null)
+    return { error: "This company has exited — its cap table is frozen." };
+
   const parsed = parseRoundFields(formData, { allowZeroCheck: true });
   if ("error" in parsed) return { error: parsed.error };
 
@@ -139,6 +144,8 @@ export async function updateRound(
     include: { company: { include: { rounds: true } } },
   });
   if (!round) return { error: "Round not found." };
+  if (round.company.exitValue !== null)
+    return { error: "This company has exited — its cap table is frozen." };
 
   const parsed = parseRoundFields(formData, { allowZeroCheck: true });
   if ("error" in parsed) return { error: parsed.error };
@@ -185,6 +192,49 @@ export async function updateCompany(
   revalidatePath("/");
   revalidatePath(`/companies/${companyId}`);
   return null;
+}
+
+export async function recordExit(
+  companyId: string,
+  _prevState: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const company = await prisma.company.findUnique({
+    where: { id: companyId },
+    include: { rounds: { orderBy: { date: "asc" } } },
+  });
+  if (!company) return { error: "Company not found." };
+
+  const writeOff = formData.get("writeOff") === "true";
+  const exitValue = writeOff ? 0 : Number(formData.get("exitValue"));
+  const date = String(formData.get("exitDate") ?? "");
+
+  if (!Number.isFinite(exitValue) || exitValue < 0)
+    return { error: "Exit valuation can't be negative." };
+  if (!date || Number.isNaN(Date.parse(date)))
+    return { error: "A valid exit date is required." };
+
+  const exitDate = new Date(date);
+  const lastRound = company.rounds[company.rounds.length - 1];
+  if (lastRound && exitDate < lastRound.date)
+    return { error: "Exit date can't be before the company's last round." };
+
+  await prisma.company.update({
+    where: { id: companyId },
+    data: { exitValue, exitDate },
+  });
+  revalidatePath("/");
+  revalidatePath(`/companies/${companyId}`);
+  redirect(`/companies/${companyId}`);
+}
+
+export async function undoExit(companyId: string) {
+  await prisma.company.update({
+    where: { id: companyId },
+    data: { exitValue: null, exitDate: null },
+  });
+  revalidatePath("/");
+  revalidatePath(`/companies/${companyId}`);
 }
 
 export async function deleteRound(roundId: string, companyId: string) {

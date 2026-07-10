@@ -4,15 +4,18 @@ import { formatDollars, formatMultiple } from "@/lib/fund-math";
 export function SummaryBar({
   deployed,
   portfolioValue,
+  distributions,
   count,
 }: {
   deployed: number;
   portfolioValue: number;
+  distributions: number;
   count: number;
 }) {
   const remaining = FUND_SIZE - deployed;
   const pctDeployed = (deployed / FUND_SIZE) * 100;
-  const tvpi = deployed > 0 ? portfolioValue / deployed : null;
+  const tvpi = deployed > 0 ? (portfolioValue + distributions) / deployed : null;
+  const dpi = deployed > 0 ? distributions / deployed : null;
 
   const stats = [
     {
@@ -31,25 +34,35 @@ export function SummaryBar({
       gradient: "from-emerald-500 to-teal-600",
     },
     {
+      label: "Companies",
+      value: `${count} / 15`,
+      gradient: "from-amber-500 to-orange-600",
+    },
+    {
       label: "Portfolio value",
       value: formatDollars(portfolioValue),
       gradient: "from-sky-500 to-cyan-600",
+    },
+    {
+      label: "Distributions",
+      value: formatDollars(distributions),
+      gradient: "from-lime-500 to-green-600",
+    },
+    {
+      label: "DPI",
+      value: dpi === null ? "—" : formatMultiple(dpi),
+      gradient: "from-teal-500 to-emerald-600",
     },
     {
       label: "TVPI",
       value: tvpi === null ? "—" : formatMultiple(tvpi),
       gradient: "from-rose-500 to-pink-600",
     },
-    {
-      label: "Companies",
-      value: `${count} / 15`,
-      gradient: "from-amber-500 to-orange-600",
-    },
   ];
 
   return (
     <div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {stats.map((stat) => (
           <div
             key={stat.label}

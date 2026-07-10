@@ -12,6 +12,7 @@ import {
   valueTimeline,
 } from "@/lib/fund-math";
 import { DeleteRoundButton } from "@/components/DeleteRoundButton";
+import { UndoExitButton } from "@/components/UndoExitButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default async function CompanyPage({
@@ -31,7 +32,10 @@ export default async function CompanyPage({
   const values = valueTimeline(company.rounds);
   const invested = company.rounds.reduce((sum, r) => sum + r.yourCheck, 0);
   const currentOwnership = timeline[timeline.length - 1] ?? 0;
-  const stakeValue = values[values.length - 1] ?? 0;
+  const exited = company.exitValue !== null;
+  const stakeValue = exited
+    ? (currentOwnership / 100) * (company.exitValue ?? 0)
+    : values[values.length - 1] ?? 0;
   const multiple = invested > 0 ? stakeValue / invested : 0;
   const latest = company.rounds[company.rounds.length - 1];
 
@@ -56,6 +60,45 @@ export default async function CompanyPage({
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-8">
+        {exited && (
+          <div
+            className={`mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 ${
+              company.exitValue === 0
+                ? "border-rose-200 bg-rose-50 dark:border-rose-900 dark:bg-rose-950"
+                : "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950"
+            }`}
+          >
+            <p className="text-sm text-slate-700 dark:text-slate-300">
+              {company.exitValue === 0 ? (
+                <>
+                  <strong>Written off</strong>
+                  {company.exitDate && <> on {formatDate(company.exitDate)}</>} — the
+                  company shut down and your {formatDollars(invested)} is gone.
+                </>
+              ) : (
+                <>
+                  <strong>Exited</strong>
+                  {company.exitDate && <> on {formatDate(company.exitDate)}</>} at a{" "}
+                  {formatDollars(company.exitValue ?? 0)} valuation — your{" "}
+                  {formatPercent(currentOwnership)} returned{" "}
+                  <strong>{formatDollars(stakeValue)}</strong> in cash (
+                  {formatMultiple(multiple)} on {formatDollars(invested)} invested).
+                </>
+              )}{" "}
+              The cap table is frozen.
+            </p>
+            <div className="flex items-center gap-4">
+              <Link
+                href={`/companies/${company.id}/exit`}
+                className="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+              >
+                Edit exit
+              </Link>
+              <UndoExitButton companyId={company.id} />
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           <div className="rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 p-4 text-white shadow-sm">
             <p className="text-xs uppercase tracking-wide text-white/80">
@@ -71,7 +114,7 @@ export default async function CompanyPage({
           </div>
           <div className="rounded-xl bg-gradient-to-br from-sky-500 to-cyan-600 p-4 text-white shadow-sm">
             <p className="text-xs uppercase tracking-wide text-white/80">
-              Stake value
+              {exited ? "Exit proceeds" : "Stake value"}
             </p>
             <p className="text-xl font-semibold">
               {formatDollars(stakeValue)}{" "}
@@ -96,12 +139,24 @@ export default async function CompanyPage({
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
             Funding rounds
           </h2>
-          <Link
-            href={`/companies/${company.id}/rounds/new`}
-            className="rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-4 py-2 text-sm font-semibold shadow-sm hover:from-indigo-500 hover:to-violet-500 transition-colors"
-          >
-            + Add round
-          </Link>
+          <div className="flex items-center gap-3">
+            {!exited && (
+              <Link
+                href={`/companies/${company.id}/exit`}
+                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                Record exit
+              </Link>
+            )}
+            {!exited && (
+              <Link
+                href={`/companies/${company.id}/rounds/new`}
+                className="rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-4 py-2 text-sm font-semibold shadow-sm hover:from-indigo-500 hover:to-violet-500 transition-colors"
+              >
+                + Add round
+              </Link>
+            )}
+          </div>
         </div>
 
         <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200 shadow-sm dark:border-slate-800">
@@ -187,19 +242,21 @@ export default async function CompanyPage({
                       )}
                     </td>
                     <td className="py-3 px-4">
-                      <div className="flex items-center gap-3 justify-end">
-                        <Link
-                          href={`/companies/${company.id}/rounds/${round.id}/edit`}
-                          className="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-                        >
-                          Edit
-                        </Link>
-                        <DeleteRoundButton
-                          roundId={round.id}
-                          companyId={company.id}
-                          isOnlyRound={company.rounds.length === 1}
-                        />
-                      </div>
+                      {!exited && (
+                        <div className="flex items-center gap-3 justify-end">
+                          <Link
+                            href={`/companies/${company.id}/rounds/${round.id}/edit`}
+                            className="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                          >
+                            Edit
+                          </Link>
+                          <DeleteRoundButton
+                            roundId={round.id}
+                            companyId={company.id}
+                            isOnlyRound={company.rounds.length === 1}
+                          />
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );

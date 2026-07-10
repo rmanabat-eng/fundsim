@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { ownershipAfterRounds, currentValue } from "@/lib/fund-math";
+import { ownershipAfterRounds, currentValue, exitProceeds } from "@/lib/fund-math";
 import { SummaryBar } from "@/components/SummaryBar";
 import { CompanyTable, type CompanyRow } from "@/components/CompanyTable";
 import { ClearAllButton } from "@/components/ClearAllButton";
@@ -20,7 +20,11 @@ export default async function Home() {
     .map((c) => {
       const latest = c.rounds[c.rounds.length - 1];
       const invested = c.rounds.reduce((sum, r) => sum + r.yourCheck, 0);
-      const value = currentValue(c.rounds);
+      const exited = c.exitValue !== null;
+      // Exited stakes are cash in the bank; active ones mark to the last round.
+      const value = exited
+        ? exitProceeds(c.rounds, c.exitValue ?? 0)
+        : currentValue(c.rounds);
       return {
         id: c.id,
         name: c.name,
@@ -31,12 +35,22 @@ export default async function Home() {
         ownershipPct: ownershipAfterRounds(c.rounds),
         value,
         multiple: invested > 0 ? value / invested : 0,
+        status: exited
+          ? c.exitValue === 0
+            ? ("written-off" as const)
+            : ("exited" as const)
+          : ("active" as const),
         roundCount: c.rounds.length,
         latestDate: latest.date.toISOString(),
       };
     });
 
-  const portfolioValue = rows.reduce((sum, r) => sum + r.value, 0);
+  const portfolioValue = rows
+    .filter((r) => r.status === "active")
+    .reduce((sum, r) => sum + r.value, 0);
+  const distributions = rows
+    .filter((r) => r.status !== "active")
+    .reduce((sum, r) => sum + r.value, 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
@@ -67,6 +81,7 @@ export default async function Home() {
         <SummaryBar
           deployed={deployed}
           portfolioValue={portfolioValue}
+          distributions={distributions}
           count={companies.length}
         />
 
