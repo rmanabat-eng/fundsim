@@ -6,7 +6,9 @@ import {
   exitProceeds,
   companyCashFlows,
   xirr,
+  fundTimeline,
 } from "@/lib/fund-math";
+import { FundChart, type FundChartPoint } from "@/components/FundChart";
 import { SummaryBar } from "@/components/SummaryBar";
 import { CompanyTable, type CompanyRow } from "@/components/CompanyTable";
 import { ClearAllButton } from "@/components/ClearAllButton";
@@ -69,6 +71,13 @@ export default async function Home() {
       ])
     )
   );
+  const chartPoints: FundChartPoint[] = fundTimeline(companies).map((p) => ({
+    date: p.date.toISOString(),
+    deployed: p.deployed,
+    value: p.value,
+    distributions: p.distributions,
+  }));
+
   const irr = xirr(
     companies.flatMap((c) =>
       companyCashFlows(
@@ -114,6 +123,23 @@ export default async function Home() {
           irr={irr}
           count={companies.length}
         />
+
+        {chartPoints.length >= 2 && (
+          <section className="mt-8">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Fund performance
+            </h2>
+            <div className="mt-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <FundChart points={chartPoints} />
+              <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
+                Both lines move only when something happens — a check, a round, an
+                exit. Early on, total value hugs deployed capital (everything at
+                cost); write-offs knock it below, markups and exits pull it away.
+                That dip-then-climb is venture&apos;s famous J-curve.
+              </p>
+            </div>
+          </section>
+        )}
 
         <div className="mt-8 flex items-center justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">

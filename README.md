@@ -147,11 +147,22 @@ A fund doesn't invest all its capital at once; it deploys it over years across m
 
 FundSim blocks you from adding an investment that would push total deployed past the fund size, the same way a real fund manager can't invest more than their fund's committed capital.
 
+### The fund chart (V2)
+
+The dashboard plots the fund's whole history from its dated events: a
+cyan staircase of **capital deployed** and a violet line of **total value**
+(active stakes at their marks, plus cash distributed). The vertical gap
+between the lines is your gain or loss — the ratio between them is TVPI,
+drawn. Early on the lines overlap (everything held at cost); write-offs
+knock value below deployed and markups pull it above. That dip-then-recover
+shape is venture's famous **J-curve**. Company pages get a sparkline of the
+stake's value round by round.
+
 ## What's out of scope (for now)
 
 Not yet modeled:
 
-- Charts, dashboards, or multi-user accounts
+- Multi-user accounts, fund settings, or scenario comparison
 
 These are natural V2 features once the core mechanics above are solid.
 

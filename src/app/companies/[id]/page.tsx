@@ -15,6 +15,7 @@ import {
 } from "@/lib/fund-math";
 import { DeleteRoundButton } from "@/components/DeleteRoundButton";
 import { UndoExitButton } from "@/components/UndoExitButton";
+import { StakeSparkline } from "@/components/StakeSparkline";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default async function CompanyPage({
@@ -158,6 +159,20 @@ export default async function CompanyPage({
             </p>
           </div>
         </div>
+
+        {company.rounds.length >= 2 && (
+          <div className="mt-6">
+            <p className="text-xs uppercase tracking-wide font-semibold text-slate-500 dark:text-slate-400">
+              Stake value by round
+            </p>
+            <StakeSparkline
+              points={company.rounds.map((r, i) => ({
+                date: r.date,
+                value: values[i],
+              }))}
+            />
+          </div>
+        )}
 
         <div className="mt-8 flex items-center justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">

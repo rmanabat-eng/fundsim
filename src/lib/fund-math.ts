@@ -149,6 +149,56 @@ export function companyCashFlows(
   return flows;
 }
 
+export type TimelinePoint = {
+  date: Date;
+  deployed: number; // cumulative checks written by this date
+  value: number; // unrealized: active stakes marked at their last round by this date
+  distributions: number; // cumulative exit proceeds by this date
+};
+
+// Replay the fund's history: at every dated event (a round or an exit),
+// recompute deployed capital, the marked value of active stakes, and cash
+// distributed. Both series move in steps — nothing changes between events.
+export function fundTimeline(
+  companies: {
+    rounds: RoundInput[];
+    exitValue: number | null;
+    exitDate: Date | string | null;
+  }[]
+): TimelinePoint[] {
+  const eventTimes = new Set<number>();
+  for (const c of companies) {
+    for (const r of c.rounds) eventTimes.add(new Date(r.date).getTime());
+    if (c.exitValue !== null && c.exitDate)
+      eventTimes.add(new Date(c.exitDate).getTime());
+  }
+  if (eventTimes.size === 0) return [];
+
+  const times = [...eventTimes].sort((a, b) => a - b);
+  if (Date.now() > times[times.length - 1]) times.push(Date.now());
+
+  return times.map((t) => {
+    let deployed = 0;
+    let value = 0;
+    let distributions = 0;
+    for (const c of companies) {
+      const roundsSoFar = c.rounds.filter((r) => new Date(r.date).getTime() <= t);
+      if (roundsSoFar.length === 0) continue;
+      deployed += roundsSoFar.reduce((sum, r) => sum + r.yourCheck, 0);
+      const exitedByThen =
+        c.exitValue !== null &&
+        c.exitDate !== null &&
+        new Date(c.exitDate).getTime() <= t;
+      if (exitedByThen) {
+        distributions += exitProceeds(c.rounds, c.exitValue ?? 0);
+      } else {
+        value += currentValue(roundsSoFar);
+      }
+    }
+    return { date: new Date(t), deployed, value, distributions };
+  });
+}
+
 export function formatDollars(amount: number): string {
   return amount.toLocaleString("en-US", {
     style: "currency",
