@@ -13,6 +13,7 @@ import { FundChartToggle } from "@/components/FundChartToggle";
 import { SummaryBar } from "@/components/SummaryBar";
 import { CompanyTable, type CompanyRow } from "@/components/CompanyTable";
 import { ClearAllButton } from "@/components/ClearAllButton";
+import { SimulateYearButton } from "@/components/SimulateYearButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default async function Home() {
@@ -150,6 +151,11 @@ export default async function Home() {
             Portfolio
           </h2>
           <div className="flex items-center gap-3">
+            {companies.length > 0 && (
+              <SimulateYearButton
+                activeCount={rows.filter((r) => r.status === "active").length}
+              />
+            )}
             {companies.length > 0 && <ClearAllButton />}
             {companies.length < 15 && (
               <Link

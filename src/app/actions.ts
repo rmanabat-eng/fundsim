@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { FUND_SIZE, SECTORS, STAGES } from "@/lib/constants";
+import { rollYearEvent } from "@/lib/simulate";
+import { exitProceeds } from "@/lib/fund-math";
 
 export type FormState = { error: string } | null;
 
@@ -258,4 +260,80 @@ export async function deleteCompany(id: string) {
 export async function deleteAllCompanies() {
   await prisma.company.deleteMany();
   revalidatePath("/");
+}
+
+export type SimulationSummary = {
+  raised: number;
+  exited: number;
+  writtenOff: number;
+  quiet: number;
+  distributions: number; // cash returned by this year's exits
+};
+
+// Advance the whole portfolio one simulated year: every active company rolls
+// a raise, an exit, a shutdown, or a quiet year. Simulated rounds never
+// spend the fund's money (yourCheck = 0) — follow on by editing the round.
+export async function simulateYear(): Promise<SimulationSummary> {
+  const companies = await prisma.company.findMany({
+    include: { rounds: { orderBy: { date: "asc" } } },
+  });
+
+  // The sim clock starts at the latest date anywhere in the fund.
+  const simNow = new Date(
+    Math.max(
+      Date.now(),
+      ...companies.flatMap((c) => [
+        ...c.rounds.map((r) => r.date.getTime()),
+        c.exitDate?.getTime() ?? 0,
+      ])
+    )
+  );
+
+  const summary: SimulationSummary = {
+    raised: 0,
+    exited: 0,
+    writtenOff: 0,
+    quiet: 0,
+    distributions: 0,
+  };
+
+  for (const company of companies) {
+    if (company.exitValue !== null || company.rounds.length === 0) continue;
+    const latest = company.rounds[company.rounds.length - 1];
+    const event = rollYearEvent(
+      { stage: latest.stage, postMoney: latest.postMoney, lastDate: latest.date },
+      simNow
+    );
+
+    if (event.kind === "round") {
+      await prisma.round.create({
+        data: {
+          companyId: company.id,
+          stage: event.stage as (typeof STAGES)[number],
+          date: new Date(event.date),
+          raised: event.raised,
+          postMoney: event.postMoney,
+          yourCheck: 0,
+        },
+      });
+      summary.raised++;
+    } else if (event.kind === "exit" || event.kind === "writeOff") {
+      const exitValue = event.kind === "exit" ? event.exitValue : 0;
+      await prisma.company.update({
+        where: { id: company.id },
+        data: { exitValue, exitDate: new Date(event.exitDate) },
+      });
+      if (event.kind === "exit") {
+        summary.exited++;
+        summary.distributions += exitProceeds(company.rounds, exitValue);
+      } else {
+        summary.writtenOff++;
+      }
+    } else {
+      summary.quiet++;
+    }
+  }
+
+  revalidatePath("/");
+  return summary;
 }

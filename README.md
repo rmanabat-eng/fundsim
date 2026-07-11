@@ -147,6 +147,17 @@ A fund doesn't invest all its capital at once; it deploys it over years across m
 
 FundSim blocks you from adding an investment that would push total deployed past the fund size, the same way a real fund manager can't invest more than their fund's committed capital.
 
+### Simulating a year (V2)
+
+The dashboard's **⏩ Simulate a year** button advances the whole portfolio
+one year: every active company rolls its fate — 15% shut down, 10% exit,
+45% raise their next round (usually a markup, sometimes a down round), 30%
+have a quiet year. The simulation never spends your money: simulated rounds
+arrive with a $0 check, so every follow-on decision is still yours — edit
+the round to defend your stake before the next year rolls. Run it a few
+times and the power law shows up in your own numbers: a third of the fund
+dies, and one or two winners end up carrying everything.
+
 ### The fund chart (V2)
 
 The dashboard plots the fund's whole history from its dated events: a
