@@ -72,6 +72,10 @@ export default async function Home() {
             <h1 className="text-3xl font-bold text-white tracking-tight">FundSim</h1>
             <p className="text-sm text-white/80 mt-1">
               Simulating a {formatDollars(settings.fundSize)} venture fund ·{" "}
+              <Link href="/guide" className="underline hover:text-white">
+                Learning guide
+              </Link>{" "}
+              ·{" "}
               <Link href="/settings" className="underline hover:text-white">
                 Settings
               </Link>{" "}
