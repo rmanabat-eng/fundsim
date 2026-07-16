@@ -199,6 +199,69 @@ export function fundTimeline(
   });
 }
 
+export type FundCompany = {
+  rounds: RoundInput[];
+  exitValue: number | null;
+  exitDate: Date | string | null;
+};
+
+export type FundMetrics = {
+  deployed: number;
+  portfolioValue: number; // unrealized (active stakes only)
+  distributions: number; // realized cash from exits
+  dpi: number | null;
+  tvpi: number | null;
+  irr: number | null;
+};
+
+// All the headline numbers from one portfolio, so the dashboard and scenario
+// comparison can't drift apart.
+export function fundMetrics(companies: FundCompany[]): FundMetrics {
+  let deployed = 0;
+  let portfolioValue = 0;
+  let distributions = 0;
+  for (const c of companies) {
+    deployed += c.rounds.reduce((sum, r) => sum + r.yourCheck, 0);
+    if (c.exitValue !== null) {
+      distributions += exitProceeds(c.rounds, c.exitValue);
+    } else {
+      portfolioValue += currentValue(c.rounds);
+    }
+  }
+
+  // Mark active stakes as of the latest date anywhere in the portfolio
+  // (rounds can be future-dated), so IRR never discounts backwards.
+  const asOf = new Date(
+    Math.max(
+      Date.now(),
+      ...companies.flatMap((c) => [
+        ...c.rounds.map((r) => new Date(r.date).getTime()),
+        c.exitDate ? new Date(c.exitDate).getTime() : 0,
+      ])
+    )
+  );
+  const irr = xirr(
+    companies.flatMap((c) =>
+      companyCashFlows(
+        c.rounds,
+        c.exitValue !== null
+          ? { value: c.exitValue, date: c.exitDate ?? asOf }
+          : null,
+        asOf
+      )
+    )
+  );
+
+  return {
+    deployed,
+    portfolioValue,
+    distributions,
+    dpi: deployed > 0 ? distributions / deployed : null,
+    tvpi: deployed > 0 ? (portfolioValue + distributions) / deployed : null,
+    irr,
+  };
+}
+
 export function formatDollars(amount: number): string {
   return amount.toLocaleString("en-US", {
     style: "currency",

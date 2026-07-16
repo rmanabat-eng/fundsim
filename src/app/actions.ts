@@ -3,13 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { FUND_SIZE, SECTORS, STAGES } from "@/lib/constants";
+import { SECTORS, STAGES } from "@/lib/constants";
+import { getSettings } from "@/lib/settings";
 import { rollYearEvent } from "@/lib/simulate";
 import { exitProceeds } from "@/lib/fund-math";
 
 export type FormState = { error: string } | null;
-
-const MAX_COMPANIES = 15;
 
 function formatRemaining(remaining: number): string {
   return remaining.toLocaleString("en-US", {
@@ -85,12 +84,13 @@ export async function createCompany(
   const parsed = parseRoundFields(formData, { allowZeroCheck: false });
   if ("error" in parsed) return { error: parsed.error };
 
+  const settings = await getSettings();
   const companyCount = await prisma.company.count();
-  if (companyCount >= MAX_COMPANIES)
-    return { error: `Maximum of ${MAX_COMPANIES} companies reached.` };
+  if (companyCount >= settings.maxCompanies)
+    return { error: `Maximum of ${settings.maxCompanies} companies reached.` };
 
   const deployed = await deployedExcludingRound();
-  const remaining = FUND_SIZE - deployed;
+  const remaining = settings.fundSize - deployed;
   if (parsed.data.yourCheck > remaining) {
     return {
       error: `This check exceeds remaining fund capital. Only ${formatRemaining(remaining)} left to deploy.`,
@@ -121,8 +121,9 @@ export async function addRound(
   const parsed = parseRoundFields(formData, { allowZeroCheck: true });
   if ("error" in parsed) return { error: parsed.error };
 
+  const settings = await getSettings();
   const deployed = await deployedExcludingRound();
-  const remaining = FUND_SIZE - deployed;
+  const remaining = settings.fundSize - deployed;
   if (parsed.data.yourCheck > remaining) {
     return {
       error: `This check exceeds remaining fund capital. Only ${formatRemaining(remaining)} left to deploy.`,
@@ -164,8 +165,9 @@ export async function updateRound(
     }
   }
 
+  const settings = await getSettings();
   const deployed = await deployedExcludingRound(roundId);
-  const remaining = FUND_SIZE - deployed;
+  const remaining = settings.fundSize - deployed;
   if (parsed.data.yourCheck > remaining) {
     return {
       error: `This check exceeds remaining fund capital. Only ${formatRemaining(remaining)} left to deploy.`,
@@ -260,6 +262,137 @@ export async function deleteCompany(id: string) {
 export async function deleteAllCompanies() {
   await prisma.company.deleteMany();
   revalidatePath("/");
+}
+
+export async function updateSettings(
+  _prevState: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const fundSize = Number(formData.get("fundSize"));
+  const maxCompanies = Number(formData.get("maxCompanies"));
+
+  if (!Number.isFinite(fundSize) || fundSize <= 0)
+    return { error: "Fund size must be greater than 0." };
+  if (!Number.isInteger(maxCompanies) || maxCompanies < 1 || maxCompanies > 50)
+    return { error: "Max companies must be a whole number between 1 and 50." };
+
+  const deployed = await deployedExcludingRound();
+  if (fundSize < deployed) {
+    return {
+      error: `Fund size can't be below what's already deployed (${formatRemaining(deployed)}).`,
+    };
+  }
+  const companyCount = await prisma.company.count();
+  if (maxCompanies < companyCount) {
+    return {
+      error: `Max companies can't be below your current ${companyCount} companies.`,
+    };
+  }
+
+  await prisma.fundSettings.upsert({
+    where: { id: 1 },
+    update: { fundSize, maxCompanies },
+    create: { fundSize, maxCompanies },
+  });
+  revalidatePath("/");
+  redirect("/");
+}
+
+// ---- Scenarios: named snapshots of the whole portfolio + settings ----
+
+type ScenarioData = {
+  fundSize: number;
+  maxCompanies: number;
+  companies: {
+    name: string;
+    sector: string;
+    exitValue: number | null;
+    exitDate: string | null;
+    rounds: {
+      stage: string;
+      date: string;
+      raised: number;
+      postMoney: number;
+      yourCheck: number;
+    }[];
+  }[];
+};
+
+export async function saveScenario(
+  _prevState: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) return { error: "Give the scenario a name." };
+  if (name.length > 40) return { error: "Keep the name under 40 characters." };
+
+  const settings = await getSettings();
+  const companies = await prisma.company.findMany({
+    include: { rounds: { orderBy: { date: "asc" } } },
+  });
+
+  const data: ScenarioData = {
+    fundSize: settings.fundSize,
+    maxCompanies: settings.maxCompanies,
+    companies: companies.map((c) => ({
+      name: c.name,
+      sector: c.sector,
+      exitValue: c.exitValue,
+      exitDate: c.exitDate?.toISOString() ?? null,
+      rounds: c.rounds.map((r) => ({
+        stage: r.stage,
+        date: r.date.toISOString(),
+        raised: r.raised,
+        postMoney: r.postMoney,
+        yourCheck: r.yourCheck,
+      })),
+    })),
+  };
+
+  await prisma.scenario.create({ data: { name, data: JSON.stringify(data) } });
+  revalidatePath("/scenarios");
+  return null;
+}
+
+// Replaces the current portfolio and settings with the snapshot.
+export async function loadScenario(id: string) {
+  const scenario = await prisma.scenario.findUnique({ where: { id } });
+  if (!scenario) return;
+  const data: ScenarioData = JSON.parse(scenario.data);
+
+  await prisma.company.deleteMany();
+  for (const c of data.companies) {
+    await prisma.company.create({
+      data: {
+        name: c.name,
+        sector: c.sector,
+        exitValue: c.exitValue,
+        exitDate: c.exitDate ? new Date(c.exitDate) : null,
+        rounds: {
+          create: c.rounds.map((r) => ({
+            stage: r.stage as (typeof STAGES)[number],
+            date: new Date(r.date),
+            raised: r.raised,
+            postMoney: r.postMoney,
+            yourCheck: r.yourCheck,
+          })),
+        },
+      },
+    });
+  }
+  await prisma.fundSettings.upsert({
+    where: { id: 1 },
+    update: { fundSize: data.fundSize, maxCompanies: data.maxCompanies },
+    create: { fundSize: data.fundSize, maxCompanies: data.maxCompanies },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/scenarios");
+}
+
+export async function deleteScenario(id: string) {
+  await prisma.scenario.delete({ where: { id } });
+  revalidatePath("/scenarios");
 }
 
 export type SimulationSummary = {

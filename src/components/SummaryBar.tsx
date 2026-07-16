@@ -1,4 +1,3 @@
-import { FUND_SIZE } from "@/lib/constants";
 import { formatDollars, formatMultiple, formatPercent } from "@/lib/fund-math";
 import { StatCard } from "@/components/StatCard";
 
@@ -8,15 +7,19 @@ export function SummaryBar({
   distributions,
   irr,
   count,
+  fundSize,
+  maxCompanies,
 }: {
   deployed: number;
   portfolioValue: number;
   distributions: number;
   irr: number | null;
   count: number;
+  fundSize: number;
+  maxCompanies: number;
 }) {
-  const remaining = FUND_SIZE - deployed;
-  const pctDeployed = (deployed / FUND_SIZE) * 100;
+  const remaining = fundSize - deployed;
+  const pctDeployed = (deployed / fundSize) * 100;
   const tvpi = deployed > 0 ? (portfolioValue + distributions) / deployed : null;
   const dpi = deployed > 0 ? distributions / deployed : null;
 
@@ -26,7 +29,7 @@ export function SummaryBar({
       label: "Total deployed",
       value: formatDollars(deployed),
       gradient: "from-violet-500 to-fuchsia-600",
-      hint: "Every check you've written so far — first checks and follow-ons — out of the $10M fund.",
+      hint: `Every check you've written so far — first checks and follow-ons — out of the ${formatDollars(fundSize)} fund.`,
     },
     {
       label: "Remaining capital",
@@ -36,9 +39,9 @@ export function SummaryBar({
     },
     {
       label: "Companies",
-      value: `${count} / 15`,
+      value: `${count} / ${maxCompanies}`,
       gradient: "from-amber-500 to-orange-600",
-      hint: "Portfolio companies backed, out of a maximum of 15.",
+      hint: `Portfolio companies backed, out of a maximum of ${maxCompanies}.`,
     },
     {
       label: "Portfolio value",

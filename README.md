@@ -169,11 +169,21 @@ knock value below deployed and markups pull it above. That dip-then-recover
 shape is venture's famous **J-curve**. Company pages get a sparkline of the
 stake's value round by round.
 
+### Fund settings and scenarios (V2)
+
+The fund's size and company cap are editable under **Settings** — run a $50M
+fund and feel how check sizes, ownership targets, and the exits needed to
+return the fund all scale. The **Scenarios** page snapshots your whole
+portfolio (companies, rounds, exits, and settings) under a name; load one to
+restore it, or keep several and compare their DPI / TVPI / IRR side by side
+to test different strategies — concentrated versus spray-and-pray, early
+versus late stage.
+
 ## What's out of scope (for now)
 
 Not yet modeled:
 
-- Multi-user accounts, fund settings, or scenario comparison
+- Multi-user accounts
 
 These are natural V2 features once the core mechanics above are solid.
 

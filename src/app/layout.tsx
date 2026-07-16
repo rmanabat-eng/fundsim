@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "FundSim",
-  description: "A $10M venture fund simulator for learning VC fund math.",
+  description: "A venture fund simulator for learning VC fund math.",
 };
 
 export default function RootLayout({

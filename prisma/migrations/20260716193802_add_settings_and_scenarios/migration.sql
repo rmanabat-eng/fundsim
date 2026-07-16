@@ -1,0 +1,14 @@
+-- CreateTable
+CREATE TABLE "FundSettings" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT DEFAULT 1,
+    "fundSize" REAL NOT NULL DEFAULT 10000000,
+    "maxCompanies" INTEGER NOT NULL DEFAULT 15
+);
+
+-- CreateTable
+CREATE TABLE "Scenario" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "data" TEXT NOT NULL
+);

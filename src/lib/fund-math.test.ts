@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  fundMetrics,
   ownershipPercent,
   ownershipAfterRounds,
   ownershipTimeline,
@@ -227,6 +228,35 @@ describe("fundTimeline", () => {
 
   it("returns an empty timeline for no companies", () => {
     expect(fundTimeline([])).toEqual([]);
+  });
+});
+
+describe("fundMetrics", () => {
+  it("aggregates deployed, value, distributions, and the multiples", () => {
+    const m = fundMetrics([
+      { rounds: [seed, seriesASatOut], exitValue: null, exitDate: null }, // $3M mark
+      {
+        rounds: [
+          { date: "2030-06-01", raised: 1_000_000, postMoney: 10_000_000, yourCheck: 250_000 },
+        ],
+        exitValue: 40_000_000, // 2.5% → $1M back
+        exitDate: "2031-06-01",
+      },
+    ]);
+    expect(m.deployed).toBeCloseTo(750_000);
+    expect(m.portfolioValue).toBeCloseTo(3_000_000);
+    expect(m.distributions).toBeCloseTo(1_000_000);
+    expect(m.dpi).toBeCloseTo(1_000_000 / 750_000);
+    expect(m.tvpi).toBeCloseTo(4_000_000 / 750_000);
+    expect(m.irr).not.toBeNull();
+  });
+
+  it("returns null multiples for an empty fund", () => {
+    const m = fundMetrics([]);
+    expect(m.deployed).toBe(0);
+    expect(m.dpi).toBeNull();
+    expect(m.tvpi).toBeNull();
+    expect(m.irr).toBeNull();
   });
 });
 

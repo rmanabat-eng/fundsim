@@ -4,10 +4,11 @@ import {
   ownershipAfterRounds,
   currentValue,
   exitProceeds,
-  companyCashFlows,
-  xirr,
+  fundMetrics,
   fundTimeline,
+  formatDollars,
 } from "@/lib/fund-math";
+import { getSettings } from "@/lib/settings";
 import { FundChart, type FundChartPoint } from "@/components/FundChart";
 import { FundChartToggle } from "@/components/FundChartToggle";
 import { SummaryBar } from "@/components/SummaryBar";
@@ -17,13 +18,14 @@ import { SimulateYearButton } from "@/components/SimulateYearButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default async function Home() {
-  const companies = await prisma.company.findMany({
-    include: { rounds: { orderBy: { date: "asc" } } },
-  });
+  const [companies, settings] = await Promise.all([
+    prisma.company.findMany({
+      include: { rounds: { orderBy: { date: "asc" } } },
+    }),
+    getSettings(),
+  ]);
 
-  const deployed = companies
-    .flatMap((c) => c.rounds)
-    .reduce((sum, r) => sum + r.yourCheck, 0);
+  const metrics = fundMetrics(companies);
 
   const rows: CompanyRow[] = companies
     .filter((c) => c.rounds.length > 0)
@@ -55,42 +57,12 @@ export default async function Home() {
       };
     });
 
-  const portfolioValue = rows
-    .filter((r) => r.status === "active")
-    .reduce((sum, r) => sum + r.value, 0);
-  const distributions = rows
-    .filter((r) => r.status !== "active")
-    .reduce((sum, r) => sum + r.value, 0);
-
-  // Value active stakes as of the latest date anywhere in the sim (rounds can
-  // be dated in the future), so IRR never has to discount backwards.
-  const asOf = new Date(
-    Math.max(
-      Date.now(),
-      ...companies.flatMap((c) => [
-        ...c.rounds.map((r) => r.date.getTime()),
-        c.exitDate?.getTime() ?? 0,
-      ])
-    )
-  );
   const chartPoints: FundChartPoint[] = fundTimeline(companies).map((p) => ({
     date: p.date.toISOString(),
     deployed: p.deployed,
     value: p.value,
     distributions: p.distributions,
   }));
-
-  const irr = xirr(
-    companies.flatMap((c) =>
-      companyCashFlows(
-        c.rounds,
-        c.exitValue !== null
-          ? { value: c.exitValue, date: c.exitDate ?? asOf }
-          : null,
-        asOf
-      )
-    )
-  );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
@@ -99,7 +71,14 @@ export default async function Home() {
           <div className="max-w-2xl">
             <h1 className="text-3xl font-bold text-white tracking-tight">FundSim</h1>
             <p className="text-sm text-white/80 mt-1">
-              Simulating a $10M venture fund
+              Simulating a {formatDollars(settings.fundSize)} venture fund ·{" "}
+              <Link href="/settings" className="underline hover:text-white">
+                Settings
+              </Link>{" "}
+              ·{" "}
+              <Link href="/scenarios" className="underline hover:text-white">
+                Scenarios
+              </Link>
             </p>
             <p className="text-sm text-white/90 mt-3 leading-relaxed">
               You&apos;re the fund manager. Every check you write buys a slice of a
@@ -119,11 +98,13 @@ export default async function Home() {
 
       <main className="mx-auto max-w-5xl px-6 py-8">
         <SummaryBar
-          deployed={deployed}
-          portfolioValue={portfolioValue}
-          distributions={distributions}
-          irr={irr}
+          deployed={metrics.deployed}
+          portfolioValue={metrics.portfolioValue}
+          distributions={metrics.distributions}
+          irr={metrics.irr}
           count={companies.length}
+          fundSize={settings.fundSize}
+          maxCompanies={settings.maxCompanies}
         />
 
         {chartPoints.length >= 2 && (
@@ -157,7 +138,7 @@ export default async function Home() {
               />
             )}
             {companies.length > 0 && <ClearAllButton />}
-            {companies.length < 15 && (
+            {companies.length < settings.maxCompanies && (
               <Link
                 href="/companies/new"
                 className="rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-4 py-2 text-sm font-semibold shadow-sm hover:from-indigo-500 hover:to-violet-500 transition-colors"
@@ -221,7 +202,7 @@ export default async function Home() {
                   Watch your deployment pacing
                 </strong>{" "}
                 in the cards above — every check, first or follow-on, comes out of the
-                same $10M fund.
+                same {formatDollars(settings.fundSize)} fund.
               </span>
             </li>
             <li className="flex gap-3">

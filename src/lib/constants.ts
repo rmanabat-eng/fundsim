@@ -1,5 +1,3 @@
-export const FUND_SIZE = 10_000_000;
-
 export const SECTORS = [
   "Water Tech",
   "Climate",

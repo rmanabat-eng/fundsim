@@ -20,6 +20,22 @@ enum Stage {
   SERIES_C
 }
 
+// Single-row table: the fund's knobs. Row id is always 1.
+model FundSettings {
+  id           Int   @id @default(1)
+  fundSize     Float @default(10000000)
+  maxCompanies Int   @default(15)
+}
+
+// A named snapshot of the whole portfolio + settings, for comparing
+// strategies. `data` is a JSON blob — scenarios are read-mostly.
+model Scenario {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  data      String
+}
+
 model Company {
   id        String    @id @default(cuid())
   name      String
