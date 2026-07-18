@@ -2,6 +2,8 @@
 
 FundSim is a small web app that simulates managing a $10M venture capital fund. Log hypothetical investments and watch fund-level metrics — deployed capital, remaining capital, and ownership — update in real time. Built to learn VC fund math by encoding it in working software.
 
+The in-app **guide** (at `/guide`, linked from the dashboard header) walks through the playbook the simulator teaches: deploy first, keep reserves, simulate year by year, and let the power law show up in your own numbers.
+
 ## Running it locally
 
 Requirements: Node.js 18+.
@@ -16,6 +18,12 @@ npm run dev
 Open [http://localhost:3000](http://localhost:3000).
 
 The database is a single SQLite file (`dev.db`, at the project root), so all data persists between sessions without any external service.
+
+The fund math has a unit test suite (Vitest) covering ownership, dilution, TVPI/DPI, IRR, and the year simulator:
+
+```bash
+npm test
+```
 
 ## The fund math
 
@@ -185,8 +193,6 @@ Not yet modeled:
 
 - Multi-user accounts
 
-These are natural V2 features once the core mechanics above are solid.
-
 ## Tech stack
 
 - [Next.js](https://nextjs.org/) (App Router) + React
@@ -197,20 +203,26 @@ These are natural V2 features once the core mechanics above are solid.
 
 ```
 prisma/
-  schema.prisma      # Company and Round models
+  schema.prisma      # Company, Round, FundSettings, and Scenario models
   seed.ts            # sample portfolio incl. a company with follow-on rounds
 src/
   app/
-    page.tsx                                  # dashboard: summary bar + company table
+    page.tsx                                  # dashboard: summary bar, chart, company table
+    guide/page.tsx                            # learning guide: what the simulator teaches
+    settings/page.tsx                         # edit fund size and company cap
+    scenarios/page.tsx                        # save/load/compare portfolio snapshots
     companies/new/page.tsx                    # back a new company (presets/random/blank)
     companies/[id]/page.tsx                   # company detail: round history + dilution
     companies/[id]/rounds/new/page.tsx        # add a follow-on round
     companies/[id]/exit/page.tsx              # record an exit or write-off
     companies/[id]/rounds/[roundId]/edit/...  # edit a round
     actions.ts                                # server actions + fund validation
-  components/          # tables, forms, pickers, theme toggle
+  components/          # tables, forms, chart, pickers, theme toggle
   lib/
-    constants.ts       # fund size, sector list, stage list
-    fund-math.ts       # ownership, dilution, mark-to-market, and formatting helpers
+    constants.ts       # sector list, stage list, default fund size
+    fund-math.ts       # ownership, dilution, mark-to-market, TVPI/DPI/IRR helpers
+    fund-math.test.ts  # unit tests for the fund math
+    simulate.ts        # the "simulate a year" engine (+ simulate.test.ts)
+    settings.ts        # fund settings read/write
     prisma.ts          # Prisma client singleton
 ```
