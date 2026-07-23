@@ -4,6 +4,8 @@ FundSim is a small web app that simulates managing a $10M venture capital fund. 
 
 The in-app **guide** (at `/guide`, linked from the dashboard header) walks through the playbook the simulator teaches: deploy first, keep reserves, simulate year by year, and let the power law show up in your own numbers.
 
+The fastest way to feel the mechanics is **campaign mode** (at `/play`): a 10-year fund played one year at a time, where the game deals you the numbers and you make the calls.
+
 ## Running it locally
 
 Requirements: Node.js 18+.
@@ -177,6 +179,33 @@ knock value below deployed and markups pull it above. That dip-then-recover
 shape is venture's famous **J-curve**. Company pages get a sparkline of the
 stake's value round by round.
 
+### Campaign mode (V3)
+
+Free-play mode is a ledger: you invent the companies and the numbers.
+**Campaign mode** (`/play`) turns it into a game of decisions under
+uncertainty — the thing real investing actually is:
+
+- **Deal flow.** Each year deals you four generated pitches. Every card
+  shows soft signals ("revenue tripled", "under 8 months of runway") that
+  noisily encode a hidden quality score. Quality tilts every later die
+  roll — better companies die less, raise more, and price higher — so over
+  several runs you learn to read a pitch. Noisily is the key word: a
+  great-looking deal can still be a dud, just less often.
+- **A 10-year clock.** Advancing the year expires whatever you left on the
+  table, rolls quality- and market-weighted events across the portfolio
+  (bull and bear years scale valuations and death rates for everyone at
+  once), and deals the next year's pitches. After year 10 the fund closes
+  and your TVPI is graded against real venture quartiles.
+- **Forced decisions.** Portfolio companies raising new rounds put a
+  pro-rata on your desk (fund it or eat the dilution — the diluted
+  percentage is computed for you). Acquirers show up offering cash now
+  versus the power law. Struggling companies ask for bridges — refuse and
+  they usually don't recover; funding them is how funds bleed out. All of
+  it expires against you at year end.
+
+The scorecard at the end shows where the returns actually came from,
+which — thanks to the power law — is usually one or two names.
+
 ### Fund settings and scenarios (V2)
 
 The fund's size and company cap are editable under **Settings** — run a $50M
@@ -203,11 +232,13 @@ Not yet modeled:
 
 ```
 prisma/
-  schema.prisma      # Company, Round, FundSettings, and Scenario models
+  schema.prisma      # Company, Round, FundSettings, Scenario, Game, Deal, Decision
   seed.ts            # sample portfolio incl. a company with follow-on rounds
 src/
   app/
     page.tsx                                  # dashboard: summary bar, chart, company table
+    play/page.tsx                             # campaign mode: deal flow, decisions, scorecard
+    play/actions.ts                           # campaign server actions + the year crank
     guide/page.tsx                            # learning guide: what the simulator teaches
     settings/page.tsx                         # edit fund size and company cap
     scenarios/page.tsx                        # save/load/compare portfolio snapshots
@@ -223,6 +254,7 @@ src/
     fund-math.ts       # ownership, dilution, mark-to-market, TVPI/DPI/IRR helpers
     fund-math.test.ts  # unit tests for the fund math
     simulate.ts        # the "simulate a year" engine (+ simulate.test.ts)
+    campaign.ts        # campaign mode: signals, hidden quality, market odds (+ tests)
     settings.ts        # fund settings read/write
     prisma.ts          # Prisma client singleton
 ```
