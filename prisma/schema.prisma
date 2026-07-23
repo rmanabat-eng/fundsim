@@ -43,7 +43,48 @@ model Company {
   createdAt DateTime  @default(now())
   exitValue Float? // company valuation at exit; 0 means written off; null = still active
   exitDate  DateTime?
+  quality   Float     @default(0) // hidden -1..1; tilts campaign-mode outcomes. 0 for free-play companies.
   rounds    Round[]
+  decisions Decision[]
+}
+
+// ---- Campaign mode ----
+
+// The running campaign. Single row (id 1); no row means no campaign started.
+model Game {
+  id        Int      @id @default(1)
+  year      Int      @default(1)
+  status    String   @default("active") // "active" | "ended"
+  market    String   @default("normal") // this year's conditions: "bull" | "normal" | "bear"
+  startedAt DateTime @default(now())
+}
+
+// A pitch dealt to the player for one campaign year. `quality` is the hidden
+// score its signals (noisily) encode — never shown, only its consequences.
+model Deal {
+  id        String @id @default(cuid())
+  year      Int
+  name      String
+  sector    String
+  stage     Stage
+  raised    Float
+  postMoney Float
+  signals   String // JSON array of signal texts shown on the pitch card
+  quality   Float
+  status    String @default("open") // "open" | "invested" | "passed" | "expired"
+}
+
+// A decision forced on the player: fund a pro-rata, take an acquisition
+// offer, or bridge a struggling company. Expires against the player if
+// unresolved when the year advances.
+model Decision {
+  id        String  @id @default(cuid())
+  year      Int
+  type      String // "pro_rata" | "acquisition" | "bridge"
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  payload   String // JSON, shape depends on type
+  status    String  @default("pending") // "pending" | "resolved" | "expired"
 }
 
 model Round {
