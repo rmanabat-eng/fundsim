@@ -5,7 +5,8 @@ import { investInDeal, passDeal } from "@/app/play/actions";
 import { formatDollars } from "@/lib/fund-math";
 import { STAGE_LABELS } from "@/lib/constants";
 import { SECTOR_STYLES, STAGE_STYLES } from "@/lib/badges";
-import { inputClasses } from "@/components/RoundFields";
+
+const CHECK_STEP = 25_000;
 
 export type DealView = {
   id: string;
@@ -24,13 +25,15 @@ export function DealCard({ deal }: { deal: DealView }) {
     investInDeal.bind(null, deal.id),
     null
   );
-  const [check, setCheck] = useState("");
+  // Open with a real position on the table — ~20% of the round — instead of
+  // an empty box the player has to type into.
+  const defaultCheck = Math.max(
+    Math.round((deal.raised * 0.2) / CHECK_STEP) * CHECK_STEP,
+    CHECK_STEP
+  );
+  const [check, setCheck] = useState(defaultCheck);
 
-  const checkNumber = Number(check);
-  const ownership =
-    Number.isFinite(checkNumber) && checkNumber > 0
-      ? (checkNumber / deal.postMoney) * 100
-      : null;
+  const ownership = (check / deal.postMoney) * 100;
 
   return (
     <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -67,21 +70,34 @@ export function DealCard({ deal }: { deal: DealView }) {
       </ul>
 
       <form action={formAction} className="mt-4 flex flex-col gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
-        <div className="flex items-center gap-2">
-          <input
-            name="check"
-            type="number"
-            min={0}
-            max={deal.raised}
-            step={25000}
-            placeholder="Your check, e.g. 250000"
-            value={check}
-            onChange={(e) => setCheck(e.target.value)}
-            className={inputClasses}
-          />
+        <div className="flex items-baseline justify-between text-sm">
+          <span className="text-slate-500 dark:text-slate-400">Your check</span>
+          <span className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+            {formatDollars(check)}{" "}
+            <span className="font-normal text-slate-500 dark:text-slate-400">
+              · {ownership.toFixed(2)}%
+            </span>
+          </span>
+        </div>
+        <input
+          name="check"
+          type="range"
+          min={CHECK_STEP}
+          max={deal.raised}
+          step={CHECK_STEP}
+          value={check}
+          onChange={(e) => setCheck(Number(e.target.value))}
+          className="w-full accent-indigo-600"
+          aria-label="Check size"
+        />
+        <div className="flex justify-between text-xs text-slate-400 dark:text-slate-500">
+          <span>{formatDollars(CHECK_STEP)}</span>
+          <span>{formatDollars(deal.raised)} (lead it)</span>
+        </div>
+        <div className="mt-1 flex items-center gap-2">
           <button
             type="submit"
-            disabled={pending || !ownership}
+            disabled={pending}
             className="shrink-0 rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:from-indigo-500 hover:to-violet-500 disabled:opacity-50"
           >
             {pending ? "Wiring..." : "Invest"}
@@ -95,12 +111,6 @@ export function DealCard({ deal }: { deal: DealView }) {
             Pass
           </button>
         </div>
-        {ownership !== null && (
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            {formatDollars(checkNumber)} buys <strong>{ownership.toFixed(2)}%</strong>{" "}
-            of the company.
-          </p>
-        )}
         {state?.error && (
           <p className="text-xs text-rose-600 dark:text-rose-400" role="alert">
             {state.error}
