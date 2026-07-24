@@ -48,7 +48,7 @@ export function DealCard({ deal }: { deal: DealView }) {
   const art = SECTOR_ART[deal.sector] ?? SECTOR_ART.Other;
 
   return (
-    <div className="flex h-full flex-col rounded-2xl border-2 border-slate-900/10 bg-white shadow-[5px_5px_0_rgba(15,23,42,0.12)] transition-transform duration-150 hover:-translate-y-1 hover:-rotate-[0.5deg] dark:border-white/10 dark:bg-slate-900 dark:shadow-[5px_5px_0_rgba(0,0,0,0.5)]">
+    <div className="flex h-full flex-col rounded-2xl border-2 border-slate-900/10 bg-white shadow-[5px_5px_0_rgba(15,23,42,0.12)] transition-transform duration-150 motion-safe:hover:-translate-y-1 motion-safe:hover:-rotate-[0.5deg] dark:border-white/10 dark:bg-slate-900 dark:shadow-[5px_5px_0_rgba(0,0,0,0.5)]">
       <div
         className={`flex items-center justify-between gap-2 rounded-t-[14px] bg-gradient-to-r px-5 py-3 ${art.banner}`}
       >

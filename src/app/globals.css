@@ -119,6 +119,14 @@ body {
   .game-twinkle,
   .game-deal-in,
   .game-blink {
-    animation: none;
+    animation: none !important;
+  }
+
+  /* Keep the button's brightness/shadow feedback, drop the press movement. */
+  .btn-arcade {
+    transition-property: filter;
+  }
+  .btn-arcade:active:not(:disabled) {
+    transform: none;
   }
 }
