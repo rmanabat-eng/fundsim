@@ -9,6 +9,7 @@ import {
   formatDollars,
 } from "@/lib/fund-math";
 import { getSettings } from "@/lib/settings";
+import { GAME_YEARS } from "@/lib/campaign";
 import { FundChart, type FundChartPoint } from "@/components/FundChart";
 import { FundChartToggle } from "@/components/FundChartToggle";
 import { SummaryBar } from "@/components/SummaryBar";
@@ -17,12 +18,25 @@ import { ClearAllButton } from "@/components/ClearAllButton";
 import { SimulateYearButton } from "@/components/SimulateYearButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
+// Deterministic star positions — server and client must paint the same sky.
+const HERO_STARS = [
+  { top: "18%", left: "8%", size: "5px", delay: "0s" },
+  { top: "70%", left: "16%", size: "4px", delay: "1.1s" },
+  { top: "26%", left: "31%", size: "6px", delay: "0.5s" },
+  { top: "64%", left: "44%", size: "4px", delay: "1.7s" },
+  { top: "14%", left: "57%", size: "5px", delay: "0.9s" },
+  { top: "58%", left: "69%", size: "6px", delay: "0.2s" },
+  { top: "22%", left: "78%", size: "4px", delay: "1.4s" },
+  { top: "68%", left: "90%", size: "5px", delay: "0.7s" },
+] as const;
+
 export default async function Home() {
-  const [companies, settings] = await Promise.all([
+  const [companies, settings, game] = await Promise.all([
     prisma.company.findMany({
       include: { rounds: { orderBy: { date: "asc" } } },
     }),
     getSettings(),
+    prisma.game.findUnique({ where: { id: 1 } }),
   ]);
 
   const metrics = fundMetrics(companies);
@@ -72,10 +86,6 @@ export default async function Home() {
             <h1 className="text-3xl font-bold text-white tracking-tight">FundSim</h1>
             <p className="text-sm text-white/80 mt-1">
               Simulating a {formatDollars(settings.fundSize)} venture fund ·{" "}
-              <Link href="/play" className="font-semibold underline hover:text-white">
-                🎲 Play the campaign
-              </Link>{" "}
-              ·{" "}
               <Link href="/guide" className="underline hover:text-white">
                 Learning guide
               </Link>{" "}
@@ -105,6 +115,65 @@ export default async function Home() {
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-8">
+        <section className="relative overflow-hidden rounded-3xl border-2 border-slate-900/10 bg-gradient-to-br from-indigo-950 via-violet-950 to-fuchsia-950 p-6 shadow-[8px_8px_0_rgba(15,23,42,0.15)] dark:border-white/10 dark:shadow-[8px_8px_0_rgba(0,0,0,0.5)] sm:p-8">
+          <div aria-hidden className="pointer-events-none absolute inset-0">
+            {HERO_STARS.map((s, i) => (
+              <span
+                key={i}
+                className="game-twinkle absolute rounded-full bg-white/80"
+                style={{
+                  top: s.top,
+                  left: s.left,
+                  width: s.size,
+                  height: s.size,
+                  animationDelay: s.delay,
+                }}
+              />
+            ))}
+            <span
+              className="game-float absolute right-[8%] top-5 text-4xl opacity-90"
+              style={{ animationDelay: "0.6s" }}
+            >
+              🎲
+            </span>
+          </div>
+          <div className="relative flex flex-wrap items-center gap-x-8 gap-y-4">
+            <div className="min-w-0 flex-1 basis-72">
+              <p className="text-[10px] font-black uppercase tracking-[0.35em] text-fuchsia-300">
+                The main event
+              </p>
+              <h2 className="mt-1 text-3xl font-black uppercase tracking-tight text-white drop-shadow-[0_3px_0_rgba(0,0,0,0.4)]">
+                Campaign mode
+              </h2>
+              <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/80">
+                Run a {formatDollars(settings.fundSize)} fund for {GAME_YEARS} years:
+                get dealt pitches, read the signals, defend your pro-rata, survive
+                bear markets — and get graded like a real GP when the fund closes.
+              </p>
+              {game && game.status === "active" && (
+                <p className="mt-3 inline-flex items-center gap-1 rounded-full border border-amber-300/60 bg-amber-400/15 px-3 py-1 text-xs font-bold text-amber-200">
+                  ⏳ Run in progress — year {game.year} of {GAME_YEARS}
+                </p>
+              )}
+            </div>
+            <Link
+              href="/play"
+              className="btn-arcade shrink-0 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 px-6 py-3.5 text-base font-black uppercase tracking-wide text-slate-950"
+            >
+              {!game
+                ? "🚀 Start your fund"
+                : game.status === "active"
+                  ? `▶ Continue year ${game.year}`
+                  : "🏁 See your scorecard"}
+            </Link>
+          </div>
+        </section>
+
+        <p className="mt-8 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          {game
+            ? "Fund dashboard — your campaign portfolio, in detail"
+            : "Free play — the sandbox fund"}
+        </p>
         <SummaryBar
           deployed={metrics.deployed}
           portfolioValue={metrics.portfolioValue}

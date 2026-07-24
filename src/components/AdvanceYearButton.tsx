@@ -61,7 +61,7 @@ export function AdvanceYearButton({
           type="button"
           onClick={() => setConfirming(true)}
           disabled={pending}
-          className="rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:from-indigo-500 hover:to-violet-500 disabled:opacity-50"
+          className="btn-arcade rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-2.5 text-sm font-black uppercase tracking-wide text-white disabled:opacity-50"
         >
           {pending
             ? "Rolling..."

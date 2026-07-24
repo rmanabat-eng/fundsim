@@ -7,6 +7,11 @@ import {
   gradeFund,
   maybeAcquisitionOffer,
   maybeBridgeRequest,
+  maybeTermSheet,
+  pivotOutcome,
+  PIVOT_BACKED_MAX,
+  PIVOT_BACKED_MIN,
+  reputation,
   rollMarket,
   yearWindow,
 } from "./campaign";
@@ -142,5 +147,97 @@ describe("gradeFund", () => {
     expect(gradeFund(2.0).label).toBe("Second quartile");
     expect(gradeFund(3.0).label).toBe("Top quartile");
     expect(gradeFund(5).label).toBe("Top decile");
+  });
+});
+
+describe("reputation", () => {
+  const nobody = {
+    bridgesFunded: 0,
+    bridgesRefused: 0,
+    proRataBacked: 0,
+    adviceGiven: 0,
+    decisionsExpired: 0,
+    dealsExpired: 0,
+  };
+
+  it("starts neutral when nothing founder-facing ever happened", () => {
+    const rep = reputation(nobody);
+    expect(rep.score).toBe(70);
+    expect(rep.tone).toBe("good");
+  });
+
+  it("rewards showing up: bridges and answered follow-ons", () => {
+    const rep = reputation({ ...nobody, bridgesFunded: 2, proRataBacked: 1 });
+    expect(rep.score).toBe(90);
+    expect(rep.label).toBe("Founder favorite");
+  });
+
+  it("charges a deliberate no far less than silence", () => {
+    const refused = reputation({ ...nobody, bridgesRefused: 4 });
+    const ghosted = reputation({ ...nobody, decisionsExpired: 4 });
+    expect(refused.score).toBeGreaterThan(ghosted.score);
+    expect(refused.tone).toBe("ok");
+    expect(ghosted.tone).toBe("bad");
+    expect(ghosted.label).toBe("Ghost");
+  });
+
+  it("dings unanswered pitches and clamps to 0..100", () => {
+    expect(reputation({ ...nobody, dealsExpired: 2 }).score).toBe(62);
+    expect(reputation({ ...nobody, dealsExpired: 40 }).score).toBe(0);
+    expect(reputation({ ...nobody, bridgesFunded: 40 }).score).toBe(100);
+  });
+
+  it("credits founder calls answered — term sheets and pivots", () => {
+    expect(reputation({ ...nobody, adviceGiven: 5 }).score).toBe(85);
+  });
+});
+
+describe("maybeTermSheet", () => {
+  const round = {
+    stage: "SERIES_A",
+    raised: 5_000_000,
+    postMoney: 20_000_000,
+    date: "2031-06-01",
+  };
+
+  it("prices the top-tier lead below the round and the hype fund above it", () => {
+    let seen = 0;
+    for (let i = 0; i < 400 && seen < 20; i++) {
+      const sheet = maybeTermSheet(round);
+      if (!sheet) continue;
+      seen++;
+      expect(sheet.topTierPost).toBeLessThan(round.postMoney);
+      expect(sheet.highPricePost).toBeGreaterThan(round.postMoney);
+      expect(sheet.topTierPost).toBeGreaterThan(sheet.raised);
+      expect(sheet.topTierPost % 500_000).toBe(0);
+      expect(sheet.highPricePost % 500_000).toBe(0);
+      expect(sheet.stage).toBe(round.stage);
+      expect(sheet.date).toBe(round.date);
+    }
+    expect(seen).toBe(20); // fires often enough to actually show up in games
+  });
+
+  it("keeps every option an up-round even for tightly priced rounds", () => {
+    const tight = { ...round, raised: 18_000_000 };
+    for (let i = 0; i < 400; i++) {
+      const sheet = maybeTermSheet(tight);
+      if (!sheet) continue;
+      expect(sheet.topTierPost).toBeGreaterThan(tight.raised);
+      expect(sheet.highPricePost).toBeGreaterThan(sheet.topTierPost);
+    }
+  });
+});
+
+describe("pivotOutcome", () => {
+  it("stays inside the documented swing and tilts positive on average", () => {
+    let sum = 0;
+    const n = 2000;
+    for (let i = 0; i < n; i++) {
+      const delta = pivotOutcome();
+      expect(delta).toBeGreaterThanOrEqual(PIVOT_BACKED_MIN);
+      expect(delta).toBeLessThanOrEqual(PIVOT_BACKED_MAX);
+      sum += delta;
+    }
+    expect(sum / n).toBeGreaterThan(0); // expected value ≈ +0.15
   });
 });

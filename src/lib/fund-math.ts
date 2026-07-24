@@ -262,6 +262,27 @@ export function fundMetrics(companies: FundCompany[]): FundMetrics {
   };
 }
 
+// One company's IRR, marking an active stake as of today — or the latest
+// dated event on the company if rounds are future-dated, so IRR never
+// discounts backwards. Lives here (not in a component) because the "as of"
+// clock is impure; render code should call this rather than Date.now().
+export function companyIrr(c: FundCompany): number | null {
+  const asOf = new Date(
+    Math.max(
+      Date.now(),
+      ...c.rounds.map((r) => new Date(r.date).getTime()),
+      c.exitDate ? new Date(c.exitDate).getTime() : 0
+    )
+  );
+  return xirr(
+    companyCashFlows(
+      c.rounds,
+      c.exitValue !== null ? { value: c.exitValue, date: c.exitDate ?? asOf } : null,
+      asOf
+    )
+  );
+}
+
 export function formatDollars(amount: number): string {
   return amount.toLocaleString("en-US", {
     style: "currency",

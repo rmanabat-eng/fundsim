@@ -24,3 +24,101 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ---- Campaign mode arcade skin (used only under /play) ---- */
+
+@keyframes game-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes game-twinkle {
+  0%,
+  100% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.15;
+    transform: scale(0.6);
+  }
+}
+
+@keyframes game-deal-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.95) rotate(-1deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes game-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.game-float {
+  animation: game-float 3.5s ease-in-out infinite;
+}
+
+.game-twinkle {
+  animation: game-twinkle 2.4s ease-in-out infinite;
+}
+
+.game-deal-in {
+  animation: game-deal-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.game-blink {
+  animation: game-blink 1.6s steps(1) infinite;
+}
+
+/* Chunky game button: hard drop shadow that "presses" on click. */
+.btn-arcade {
+  border: 2px solid rgb(15 23 42);
+  box-shadow: 0 4px 0 rgb(15 23 42);
+  transition:
+    transform 100ms ease,
+    box-shadow 100ms ease,
+    filter 100ms ease;
+}
+
+.btn-arcade:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.btn-arcade:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 rgb(15 23 42);
+}
+
+.dark .btn-arcade {
+  border-color: rgb(2 6 23);
+  box-shadow: 0 4px 0 rgb(2 6 23);
+}
+
+.dark .btn-arcade:active:not(:disabled) {
+  box-shadow: 0 0 0 rgb(2 6 23);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-float,
+  .game-twinkle,
+  .game-deal-in,
+  .game-blink {
+    animation: none;
+  }
+}
