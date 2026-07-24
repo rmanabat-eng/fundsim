@@ -4,6 +4,31 @@ import { formatDollars } from "@/lib/fund-math";
 import { getSettings } from "@/lib/settings";
 import { GAME_YEARS } from "@/lib/campaign";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Term } from "@/components/Term";
+
+// The mechanics the sim teaches, as chips — each explains itself on hover/focus.
+const CONCEPTS = [
+  {
+    emoji: "🎯",
+    label: "ownership",
+    def: "What a check buys at a given valuation: your check ÷ post-money.",
+  },
+  {
+    emoji: "💧",
+    label: "dilution",
+    def: "How later rounds shrink your stake — unless you follow on.",
+  },
+  {
+    emoji: "⏱️",
+    label: "pacing",
+    def: "Spreading limited capital across enough bets to catch a winner.",
+  },
+  {
+    emoji: "🧩",
+    label: "portfolio",
+    def: "Balancing sectors, stages, and check sizes.",
+  },
+] as const;
 
 // Deterministic star positions — server and client must paint the same sky.
 const HERO_STARS = [
@@ -25,12 +50,62 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
-      <header className="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600">
-        <div className="mx-auto max-w-5xl px-6 py-8 flex items-center justify-between">
+      <header className="relative overflow-hidden bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600">
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          {HERO_STARS.map((s, i) => (
+            <span
+              key={i}
+              className="game-twinkle absolute rounded-full bg-white/70"
+              style={{
+                top: s.top,
+                left: s.left,
+                width: s.size,
+                height: s.size,
+                animationDelay: s.delay,
+              }}
+            />
+          ))}
+          {/* Kept below the theme toggle and right of the copy so nothing collides. */}
+          <span
+            className="game-float absolute right-[8%] top-28 hidden text-4xl opacity-90 sm:block"
+            style={{ animationDelay: "0.3s" }}
+          >
+            💸
+          </span>
+          <span
+            className="game-float absolute right-[21%] top-20 hidden text-2xl opacity-60 sm:block"
+            style={{ animationDelay: "1.3s" }}
+          >
+            🚀
+          </span>
+        </div>
+        <div className="relative mx-auto flex max-w-5xl items-start justify-between gap-4 px-6 py-10">
           <div className="max-w-2xl">
-            <h1 className="text-3xl font-bold text-white tracking-tight">FundSim</h1>
-            <p className="text-sm text-white/80 mt-1">
-              Simulating a {formatDollars(settings.fundSize)} venture fund ·{" "}
+            <p className="text-[10px] font-black uppercase tracking-[0.35em] text-fuchsia-200">
+              Venture capital, the game
+            </p>
+            <h1 className="mt-1 flex items-center gap-3 text-4xl font-black tracking-tight text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.3)] sm:text-5xl">
+              <span aria-hidden className="game-float text-3xl sm:text-4xl">
+                📈
+              </span>
+              FundSim
+            </h1>
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/90">
+              You&apos;re the GP of a {formatDollars(settings.fundSize)} fund. Learn the
+              mechanics every VC lives by — by <strong>playing</strong>, not reading.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {CONCEPTS.map((c) => (
+                <span
+                  key={c.label}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/25"
+                >
+                  <span aria-hidden>{c.emoji}</span>
+                  <Term def={c.def}>{c.label}</Term>
+                </span>
+              ))}
+            </div>
+            <p className="mt-5 text-xs font-medium text-white/75">
               <Link href="/guide" className="underline hover:text-white">
                 Learning guide
               </Link>{" "}
@@ -42,17 +117,6 @@ export default async function Home() {
               <Link href="/scenarios" className="underline hover:text-white">
                 Scenarios
               </Link>
-            </p>
-            <p className="text-sm text-white/90 mt-3 leading-relaxed">
-              You&apos;re the fund manager. Every check you write buys a slice of a
-              company — and every dollar deployed is a dollar you can&apos;t use on the
-              next deal. By running this fund you&apos;re learning the mechanics every VC
-              lives by: <strong>ownership</strong> (what a check buys at a given
-              valuation), <strong>dilution</strong> (how later rounds shrink your stake
-              unless you follow on), <strong>deployment pacing</strong> (spreading
-              limited capital across enough bets), and{" "}
-              <strong>portfolio construction</strong> (balancing sectors, stages, and
-              check sizes).
             </p>
           </div>
           <ThemeToggle />
