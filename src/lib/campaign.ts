@@ -12,7 +12,7 @@ export type Market = "bull" | "normal" | "bear";
 
 export const MARKET_LABELS: Record<Market, string> = {
   bull: "🐂 Bull market — prices are up and everyone is raising",
-  normal: "😐 Normal market",
+  normal: "😐 Normal market — steady, average pricing and outcomes",
   bear: "🐻 Bear market — valuations down, weak companies dying",
 };
 

@@ -30,15 +30,37 @@ const GRADE_STYLES = {
   bad: "border-rose-300 bg-rose-50 text-rose-900 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-200",
 } as const;
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint?: string; // hover definition, shown on the label
+}) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div className="group relative rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-        {label}
+        {hint ? (
+          <span className="cursor-help underline decoration-dotted decoration-slate-400 underline-offset-2 dark:decoration-slate-500">
+            {label}
+          </span>
+        ) : (
+          label
+        )}
       </p>
       <p className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-100">
         {value}
       </p>
+      {hint && (
+        <div
+          role="tooltip"
+          className="pointer-events-none invisible absolute left-1/2 top-full z-20 mt-1.5 w-56 -translate-x-1/2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-normal normal-case tracking-normal text-slate-600 shadow-lg group-hover:visible dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+        >
+          {hint}
+        </div>
+      )}
     </div>
   );
 }
@@ -127,19 +149,30 @@ export default async function PlayPage() {
         </div>
 
         <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-5">
-          <Stat label="Deployed" value={formatDollars(metrics.deployed)} />
-          <Stat label="Distributions" value={formatDollars(metrics.distributions)} />
+          <Stat
+            label="Deployed"
+            value={formatDollars(metrics.deployed)}
+            hint="Every check you wrote across the fund's life — first checks, follow-ons, and bridges."
+          />
+          <Stat
+            label="Distributions"
+            value={formatDollars(metrics.distributions)}
+            hint="Cash actually returned by exits: your ownership × the exit valuation, summed. The only money LPs can spend."
+          />
           <Stat
             label="DPI (cash back)"
             value={metrics.dpi === null ? "—" : formatMultiple(metrics.dpi)}
+            hint="Distributions to Paid-In: cash returned ÷ capital deployed. The realized multiple — you can't eat TVPI."
           />
           <Stat
             label="TVPI"
             value={metrics.tvpi === null ? "—" : formatMultiple(metrics.tvpi)}
+            hint="Total Value to Paid-In: (paper value + cash back) ÷ capital deployed. The headline multiple LPs grade a fund by."
           />
           <Stat
             label="IRR"
             value={metrics.irr === null ? "—" : formatPercent(metrics.irr * 100)}
+            hint="Internal rate of return: the annualized rate implied by your dated cash flows. Unlike multiples, it rewards getting money back fast."
           />
         </div>
 
@@ -264,15 +297,25 @@ export default async function PlayPage() {
   return (
     <Shell year={game.year} market={game.market as Market}>
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Stat label="Year" value={`${game.year} of ${GAME_YEARS}`} />
-        <Stat label="Dry powder" value={formatDollars(remaining)} />
+        <Stat
+          label="Dry powder"
+          value={formatDollars(remaining)}
+          hint="Capital you haven't deployed yet. Every check — first, follow-on, or bridge — comes out of this, and exits don't refill it."
+        />
+        <Stat
+          label="Companies backed"
+          value={`${companies.length} of ${settings.maxCompanies}`}
+          hint="Portfolio companies you've written checks into, out of the fund's cap. When it's full, new deals bounce — pace yourself."
+        />
         <Stat
           label="Portfolio value"
           value={formatDollars(metrics.portfolioValue + metrics.distributions)}
+          hint="Active stakes marked at each company's latest post-money valuation, plus cash already returned by exits."
         />
         <Stat
           label="TVPI"
           value={metrics.tvpi === null ? "—" : formatMultiple(metrics.tvpi)}
+          hint="Total Value to Paid-In: (paper value + cash back) ÷ capital deployed. The headline multiple LPs grade a fund by."
         />
       </div>
 
@@ -320,6 +363,37 @@ export default async function PlayPage() {
   );
 }
 
+// The 10-year clock as a row of pips: filled for years past, pulsing for the
+// current one, hollow for what's ahead.
+function YearPips({ year }: { year: number }) {
+  return (
+    <div
+      className="flex flex-wrap items-center gap-1.5"
+      role="img"
+      aria-label={`Year ${year} of ${GAME_YEARS}`}
+    >
+      {Array.from({ length: GAME_YEARS }, (_, i) => {
+        const n = i + 1;
+        return (
+          <span
+            key={n}
+            className={`h-2.5 w-6 rounded-full ${
+              n < year
+                ? "bg-amber-400"
+                : n === year
+                  ? "animate-pulse bg-amber-300"
+                  : "bg-white/20"
+            }`}
+          />
+        );
+      })}
+      <span className="ml-2 text-[10px] font-semibold uppercase tracking-widest text-white/70">
+        Year {year}/{GAME_YEARS}
+      </span>
+    </div>
+  );
+}
+
 function Shell({
   year,
   market,
@@ -332,21 +406,44 @@ function Shell({
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
       <header className="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600">
-        <div className="mx-auto max-w-5xl px-6 py-8 flex items-center justify-between">
-          <div>
-            <Link href="/" className="text-sm text-white/70 hover:text-white">
-              ← Portfolio
-            </Link>
-            <h1 className="text-3xl font-bold text-white tracking-tight mt-1">
-              Campaign{year !== null && ` — Year ${year}`}
-            </h1>
-            <p className="text-sm text-white/80 mt-1">
-              {market !== null
-                ? MARKET_LABELS[market]
-                : "A 10-year fund, dealt one year at a time."}
-            </p>
+        <div className="mx-auto max-w-5xl px-6 py-8">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <Link href="/" className="text-sm text-white/70 hover:text-white">
+                ← Portfolio
+              </Link>
+              <h1 className="text-3xl font-bold text-white tracking-tight mt-1">
+                Campaign{year !== null && ` — Year ${year}`}
+              </h1>
+              {market !== null ? (
+                <p className="group relative mt-1 inline-block text-sm text-white/80">
+                  <span className="cursor-help underline decoration-dotted decoration-white/40 underline-offset-2">
+                    {MARKET_LABELS[market]}
+                  </span>
+                  <span
+                    role="tooltip"
+                    className="pointer-events-none invisible absolute left-0 top-full z-20 mt-1.5 w-64 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-normal text-slate-600 shadow-lg group-hover:visible dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                  >
+                    The market mood shifts each year. A bull market lifts
+                    valuations and exits; a bear market pushes them down and kills
+                    weak companies faster; a normal market sits in between. It&apos;s
+                    the same weather for every fund that year — you just have to
+                    play it.
+                  </span>
+                </p>
+              ) : (
+                <p className="mt-1 text-sm text-white/80">
+                  A 10-year fund, dealt one year at a time.
+                </p>
+              )}
+            </div>
+            <ThemeToggle />
           </div>
-          <ThemeToggle />
+          {year !== null && (
+            <div className="mt-4">
+              <YearPips year={year} />
+            </div>
+          )}
         </div>
       </header>
       <main className="mx-auto max-w-5xl px-6 py-8">{children}</main>
