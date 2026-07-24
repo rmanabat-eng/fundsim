@@ -44,6 +44,8 @@ model Company {
   exitValue Float? // company valuation at exit; 0 means written off; null = still active
   exitDate  DateTime?
   quality   Float     @default(0) // hidden -1..1; tilts campaign-mode outcomes. 0 for free-play companies.
+  dealId    String?   @unique // the pitch this company was funded from; lets a first check be undone before the year advances
+  deal      Deal?     @relation(fields: [dealId], references: [id])
   rounds    Round[]
   decisions Decision[]
 }
@@ -72,6 +74,7 @@ model Deal {
   signals   String // JSON array of signal texts shown on the pitch card
   quality   Float
   status    String @default("open") // "open" | "invested" | "passed" | "expired"
+  company   Company? // set when invested; cleared if the investment is undone
 }
 
 // A decision forced on the player: fund a pro-rata, take an acquisition

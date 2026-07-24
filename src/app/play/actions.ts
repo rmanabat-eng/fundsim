@@ -135,6 +135,7 @@ export async function investInDeal(
       name: deal.name,
       sector: deal.sector,
       quality: deal.quality,
+      dealId, // link back to the pitch so this first check can be undone
       rounds: {
         create: {
           stage: deal.stage,
@@ -151,6 +152,29 @@ export async function investInDeal(
   revalidatePath("/play");
   revalidatePath("/");
   return null;
+}
+
+// Reverse a first check made this year: delete the company (its round cascades)
+// and put the pitch back in the deck. Only current-year, un-exited investments
+// straight from a deal qualify — follow-ons and decisions aren't undoable here.
+export async function undoInvestment(companyId: string) {
+  const [company, game] = await Promise.all([
+    prisma.company.findUnique({ where: { id: companyId }, include: { deal: true } }),
+    prisma.game.findUnique({ where: { id: 1 } }),
+  ]);
+  if (!company || !company.deal || !game) return;
+  if (game.status !== "active") return;
+  if (company.deal.year !== game.year) return; // only this year's checks
+  if (company.exitValue !== null) return;
+
+  await prisma.deal.update({
+    where: { id: company.deal.id },
+    data: { status: "open" },
+  });
+  await prisma.company.delete({ where: { id: companyId } });
+
+  revalidatePath("/play");
+  revalidatePath("/");
 }
 
 export async function passDeal(dealId: string) {

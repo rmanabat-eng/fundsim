@@ -24,6 +24,7 @@ import { StartCampaignButton } from "@/components/StartCampaignButton";
 import { AdvanceYearButton } from "@/components/AdvanceYearButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Toaster } from "@/components/toast";
+import { UndoInvestmentButton } from "@/components/UndoInvestmentButton";
 import type {
   AcquisitionPayload,
   BridgePayload,
@@ -161,7 +162,9 @@ export default async function PlayPage() {
   const [game, settings, companies] = await Promise.all([
     prisma.game.findUnique({ where: { id: 1 } }),
     getSettings(),
-    prisma.company.findMany({ include: { rounds: { orderBy: { date: "asc" } } } }),
+    prisma.company.findMany({
+      include: { rounds: { orderBy: { date: "asc" } }, deal: true },
+    }),
   ]);
 
   const metrics = fundMetrics(companies);
@@ -404,6 +407,18 @@ export default async function PlayPage() {
 
   // ---- Active campaign ----
   const { rep } = await currentReputation();
+
+  // First checks written this year, straight from a pitch, that haven't exited
+  // — these can be undone (delete the company, reopen the deal) until you advance.
+  const backedThisYear = companies
+    .filter(
+      (c) =>
+        c.deal !== null &&
+        c.deal.year === game.year &&
+        c.deal.status === "invested" &&
+        c.exitValue === null
+    )
+    .map((c) => ({ id: c.id, name: c.name, check: c.rounds[0]?.yourCheck ?? 0 }));
   const [deals, decisions] = await Promise.all([
     prisma.deal.findMany({
       where: { status: "open", year: game.year },
@@ -544,6 +559,24 @@ export default async function PlayPage() {
           delay={240}
         />
       </div>
+
+      {backedThisYear.length > 0 && (
+        <section className="mt-6">
+          <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+            ↩ Backed this year — undo before you advance
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {backedThisYear.map((c) => (
+              <UndoInvestmentButton
+                key={c.id}
+                id={c.id}
+                name={c.name}
+                check={c.check}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {decisionViews.length > 0 && (
         <section className="mt-8">
