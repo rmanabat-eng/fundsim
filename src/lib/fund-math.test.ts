@@ -9,6 +9,7 @@ import {
   exitProceeds,
   xirr,
   companyCashFlows,
+  companyIrr,
   fundTimeline,
   formatDollars,
   formatMultiple,
@@ -257,6 +258,35 @@ describe("fundMetrics", () => {
     expect(m.dpi).toBeNull();
     expect(m.tvpi).toBeNull();
     expect(m.irr).toBeNull();
+  });
+});
+
+describe("companyIrr", () => {
+  it("annualizes a dated exit exactly (2× in one year ≈ 100%)", () => {
+    const irr = companyIrr({
+      rounds: [seed], // 2.5% for $500k
+      exitValue: 40_000_000, // 2.5% → $1M back
+      exitDate: "2031-01-01", // one year after the check
+    });
+    expect(irr).toBeCloseTo(1.0, 2);
+  });
+
+  it("marks an active stake as of the latest round, never discounting backwards", () => {
+    // Future-dated rounds: the as-of clock must land on the series A date,
+    // not today, or the mark would sit before the last check.
+    const irr = companyIrr({
+      rounds: [seed, seriesAFollowOn],
+      exitValue: null,
+      exitDate: null,
+    });
+    expect(irr).not.toBeNull();
+    expect(irr!).toBeGreaterThan(0);
+  });
+
+  it("returns null for a write-off (no positive flow)", () => {
+    expect(
+      companyIrr({ rounds: [seed], exitValue: 0, exitDate: "2031-01-01" })
+    ).toBeNull();
   });
 });
 

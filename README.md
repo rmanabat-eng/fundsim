@@ -185,26 +185,41 @@ Free-play mode is a ledger: you invent the companies and the numbers.
 **Campaign mode** (`/play`) turns it into a game of decisions under
 uncertainty — the thing real investing actually is:
 
-- **Deal flow.** Each year deals you four generated pitches. Every card
-  shows soft signals ("revenue tripled", "under 8 months of runway") that
-  noisily encode a hidden quality score. Quality tilts every later die
-  roll — better companies die less, raise more, and price higher — so over
-  several runs you learn to read a pitch. Noisily is the key word: a
-  great-looking deal can still be a dud, just less often.
+- **Deal flow, during the investment period.** Years 1–5 each deal you
+  four generated pitches; after year 5 the checkbook closes for new names
+  — like a real fund's investment period — and years 6–10 are pure
+  portfolio management. Every card shows soft signals ("revenue tripled",
+  "under 8 months of runway") that noisily encode a hidden quality score.
+  Quality tilts every later die roll — better companies die less, raise
+  more, and price higher — so over several runs you learn to read a
+  pitch. Noisily is the key word: a great-looking deal can still be a
+  dud, just less often.
 - **A 10-year clock.** Advancing the year expires whatever you left on the
   table, rolls quality- and market-weighted events across the portfolio
   (bull and bear years scale valuations and death rates for everyone at
-  once), and deals the next year's pitches. After year 10 the fund closes
-  and your TVPI is graded against real venture quartiles.
+  once), and deals the next year's pitches while the investment period
+  lasts. After year 10 the fund closes and your TVPI is graded against
+  real venture quartiles.
 - **Forced decisions.** Portfolio companies raising new rounds put a
   pro-rata on your desk (fund it or eat the dilution — the diluted
   percentage is computed for you). Acquirers show up offering cash now
   versus the power law. Struggling companies ask for bridges — refuse and
   they usually don't recover; funding them is how funds bleed out. All of
   it expires against you at year end.
+- **Founder calls.** Sometimes a round arrives as two competing term
+  sheets — a top-tier lead at a lower price versus a hype fund at a
+  flattering one — and the founder asks which to sign (partner quality
+  compounds; price is one round's vanity). Stalled founders ask for your
+  blessing to pivot: backing it is a high-variance reroll, urging focus a
+  safe small win, and ghosting them means they pivot anyway,
+  half-hearted.
 
 The scorecard at the end shows where the returns actually came from,
-which — thanks to the power law — is usually one or two names.
+which — thanks to the power law — is usually one or two names. It also
+grades your **VC reputation** (0–100): funding bridges and answering
+follow-ons builds it, a deliberate "no" costs almost nothing, and letting
+pitches or decisions expire unanswered — ghosting founders — costs the
+most, independent of whether the fund made money.
 
 ### Fund settings and scenarios (V2)
 

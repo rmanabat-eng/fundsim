@@ -10,8 +10,7 @@ import {
   formatDate,
   ownershipTimeline,
   valueTimeline,
-  companyCashFlows,
-  xirr,
+  companyIrr,
 } from "@/lib/fund-math";
 import { DeleteRoundButton } from "@/components/DeleteRoundButton";
 import { UndoExitButton } from "@/components/UndoExitButton";
@@ -43,20 +42,7 @@ export default async function CompanyPage({
   const multiple = invested > 0 ? stakeValue / invested : 0;
   const latest = company.rounds[company.rounds.length - 1];
 
-  const asOf = new Date(
-    Math.max(
-      Date.now(),
-      ...company.rounds.map((r) => r.date.getTime()),
-      company.exitDate?.getTime() ?? 0
-    )
-  );
-  const irr = xirr(
-    companyCashFlows(
-      company.rounds,
-      exited ? { value: company.exitValue ?? 0, date: company.exitDate ?? asOf } : null,
-      asOf
-    )
-  );
+  const irr = companyIrr(company);
   const totalLoss = exited && company.exitValue === 0;
 
   return (

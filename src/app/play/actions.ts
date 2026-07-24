@@ -11,11 +11,19 @@ import {
   BRIDGE_REFUSED_QUALITY_HIT,
   DEALS_PER_YEAR,
   GAME_YEARS,
+  INVESTMENT_PERIOD_YEARS,
+  PIVOT_FOCUS_QUALITY_BOOST,
+  PIVOT_UNSUPPORTED_QUALITY_HIT,
+  TERM_SHEET_HIGH_PRICE_QUALITY_HIT,
+  TERM_SHEET_TOP_TIER_QUALITY_BOOST,
   campaignOdds,
   dateInWindow,
   generateDeal,
   maybeAcquisitionOffer,
   maybeBridgeRequest,
+  maybePivotRequest,
+  maybeTermSheet,
+  pivotOutcome,
   rollMarket,
   yearWindow,
   type Market,
@@ -37,6 +45,16 @@ export type BridgePayload = {
   stage: string;
   date: string;
 };
+// Two competing term sheets the founder asks you to pick between.
+export type TermSheetPayload = {
+  stage: string;
+  raised: number;
+  topTierPost: number;
+  highPricePost: number;
+  date: string;
+};
+// A pivot request carries no numbers — the whole decision is a judgment call.
+export type PivotPayload = Record<string, never>;
 
 async function deployed(): Promise<number> {
   const rounds = await prisma.round.findMany({ select: { yourCheck: true } });
@@ -197,10 +215,12 @@ export async function acceptAcquisition(decisionId: string) {
     data: { status: "resolved" },
   });
   // The exit freezes the cap table, so any other decision about this company
-  // (a pro-rata, a bridge) is moot — clear it off the desk.
+  // (a pro-rata, a bridge, a founder call) is moot — clear it off the desk.
+  // "moot" is its own status so it neither costs reputation like "expired"
+  // nor earns it like "resolved".
   await prisma.decision.updateMany({
     where: { companyId: decision.companyId, status: "pending" },
-    data: { status: "expired" },
+    data: { status: "moot" },
   });
   revalidatePath("/play");
   revalidatePath("/");
@@ -247,7 +267,9 @@ export async function fundBridge(decisionId: string): Promise<FormState> {
 }
 
 // Decline any pending decision. Refusing a bridge leaves the company
-// struggling and unfunded — its quality takes a hit.
+// struggling and unfunded — its quality takes a hit. Recorded as "declined"
+// (not "resolved") so the end-of-fund reputation can tell a deliberate no
+// apart from money wired.
 export async function declineDecision(decisionId: string) {
   const decision = await prisma.decision.findUnique({
     where: { id: decisionId },
@@ -265,9 +287,81 @@ export async function declineDecision(decisionId: string) {
   }
   await prisma.decision.update({
     where: { id: decisionId },
+    data: { status: "declined" },
+  });
+  revalidatePath("/play");
+}
+
+// The founder signs whichever term sheet you recommend. The top-tier lead
+// prices lower (more dilution for you) but strengthens the company; the high
+// price flatters today's mark and weakens every later roll.
+export async function resolveTermSheet(
+  decisionId: string,
+  choice: "top_tier" | "high_price"
+) {
+  const decision = await prisma.decision.findUnique({
+    where: { id: decisionId },
+    include: { company: true },
+  });
+  if (!decision || decision.status !== "pending" || decision.type !== "term_sheet")
+    return;
+  if (decision.company.exitValue !== null) return;
+  const payload: TermSheetPayload = JSON.parse(decision.payload);
+
+  await prisma.round.create({
+    data: {
+      companyId: decision.companyId,
+      stage: payload.stage as (typeof STAGES)[number],
+      date: new Date(payload.date),
+      raised: payload.raised,
+      postMoney: choice === "top_tier" ? payload.topTierPost : payload.highPricePost,
+      yourCheck: 0,
+    },
+  });
+  await prisma.company.update({
+    where: { id: decision.companyId },
+    data: {
+      quality: clampQuality(
+        decision.company.quality +
+          (choice === "top_tier"
+            ? TERM_SHEET_TOP_TIER_QUALITY_BOOST
+            : TERM_SHEET_HIGH_PRICE_QUALITY_HIT)
+      ),
+    },
+  });
+  await prisma.decision.update({
+    where: { id: decisionId },
     data: { status: "resolved" },
   });
   revalidatePath("/play");
+  revalidatePath("/");
+}
+
+// Bless the pivot (a high-variance quality reroll) or urge focus (a small,
+// safe boost). Either way the founder got an answer.
+export async function resolvePivot(decisionId: string, choice: "back" | "focus") {
+  const decision = await prisma.decision.findUnique({
+    where: { id: decisionId },
+    include: { company: true },
+  });
+  if (!decision || decision.status !== "pending" || decision.type !== "pivot") return;
+  if (decision.company.exitValue !== null) return;
+
+  await prisma.company.update({
+    where: { id: decision.companyId },
+    data: {
+      quality: clampQuality(
+        decision.company.quality +
+          (choice === "back" ? pivotOutcome() : PIVOT_FOCUS_QUALITY_BOOST)
+      ),
+    },
+  });
+  await prisma.decision.update({
+    where: { id: decisionId },
+    data: { status: "resolved" },
+  });
+  revalidatePath("/play");
+  revalidatePath("/");
 }
 
 export type YearSummary = {
@@ -307,6 +401,33 @@ export async function advanceYear(): Promise<YearSummary | null> {
         where: { id: d.companyId },
         data: {
           quality: clampQuality(d.company.quality + BRIDGE_REFUSED_QUALITY_HIT),
+        },
+      });
+    } else if (d.type === "pivot") {
+      // Ignored, the founder pivots anyway — half-hearted, without your help.
+      await prisma.company.update({
+        where: { id: d.companyId },
+        data: {
+          quality: clampQuality(d.company.quality + PIVOT_UNSUPPORTED_QUALITY_HIT),
+        },
+      });
+    } else if (d.type === "term_sheet") {
+      // No answer from you, so the founder signs the flattering price alone.
+      const payload: TermSheetPayload = JSON.parse(d.payload);
+      await prisma.round.create({
+        data: {
+          companyId: d.companyId,
+          stage: payload.stage as (typeof STAGES)[number],
+          date: new Date(payload.date),
+          raised: payload.raised,
+          postMoney: payload.highPricePost,
+          yourCheck: 0,
+        },
+      });
+      await prisma.company.update({
+        where: { id: d.companyId },
+        data: {
+          quality: clampQuality(d.company.quality + TERM_SHEET_HIGH_PRICE_QUALITY_HIT),
         },
       });
     }
@@ -369,6 +490,21 @@ export async function advanceYear(): Promise<YearSummary | null> {
     );
 
     if (event.kind === "round") {
+      // Sometimes the round arrives as two competing term sheets instead of a
+      // done deal — the founder wants your call before anything is signed.
+      const sheet = maybeTermSheet(event);
+      if (sheet) {
+        await prisma.decision.create({
+          data: {
+            year,
+            type: "term_sheet",
+            companyId: company.id,
+            payload: JSON.stringify(sheet satisfies TermSheetPayload),
+          },
+        });
+        summary.newDecisions++;
+        continue; // nothing is signed yet — no round, no offers
+      }
       const round = await prisma.round.create({
         data: {
           companyId: company.id,
@@ -423,6 +559,18 @@ export async function advanceYear(): Promise<YearSummary | null> {
         summary.newDecisions++;
         continue; // a company asking for a bridge isn't fielding acquirers
       }
+      if (maybePivotRequest()) {
+        await prisma.decision.create({
+          data: {
+            year,
+            type: "pivot",
+            companyId: company.id,
+            payload: JSON.stringify({} satisfies PivotPayload),
+          },
+        });
+        summary.newDecisions++;
+        continue; // a founder mid-soul-search isn't fielding acquirers either
+      }
     }
 
     // Anchor any offer to the latest state — including a round created just
@@ -448,7 +596,9 @@ export async function advanceYear(): Promise<YearSummary | null> {
   }
 
   await prisma.game.update({ where: { id: 1 }, data: { year, market } });
-  await dealFlow(year);
+  // The checkbook closes for new names after the investment period — from
+  // then on it's pro-ratas, bridges, founder calls, and exits only.
+  if (year <= INVESTMENT_PERIOD_YEARS) await dealFlow(year);
 
   revalidatePath("/play");
   revalidatePath("/");

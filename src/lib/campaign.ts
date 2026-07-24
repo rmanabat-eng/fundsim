@@ -7,6 +7,10 @@ import { DEFAULT_ODDS, type SimCompanyState, type YearOdds } from "@/lib/simulat
 
 export const GAME_YEARS = 10;
 export const DEALS_PER_YEAR = 4;
+// Real funds only write first checks during an investment period — after
+// that, remaining capital is reserved for the existing portfolio. Years 1-5
+// deal fresh pitches; years 6-10 are pure portfolio management.
+export const INVESTMENT_PERIOD_YEARS = 5;
 
 export type Market = "bull" | "normal" | "bear";
 
@@ -202,6 +206,134 @@ export function maybeBridgeRequest(
 // buys runway; a refused struggling company usually doesn't recover.
 export const BRIDGE_FUNDED_QUALITY_BOOST = 0.15;
 export const BRIDGE_REFUSED_QUALITY_HIT = -0.35;
+
+// ---- Founder calls: decisions where the founder asks for your advice ----
+
+export type TermSheetChoice = {
+  stage: string;
+  raised: number;
+  topTierPost: number; // the stronger lead prices lower
+  highPricePost: number; // the hype fund flatters today's mark
+  date: string;
+};
+
+const TERM_SHEET_CHANCE = 0.35;
+// The lesson: partner quality compounds, price is one round's vanity. The
+// top-tier lead dilutes you more today but tilts every later roll; the high
+// price does the opposite.
+export const TERM_SHEET_TOP_TIER_QUALITY_BOOST = 0.15;
+export const TERM_SHEET_HIGH_PRICE_QUALITY_HIT = -0.12;
+
+function roundTo500k(value: number): number {
+  return Math.round(value / 500_000) * 500_000;
+}
+
+// Sometimes a company that would have quietly closed its round instead comes
+// to you with two competing term sheets and asks which to sign.
+export function maybeTermSheet(round: {
+  stage: string;
+  raised: number;
+  postMoney: number;
+  date: string;
+}): TermSheetChoice | null {
+  if (Math.random() >= TERM_SHEET_CHANCE) return null;
+
+  const floor = round.raised + 500_000; // keep every option a sane up-round
+  return {
+    stage: round.stage,
+    raised: round.raised,
+    topTierPost: Math.max(roundTo500k(round.postMoney * 0.8), floor),
+    highPricePost: Math.max(roundTo500k(round.postMoney * 1.15), floor + 500_000),
+    date: round.date,
+  };
+}
+
+const PIVOT_CHANCE = 0.18;
+// Backing a pivot is a high-variance reroll: most fizzle, some find the real
+// business. Urging focus is the safe, small win. A founder who pivots without
+// your support does it half-hearted.
+export const PIVOT_FOCUS_QUALITY_BOOST = 0.05;
+export const PIVOT_UNSUPPORTED_QUALITY_HIT = -0.2;
+export const PIVOT_BACKED_MIN = -0.15;
+export const PIVOT_BACKED_MAX = 0.45;
+
+// Whether a quiet company's founder calls asking to pivot this year.
+export function maybePivotRequest(): boolean {
+  return Math.random() < PIVOT_CHANCE;
+}
+
+// The quality swing of a backed pivot — upside-tilted, but no sure thing.
+export function pivotOutcome(): number {
+  return PIVOT_BACKED_MIN + Math.random() * (PIVOT_BACKED_MAX - PIVOT_BACKED_MIN);
+}
+
+export type ReputationCounts = {
+  bridgesFunded: number; // showed up when a founder was drowning
+  bridgesRefused: number; // said no — a real answer, founders can live with it
+  proRataBacked: number; // answered a follow-on round (a deliberate 0 counts)
+  adviceGiven: number; // term sheets and pivots you weighed in on
+  decisionsExpired: number; // ghosted a founder waiting on you
+  dealsExpired: number; // pitches that never got a yes or a no
+};
+
+export type Reputation = {
+  score: number; // 0..100, starts at a neutral 70
+  label: string;
+  blurb: string;
+  tone: "great" | "good" | "ok" | "bad";
+};
+
+// Founders talk. What moves your reputation isn't which bets paid off — it's
+// how you treated the people asking: wiring when it mattered helps a lot, a
+// timely "no" costs almost nothing, and silence costs the most.
+export function reputation(c: ReputationCounts): Reputation {
+  const score = clamp(
+    70 +
+      8 * c.bridgesFunded +
+      4 * c.proRataBacked +
+      3 * c.adviceGiven -
+      2 * c.bridgesRefused -
+      10 * c.decisionsExpired -
+      4 * c.dealsExpired,
+    0,
+    100
+  );
+
+  if (score >= 85) {
+    return {
+      score,
+      label: "Founder favorite",
+      blurb:
+        "You wired when it mattered and answered every call. The best founders now pitch you first — which is where the next fund's winners come from.",
+      tone: "great",
+    };
+  }
+  if (score >= 65) {
+    return {
+      score,
+      label: "Straight shooter",
+      blurb:
+        "Founders got timely answers, even when the answer was no. They don't love every call you made, but they'd take your money again.",
+      tone: "good",
+    };
+  }
+  if (score >= 40) {
+    return {
+      score,
+      label: "Hard to read",
+      blurb:
+        "Some founders got answers, some got silence. Word spreads — the strongest rounds start going to investors who reliably show up.",
+      tone: "ok",
+    };
+  }
+  return {
+    score,
+    label: "Ghost",
+    blurb:
+      "Ignored pitches and unanswered calls travel fast in founder group chats. The hot deals stopped inviting you a long time ago.",
+    tone: "bad",
+  };
+}
 
 export type FundGrade = {
   label: string;

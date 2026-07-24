@@ -75,16 +75,17 @@ model Deal {
 }
 
 // A decision forced on the player: fund a pro-rata, take an acquisition
-// offer, or bridge a struggling company. Expires against the player if
-// unresolved when the year advances.
+// offer, bridge a struggling company, or advise a founder (pick between
+// term sheets, bless a pivot). Expires against the player if unresolved
+// when the year advances.
 model Decision {
   id        String  @id @default(cuid())
   year      Int
-  type      String // "pro_rata" | "acquisition" | "bridge"
+  type      String // "pro_rata" | "acquisition" | "bridge" | "term_sheet" | "pivot"
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   payload   String // JSON, shape depends on type
-  status    String  @default("pending") // "pending" | "resolved" | "expired"
+  status    String  @default("pending") // "pending" | "resolved" | "declined" | "expired" | "moot"
 }
 
 model Round {
