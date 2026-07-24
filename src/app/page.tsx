@@ -106,10 +106,6 @@ export default async function Home() {
               ))}
             </div>
             <p className="mt-5 text-xs font-medium text-white/75">
-              <Link href="/guide" className="underline hover:text-white">
-                Learning guide
-              </Link>{" "}
-              ·{" "}
               <Link href="/settings" className="underline hover:text-white">
                 Settings
               </Link>{" "}
@@ -178,26 +174,52 @@ export default async function Home() {
           </div>
         </section>
 
-        <Link
-          href="/dashboard"
-          className="group mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border-2 border-slate-900/10 bg-white p-5 shadow-[4px_4px_0_rgba(15,23,42,0.1)] transition-transform motion-safe:hover:-translate-y-0.5 dark:border-white/10 dark:bg-slate-900 dark:shadow-[4px_4px_0_rgba(0,0,0,0.5)]"
-        >
-          <div className="min-w-0">
-            <p className="text-[10px] font-black uppercase tracking-[0.35em] text-slate-400 dark:text-slate-500">
+        <div className="mt-6 grid gap-6 sm:grid-cols-2">
+          <Link
+            href="/dashboard"
+            className="group flex flex-col rounded-2xl border-2 border-slate-900/10 bg-white p-6 shadow-[6px_6px_0_rgba(15,23,42,0.12)] transition-transform motion-safe:hover:-translate-y-1 dark:border-white/10 dark:bg-slate-900 dark:shadow-[6px_6px_0_rgba(0,0,0,0.5)]"
+          >
+            <span aria-hidden className="text-4xl">
+              📊
+            </span>
+            <p className="mt-3 text-[10px] font-black uppercase tracking-[0.35em] text-slate-400 dark:text-slate-500">
               Free play
             </p>
-            <h3 className="mt-1 text-lg font-black text-slate-900 dark:text-slate-100">
+            <h3 className="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100">
               Fund dashboard
             </h3>
-            <p className="mt-1 max-w-xl text-sm text-slate-600 dark:text-slate-400">
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
               Build a portfolio by hand, simulate years, and watch the metrics — the
               sandbox behind the campaign, plus your campaign portfolio in detail.
             </p>
-          </div>
-          <span className="shrink-0 text-sm font-bold text-indigo-600 group-hover:underline dark:text-indigo-400">
-            Open dashboard →
-          </span>
-        </Link>
+            <span className="mt-4 text-sm font-bold text-indigo-600 group-hover:underline dark:text-indigo-400">
+              Open dashboard →
+            </span>
+          </Link>
+
+          <Link
+            href="/guide"
+            className="group flex flex-col rounded-2xl border-2 border-slate-900/10 bg-white p-6 shadow-[6px_6px_0_rgba(15,23,42,0.12)] transition-transform motion-safe:hover:-translate-y-1 dark:border-white/10 dark:bg-slate-900 dark:shadow-[6px_6px_0_rgba(0,0,0,0.5)]"
+          >
+            <span aria-hidden className="text-4xl">
+              📚
+            </span>
+            <p className="mt-3 text-[10px] font-black uppercase tracking-[0.35em] text-slate-400 dark:text-slate-500">
+              Start here
+            </p>
+            <h3 className="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100">
+              Learning guide
+            </h3>
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+              What the game is actually teaching: the power law, dilution, TVPI vs.
+              cash, the J-curve, market vintages, and why silence costs more than a
+              no.
+            </p>
+            <span className="mt-4 text-sm font-bold text-indigo-600 group-hover:underline dark:text-indigo-400">
+              Read the guide →
+            </span>
+          </Link>
+        </div>
       </main>
     </div>
   );
