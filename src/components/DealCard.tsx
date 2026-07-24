@@ -1,11 +1,12 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState, useTransition } from "react";
 import { investInDeal, passDeal } from "@/app/play/actions";
 import { formatDollars } from "@/lib/fund-math";
 import { STAGE_LABELS } from "@/lib/constants";
 import { STAGE_STYLES } from "@/lib/badges";
 import { Term } from "@/components/Term";
+import { toast } from "@/components/toast";
 
 const CHECK_STEP = 25_000;
 
@@ -32,10 +33,8 @@ const SECTOR_ART: Record<string, { emoji: string; banner: string }> = {
 // A pitch card: the numbers, the signals, and a decision. The signals are
 // the whole game — some of them (noisily) predict how the company does.
 export function DealCard({ deal }: { deal: DealView }) {
-  const [state, formAction, pending] = useActionState(
-    investInDeal.bind(null, deal.id),
-    null
-  );
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
   // Open with a real position on the table — ~20% of the round — instead of
   // an empty box the player has to type into.
   const defaultCheck = Math.max(
@@ -46,6 +45,29 @@ export function DealCard({ deal }: { deal: DealView }) {
 
   const ownership = (check / deal.postMoney) * 100;
   const art = SECTOR_ART[deal.sector] ?? SECTOR_ART.Other;
+
+  // Call the action imperatively so the confirmation toast fires from the
+  // module-level store before this card unmounts on the next revalidate.
+  function invest() {
+    setError(null);
+    startTransition(async () => {
+      const data = new FormData();
+      data.set("check", String(check));
+      const res = await investInDeal(deal.id, null, data);
+      if (res?.error) setError(res.error);
+      else
+        toast(
+          `Wired ${formatDollars(check)} into ${deal.name} — ${ownership.toFixed(2)}%`
+        );
+    });
+  }
+
+  function pass() {
+    startTransition(async () => {
+      await passDeal(deal.id);
+      toast(`Passed on ${deal.name}`, "info");
+    });
+  }
 
   return (
     <div className="flex h-full flex-col rounded-2xl border-2 border-slate-900/10 bg-white shadow-[5px_5px_0_rgba(15,23,42,0.12)] transition-transform duration-150 motion-safe:hover:-translate-y-1 motion-safe:hover:-rotate-[0.5deg] dark:border-white/10 dark:bg-slate-900 dark:shadow-[5px_5px_0_rgba(0,0,0,0.5)]">
@@ -87,7 +109,10 @@ export function DealCard({ deal }: { deal: DealView }) {
         </ul>
 
         <form
-          action={formAction}
+          onSubmit={(e) => {
+            e.preventDefault();
+            invest();
+          }}
           className="mt-auto flex flex-col gap-2 border-t border-slate-100 pt-4 dark:border-slate-800"
         >
           <div className="flex items-baseline justify-between text-sm">
@@ -125,15 +150,15 @@ export function DealCard({ deal }: { deal: DealView }) {
             <button
               type="button"
               disabled={pending}
-              onClick={() => passDeal(deal.id)}
+              onClick={pass}
               className="btn-arcade shrink-0 rounded-xl bg-slate-100 px-3 py-2 text-sm font-bold text-slate-600 disabled:opacity-50 dark:bg-slate-800 dark:text-slate-300"
             >
               Pass
             </button>
           </div>
-          {state?.error && (
+          {error && (
             <p className="text-xs text-rose-600 dark:text-rose-400" role="alert">
-              {state.error}
+              {error}
             </p>
           )}
         </form>

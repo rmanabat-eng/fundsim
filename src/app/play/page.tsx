@@ -23,6 +23,7 @@ import { DecisionCard, type DecisionView } from "@/components/DecisionCard";
 import { StartCampaignButton } from "@/components/StartCampaignButton";
 import { AdvanceYearButton } from "@/components/AdvanceYearButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Toaster } from "@/components/toast";
 import type {
   AcquisitionPayload,
   BridgePayload,
@@ -745,6 +746,7 @@ function Shell({
         </div>
       </header>
       <main className="mx-auto max-w-5xl px-6 py-8">{children}</main>
+      <Toaster />
     </div>
   );
 }

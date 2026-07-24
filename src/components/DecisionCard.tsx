@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import {
   acceptAcquisition,
@@ -9,12 +9,12 @@ import {
   fundProRata,
   resolvePivot,
   resolveTermSheet,
-  type FormState,
 } from "@/app/play/actions";
 import { formatDollars, formatPercent } from "@/lib/fund-math";
 import { STAGE_LABELS } from "@/lib/constants";
 import { inputClasses } from "@/components/RoundFields";
 import { Term } from "@/components/Term";
+import { toast } from "@/components/toast";
 
 // Everything the card needs is computed server-side in the play page —
 // ownership math stays in one place (fund-math) and the card just renders.
@@ -95,11 +95,8 @@ function CompanyName({ id, name }: { id: string; name: string }) {
 }
 
 function ProRataCard({ d }: { d: Extract<DecisionView, { type: "pro_rata" }> }) {
-  const [state, formAction, pending] = useActionState(
-    fundProRata.bind(null, d.id),
-    null
-  );
-  const [isDeclining, startDecline] = useTransition();
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
   const [check, setCheck] = useState(String(d.proRataCheck));
 
   const checkNumber = Number(check);
@@ -107,6 +104,26 @@ function ProRataCard({ d }: { d: Extract<DecisionView, { type: "pro_rata" }> }) 
     Number.isFinite(checkNumber) && checkNumber > 0
       ? (checkNumber / d.postMoney) * 100
       : 0;
+
+  function writeCheck() {
+    setError(null);
+    startTransition(async () => {
+      const data = new FormData();
+      data.set("check", check);
+      const res = await fundProRata(d.id, null, data);
+      if (res?.error) setError(res.error);
+      else if (checkNumber > 0)
+        toast(`Backed ${d.companyName}'s round — ${formatDollars(checkNumber)}`);
+      else toast(`Sat out ${d.companyName}'s round`, "info");
+    });
+  }
+
+  function sitOut() {
+    startTransition(async () => {
+      await declineDecision(d.id);
+      toast(`Sat out ${d.companyName}'s round`, "info");
+    });
+  }
 
   return (
     <div className={cardClasses}>
@@ -128,7 +145,13 @@ function ProRataCard({ d }: { d: Extract<DecisionView, { type: "pro_rata" }> }) 
         costs about <strong>{formatDollars(d.proRataCheck)}</strong> — or sit out and
         keep the cash for other bets.
       </p>
-      <form action={formAction} className="mt-3 flex items-center gap-2">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          writeCheck();
+        }}
+        className="mt-3 flex items-center gap-2"
+      >
         <input
           name="check"
           type="number"
@@ -140,13 +163,13 @@ function ProRataCard({ d }: { d: Extract<DecisionView, { type: "pro_rata" }> }) 
           className={inputClasses}
           aria-label="Follow-on check"
         />
-        <button type="submit" disabled={pending || isDeclining} className={primaryButton}>
+        <button type="submit" disabled={pending} className={primaryButton}>
           {pending ? "Wiring..." : "Write the check"}
         </button>
         <button
           type="button"
-          disabled={pending || isDeclining}
-          onClick={() => startDecline(() => declineDecision(d.id))}
+          disabled={pending}
+          onClick={sitOut}
           className={secondaryButton}
         >
           Sit out
@@ -158,9 +181,9 @@ function ProRataCard({ d }: { d: Extract<DecisionView, { type: "pro_rata" }> }) 
           {formatPercent(d.ownedNow + bought)} after the round.
         </p>
       )}
-      {state?.error && (
+      {error && (
         <p className="mt-2 text-xs text-rose-600 dark:text-rose-400" role="alert">
-          {state.error}
+          {error}
         </p>
       )}
     </div>
@@ -202,7 +225,12 @@ function AcquisitionCard({
         <button
           type="button"
           disabled={pending}
-          onClick={() => startTransition(() => acceptAcquisition(d.id))}
+          onClick={() =>
+            startTransition(async () => {
+              await acceptAcquisition(d.id);
+              toast(`Took the exit on ${d.companyName} — ${formatDollars(d.yourShare)}`);
+            })
+          }
           className={primaryButton}
         >
           {pending ? "Signing..." : "Take the exit"}
@@ -210,7 +238,12 @@ function AcquisitionCard({
         <button
           type="button"
           disabled={pending}
-          onClick={() => startTransition(() => declineDecision(d.id))}
+          onClick={() =>
+            startTransition(async () => {
+              await declineDecision(d.id);
+              toast(`Held ${d.companyName} — passed on the offer`, "info");
+            })
+          }
           className={secondaryButton}
         >
           Hold
@@ -221,7 +254,7 @@ function AcquisitionCard({
 }
 
 function BridgeCard({ d }: { d: Extract<DecisionView, { type: "bridge" }> }) {
-  const [error, setError] = useState<FormState>(null);
+  const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   return (
@@ -247,7 +280,13 @@ function BridgeCard({ d }: { d: Extract<DecisionView, { type: "bridge" }> }) {
         <button
           type="button"
           disabled={pending}
-          onClick={() => startTransition(async () => setError(await fundBridge(d.id)))}
+          onClick={() =>
+            startTransition(async () => {
+              const res = await fundBridge(d.id);
+              if (res?.error) setError(res.error);
+              else toast(`Bridged ${d.companyName} — ${formatDollars(d.amount)}`);
+            })
+          }
           className={primaryButton}
         >
           {pending ? "Wiring..." : `Fund the bridge`}
@@ -255,15 +294,20 @@ function BridgeCard({ d }: { d: Extract<DecisionView, { type: "bridge" }> }) {
         <button
           type="button"
           disabled={pending}
-          onClick={() => startTransition(() => declineDecision(d.id))}
+          onClick={() =>
+            startTransition(async () => {
+              await declineDecision(d.id);
+              toast(`Refused the bridge for ${d.companyName}`, "info");
+            })
+          }
           className={secondaryButton}
         >
           Refuse
         </button>
       </div>
-      {error?.error && (
+      {error && (
         <p className="mt-2 text-xs text-rose-600 dark:text-rose-400" role="alert">
-          {error.error}
+          {error}
         </p>
       )}
     </div>
@@ -306,7 +350,12 @@ function TermSheetCard({ d }: { d: Extract<DecisionView, { type: "term_sheet" }>
         <button
           type="button"
           disabled={pending}
-          onClick={() => startTransition(() => resolveTermSheet(d.id, "top_tier"))}
+          onClick={() =>
+            startTransition(async () => {
+              await resolveTermSheet(d.id, "top_tier");
+              toast(`Advised ${d.companyName}: signed the top-tier lead`);
+            })
+          }
           className={primaryButton}
         >
           {pending ? "Advising..." : "🏦 Sign the top-tier lead"}
@@ -314,7 +363,12 @@ function TermSheetCard({ d }: { d: Extract<DecisionView, { type: "term_sheet" }>
         <button
           type="button"
           disabled={pending}
-          onClick={() => startTransition(() => resolveTermSheet(d.id, "high_price"))}
+          onClick={() =>
+            startTransition(async () => {
+              await resolveTermSheet(d.id, "high_price");
+              toast(`Advised ${d.companyName}: took the higher price`);
+            })
+          }
           className={secondaryButton}
         >
           🎈 Take the higher price
@@ -348,7 +402,12 @@ function PivotCard({ d }: { d: Extract<DecisionView, { type: "pivot" }> }) {
         <button
           type="button"
           disabled={pending}
-          onClick={() => startTransition(() => resolvePivot(d.id, "back"))}
+          onClick={() =>
+            startTransition(async () => {
+              await resolvePivot(d.id, "back");
+              toast(`Advised ${d.companyName}: backed the pivot`);
+            })
+          }
           className={primaryButton}
         >
           {pending ? "Advising..." : "🎲 Back the pivot"}
@@ -356,7 +415,12 @@ function PivotCard({ d }: { d: Extract<DecisionView, { type: "pivot" }> }) {
         <button
           type="button"
           disabled={pending}
-          onClick={() => startTransition(() => resolvePivot(d.id, "focus"))}
+          onClick={() =>
+            startTransition(async () => {
+              await resolvePivot(d.id, "focus");
+              toast(`Advised ${d.companyName}: urged focus`);
+            })
+          }
           className={secondaryButton}
         >
           🎯 Urge focus
