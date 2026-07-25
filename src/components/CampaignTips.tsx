@@ -16,16 +16,16 @@ const GROUPS: Group[] = [
     heading: "🃏 Reading the deals",
     tips: [
       {
-        lead: "Weigh the whole card, not its best line",
-        body: "Signals are deliberately noisy — the random swing on any company is bigger than any single clue is worth. Net the good against the bad instead of buying for one exciting bullet.",
+        lead: "Weigh the whole card",
+        body: "Noise outweighs any single signal. Net the good against the bad.",
       },
       {
-        lead: "Founder signals carry the most weight",
-        body: "A proven founding team is the strongest positive on the board; co-founders who disagree about direction are the strongest negative. Serial pivoting is close behind.",
+        lead: "Founders matter most",
+        body: "A proven team is the biggest plus; feuding co-founders the biggest minus.",
       },
       {
-        lead: "A pass is free — silence is not",
-        body: "Passing on a pitch costs you nothing. Letting it sit until the year rolls is recorded as ghosting the founder and costs reputation. Decide, don't drift.",
+        lead: "A pass is free, silence isn't",
+        body: "Letting a pitch expire costs reputation. Passing costs nothing.",
       },
     ],
   },
@@ -33,20 +33,20 @@ const GROUPS: Group[] = [
     heading: "💰 Pacing the fund",
     tips: [
       {
-        lead: `Budget across all ${INVESTMENT_PERIOD_YEARS} investing years`,
-        body: `You see about ${DEALS_PER_YEAR} pitches a year and none after year ${INVESTMENT_PERIOD_YEARS}. Spend everything early and you'll watch better companies go by with an empty chequebook.`,
+        lead: "Don't spend it all early",
+        body: `About ${DEALS_PER_YEAR} pitches a year, and none after year ${INVESTMENT_PERIOD_YEARS}.`,
       },
       {
-        lead: "Hold reserves for follow-ons",
-        body: "Your winners raise again, and defending your ownership costs more at every markup. Real funds keep roughly half their capital back for exactly this.",
+        lead: "Hold reserves",
+        body: "Defending your ownership costs more at every markup.",
       },
       {
-        lead: "Enough bets to catch an outlier",
-        body: "One or two companies is a coin flip. The whole fund usually comes from a single winner, so you need enough shots for one of them to be it.",
+        lead: "Take enough bets",
+        body: "One winner usually pays for the fund — you need shots at it.",
       },
       {
-        lead: "Dry powder is worth most in a downturn",
-        body: "Bear years price companies cheaply and bull years exit them richly. Capital left over when the market turns is an advantage, not a mistake.",
+        lead: "Dry powder wins downturns",
+        body: "Bear years price cheap; bull years exit rich.",
       },
     ],
   },
@@ -54,20 +54,20 @@ const GROUPS: Group[] = [
     heading: "⚡ Working your desk",
     tips: [
       {
-        lead: "Back the top-tier lead over the higher price",
-        body: "A strong lead investor improves the company's odds every year afterwards. The flattering valuation gives you a better paper mark today and a weaker company later.",
+        lead: "Top-tier lead beats a high price",
+        body: "A strong lead lifts the company's odds every year after.",
       },
       {
         lead: "Bridges cut both ways",
-        body: "Funding one meaningfully improves a struggling company's chances; refusing hurts it badly and dents your reputation. But bridging every casualty is how a fund bleeds out — pick the ones worth saving.",
+        body: "Refusing hurts them and you — but don't bridge every casualty.",
       },
       {
-        lead: "Backing a pivot is the high-variance play",
-        body: "It's a genuine reroll — it can go a little worse or a lot better. Urging focus is a small, safe nudge. On a company you can afford to lose, variance is your friend.",
+        lead: "Backing a pivot is the risky play",
+        body: "Urging focus is the small, safe nudge.",
       },
       {
-        lead: "Undo is available until you advance",
-        body: "A first check written this year can be reversed from the “Backed this year” strip, and the pitch goes back in the deck. Once the year rolls, it's permanent.",
+        lead: "Undo works until you advance",
+        body: "First checks are reversible from the “Backed this year” strip.",
       },
     ],
   },
@@ -76,11 +76,11 @@ const GROUPS: Group[] = [
     tips: [
       {
         lead: "Doubling your money is below median",
-        body: `You're scored on TVPI at year ${GAME_YEARS}: 2.5× is top quartile and 3.5× is top decile, but under 1× means you returned less than you deployed. LPs take this risk for outliers.`,
+        body: `2.5× is top quartile at year ${GAME_YEARS}; under 1× means you lost money.`,
       },
       {
-        lead: "Don't sell the company that pays for the fund",
-        body: "A 3× acquisition looks great next to a write-off and still loses you the run. Declined offers never come back — but neither does the outlier you cashed out early.",
+        lead: "Don't sell the fund-maker",
+        body: "A 3× exit still loses you the run.",
       },
     ],
   },
