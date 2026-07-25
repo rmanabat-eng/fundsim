@@ -429,7 +429,13 @@ export default async function PlayPage() {
     prisma.decision.findMany({
       // An exit freezes the cap table, so decisions about exited companies are moot.
       where: { status: "pending", company: { exitValue: null } },
-      include: { company: { include: { rounds: { orderBy: { date: "asc" } } } } },
+      include: {
+        company: {
+          // `deal` carries the original pitch signals, so a decision can show
+          // you what you liked about this company in the first place.
+          include: { rounds: { orderBy: { date: "asc" } }, deal: true },
+        },
+      },
     }),
   ]);
 
@@ -445,6 +451,10 @@ export default async function PlayPage() {
 
   const decisionViews: DecisionView[] = decisions.map((d) => {
     const rounds = d.company.rounds;
+    // The pitch signals, so a decision can remind you why you backed them.
+    const signals = d.company.deal
+      ? (JSON.parse(d.company.deal.signals) as string[])
+      : [];
     if (d.type === "pro_rata") {
       const payload = JSON.parse(d.payload) as ProRataPayload;
       const ownedNow = ownershipAfterRounds(rounds);
@@ -466,6 +476,7 @@ export default async function PlayPage() {
         ownedBefore,
         ownedNow,
         proRataCheck,
+        signals,
       };
     }
     if (d.type === "acquisition") {
@@ -478,6 +489,7 @@ export default async function PlayPage() {
         offerValue: payload.offerValue,
         yourShare: (ownershipAfterRounds(rounds) / 100) * payload.offerValue,
         invested: rounds.reduce((sum, r) => sum + r.yourCheck, 0),
+        signals,
       };
     }
     if (d.type === "term_sheet") {
@@ -496,6 +508,7 @@ export default async function PlayPage() {
         highPricePost: payload.highPricePost,
         ownedTopTier: dilute(payload.topTierPost),
         ownedHighPrice: dilute(payload.highPricePost),
+        signals,
       };
     }
     if (d.type === "pivot") {
@@ -504,9 +517,16 @@ export default async function PlayPage() {
         type: "pivot",
         companyId: d.companyId,
         companyName: d.company.name,
+        signals,
       };
     }
     const payload = JSON.parse(d.payload) as BridgePayload;
+    // You fund the whole bridge, so your stake is diluted by the new money and
+    // then topped back up by the slice that money buys.
+    const ownedNow = ownershipAfterRounds(rounds);
+    const ownedAfter =
+      (ownedNow * (payload.postMoney - payload.amount)) / payload.postMoney +
+      (payload.amount / payload.postMoney) * 100;
     return {
       id: d.id,
       type: "bridge",
@@ -514,6 +534,9 @@ export default async function PlayPage() {
       companyName: d.company.name,
       amount: payload.amount,
       postMoney: payload.postMoney,
+      ownedNow,
+      ownedAfter,
+      signals,
     };
   });
 

@@ -26,10 +26,16 @@ export default async function CompanyPage({
   const { id } = await params;
   const company = await prisma.company.findUnique({
     where: { id },
-    include: { rounds: { orderBy: { date: "asc" } } },
+    // `deal` is set for companies backed in campaign mode — it holds the
+    // signals from the pitch you originally bought.
+    include: { rounds: { orderBy: { date: "asc" } }, deal: true },
   });
 
   if (!company) notFound();
+
+  const pitchNotes: string[] = company.deal
+    ? (JSON.parse(company.deal.signals) as string[])
+    : [];
 
   const timeline = ownershipTimeline(company.rounds);
   const values = valueTimeline(company.rounds);
@@ -167,6 +173,26 @@ export default async function CompanyPage({
               }))}
             />
           </div>
+        )}
+
+        {pitchNotes.length > 0 && (
+          <section className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              🔎 Notes from the pitch
+            </h2>
+            <ul className="mt-3 space-y-1.5 text-sm text-slate-600 dark:text-slate-400">
+              {pitchNotes.map((s) => (
+                <li key={s} className="flex gap-2">
+                  <span aria-hidden>·</span>
+                  {s}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
+              What the deck said when you backed them. Some of it predicted how this
+              turned out; some of it was noise.
+            </p>
+          </section>
         )}
 
         <div className="mt-8 flex items-center justify-between">

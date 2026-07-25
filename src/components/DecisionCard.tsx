@@ -18,54 +18,50 @@ import { toast } from "@/components/toast";
 
 // Everything the card needs is computed server-side in the play page —
 // ownership math stays in one place (fund-math) and the card just renders.
+// Every decision carries the company's original pitch signals, so you can see
+// what you liked about them without leaving the page.
+type Common = {
+  id: string;
+  companyId: string;
+  companyName: string;
+  signals: string[];
+};
+
 export type DecisionView =
-  | {
-      id: string;
+  | (Common & {
       type: "pro_rata";
-      companyId: string;
-      companyName: string;
       stage: string;
       raised: number;
       postMoney: number;
       ownedBefore: number; // % before this round's dilution
       ownedNow: number; // % after it, with no check written
       proRataCheck: number; // the check that would defend ownedBefore
-    }
-  | {
-      id: string;
+    })
+  | (Common & {
       type: "acquisition";
-      companyId: string;
-      companyName: string;
       offerValue: number;
       yourShare: number; // ownership × offer
       invested: number; // total checks into this company so far
-    }
-  | {
-      id: string;
+    })
+  | (Common & {
       type: "bridge";
-      companyId: string;
-      companyName: string;
       amount: number;
       postMoney: number;
-    }
-  | {
-      id: string;
+      ownedNow: number; // % before the bridge
+      ownedAfter: number; // % if you fund the whole thing
+    })
+  | (Common & {
       type: "term_sheet";
-      companyId: string;
-      companyName: string;
       stage: string;
       raised: number;
       topTierPost: number;
       highPricePost: number;
       ownedTopTier: number; // your % after signing the top-tier sheet
       ownedHighPrice: number; // your % after signing the high-price sheet
-    }
-  | {
-      id: string;
+    })
+  | (Common & {
       type: "pivot";
-      companyId: string;
-      companyName: string;
-    };
+    });
 
 const cardClasses =
   "h-full rounded-2xl border-2 border-amber-400 bg-amber-50/70 p-5 shadow-[5px_5px_0_rgba(245,158,11,0.3)] dark:border-amber-600/70 dark:bg-amber-950/20 dark:shadow-[5px_5px_0_rgba(0,0,0,0.5)]";
@@ -83,14 +79,57 @@ function EventStamp({ label }: { label: string }) {
   );
 }
 
-function CompanyName({ id, name }: { id: string; name: string }) {
-  return (
+// The name links to the full company page; hovering (or tabbing to it) shows
+// the pitch notes without leaving the decision.
+function CompanyName({
+  id,
+  name,
+  signals,
+}: {
+  id: string;
+  name: string;
+  signals?: string[];
+}) {
+  const link = (
     <Link
       href={`/companies/${id}`}
       className="font-semibold text-slate-900 underline-offset-2 hover:underline dark:text-slate-100"
     >
       {name}
     </Link>
+  );
+  if (!signals?.length) return link;
+
+  return (
+    <span className="group/notes relative inline-block">
+      {link}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none invisible absolute left-0 top-full z-20 mt-1.5 w-64 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-normal text-slate-600 shadow-lg group-hover/notes:visible group-focus-within/notes:visible dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+      >
+        <span className="mb-1 block font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+          From the pitch
+        </span>
+        {signals.map((s) => (
+          <span key={s} className="block">
+            🔎 {s}
+          </span>
+        ))}
+      </span>
+    </span>
+  );
+}
+
+// A compact recap under the headline, so the notes are visible without hovering.
+function PitchNotes({ signals }: { signals: string[] }) {
+  if (!signals.length) return null;
+  return (
+    <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+      <span className="font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+        From the pitch:
+      </span>{" "}
+      {signals.join(" · ")}
+    </p>
   );
 }
 
@@ -129,10 +168,16 @@ function ProRataCard({ d }: { d: Extract<DecisionView, { type: "pro_rata" }> }) 
     <div className={cardClasses}>
       <EventStamp label="Follow-on" />
       <p className="text-sm text-slate-700 dark:text-slate-300">
-        📈 <CompanyName id={d.companyId} name={d.companyName} /> is raising a{" "}
-        {STAGE_LABELS[d.stage as keyof typeof STAGE_LABELS] ?? d.stage}:{" "}
+        📈{" "}
+        <CompanyName
+          id={d.companyId}
+          name={d.companyName}
+          signals={d.signals}
+        />{" "}
+        is raising a {STAGE_LABELS[d.stage as keyof typeof STAGE_LABELS] ?? d.stage}:{" "}
         {formatDollars(d.raised)} at a {formatDollars(d.postMoney)} post-money.
       </p>
+      <PitchNotes signals={d.signals} />
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
         Your {formatPercent(d.ownedBefore)} is being{" "}
         <Term def="New rounds create new shares, so everyone who doesn't buy in owns a smaller slice: your stake × (post-money − raised) ÷ post-money.">
@@ -144,6 +189,13 @@ function ProRataCard({ d }: { d: Extract<DecisionView, { type: "pro_rata" }> }) 
         </Term>{" "}
         costs about <strong>{formatDollars(d.proRataCheck)}</strong> — or sit out and
         keep the cash for other bets.
+      </p>
+      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+        At this price that stake is worth{" "}
+        <strong>{formatDollars((d.ownedNow / 100) * d.postMoney)}</strong> if you sit
+        out, vs{" "}
+        <strong>{formatDollars((d.ownedBefore / 100) * d.postMoney)}</strong> if you
+        defend it.
       </p>
       <form
         onSubmit={(e) => {
@@ -203,8 +255,12 @@ function AcquisitionCard({
       <EventStamp label="Exit offer" />
       <p className="text-sm text-slate-700 dark:text-slate-300">
         🤝 An acquirer is offering {formatDollars(d.offerValue)} for{" "}
-        <CompanyName id={d.companyId} name={d.companyName} />. Your stake would
-        return <strong>{formatDollars(d.yourShare)}</strong>
+        <CompanyName
+          id={d.companyId}
+          name={d.companyName}
+          signals={d.signals}
+        />
+        . Your stake would return <strong>{formatDollars(d.yourShare)}</strong>
         {d.invested > 0 && (
           <>
             {" "}
@@ -214,6 +270,7 @@ function AcquisitionCard({
         )}
         .
       </p>
+      <PitchNotes signals={d.signals} />
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
         Cash now, or hold for{" "}
         <Term def="In venture, a handful of huge winners return more than everything else combined. Selling a potential winner early caps the outcome that pays for the whole fund.">
@@ -261,8 +318,13 @@ function BridgeCard({ d }: { d: Extract<DecisionView, { type: "bridge" }> }) {
     <div className={cardClasses}>
       <EventStamp label="SOS" />
       <p className="text-sm text-slate-700 dark:text-slate-300">
-        🆘 <CompanyName id={d.companyId} name={d.companyName} /> is nearly out of
-        cash and asking you for a {formatDollars(d.amount)}{" "}
+        🆘{" "}
+        <CompanyName
+          id={d.companyId}
+          name={d.companyName}
+          signals={d.signals}
+        />{" "}
+        is nearly out of cash and asking you for a {formatDollars(d.amount)}{" "}
         <Term def="A small round at flat-to-down pricing meant to keep a struggling company alive until it can raise properly. Insiders fund it — or nobody does.">
           bridge
         </Term>{" "}
@@ -272,9 +334,15 @@ function BridgeCard({ d }: { d: Extract<DecisionView, { type: "bridge" }> }) {
         </Term>
         .
       </p>
+      <PitchNotes signals={d.signals} />
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
         Fund it and they get runway to recover. Refuse and they probably
         don&apos;t make it — but bridges to nowhere are how funds bleed out.
+      </p>
+      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+        You&apos;d be funding the whole round, taking your stake from{" "}
+        {formatPercent(d.ownedNow)} to <strong>{formatPercent(d.ownedAfter)}</strong> —
+        worth {formatDollars((d.ownedAfter / 100) * d.postMoney)} at this price.
       </p>
       <div className="mt-3 flex items-center gap-2">
         <button
@@ -321,11 +389,17 @@ function TermSheetCard({ d }: { d: Extract<DecisionView, { type: "term_sheet" }>
     <div className={cardClasses}>
       <EventStamp label="Term sheets" />
       <p className="text-sm text-slate-700 dark:text-slate-300">
-        🖊️ <CompanyName id={d.companyId} name={d.companyName} /> has two term sheets
-        for its {STAGE_LABELS[d.stage as keyof typeof STAGE_LABELS] ?? d.stage}, both
-        raising {formatDollars(d.raised)} — and the founder is asking you which to
-        sign.
+        🖊️{" "}
+        <CompanyName
+          id={d.companyId}
+          name={d.companyName}
+          signals={d.signals}
+        />{" "}
+        has two term sheets for its{" "}
+        {STAGE_LABELS[d.stage as keyof typeof STAGE_LABELS] ?? d.stage}, both raising{" "}
+        {formatDollars(d.raised)} — and the founder is asking you which to sign.
       </p>
+      <PitchNotes signals={d.signals} />
       <ul className="mt-2 space-y-1 text-sm text-slate-600 dark:text-slate-400">
         <li>
           🏦 A top-tier lead at a <strong>{formatDollars(d.topTierPost)}</strong>{" "}
@@ -386,13 +460,19 @@ function PivotCard({ d }: { d: Extract<DecisionView, { type: "pivot" }> }) {
       <EventStamp label="Crossroads" />
       <p className="text-sm text-slate-700 dark:text-slate-300">
         🧭 Growth has stalled at{" "}
-        <CompanyName id={d.companyId} name={d.companyName} />. The founder wants to{" "}
+        <CompanyName
+          id={d.companyId}
+          name={d.companyName}
+          signals={d.signals}
+        />
+        . The founder wants to{" "}
         <Term def="Change the product or market while keeping the team and the money already raised. Most pivots fizzle; a famous few (Slack, Instagram) found the real business.">
           pivot
         </Term>{" "}
         into an adjacent market and is asking for your blessing before betting the
         rest of the runway.
       </p>
+      <PitchNotes signals={d.signals} />
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
         Backing the pivot is a high-variance reroll of the company&apos;s odds.
         Urging focus is the safe, small win. Either answer beats silence — an
