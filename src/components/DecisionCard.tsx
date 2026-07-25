@@ -79,18 +79,8 @@ function EventStamp({ label }: { label: string }) {
   );
 }
 
-// The name links to the full company page; hovering (or tabbing to it) shows
-// the pitch notes without leaving the decision.
-function CompanyName({
-  id,
-  name,
-  signals,
-}: {
-  id: string;
-  name: string;
-  signals?: string[];
-}) {
-  const link = (
+function CompanyName({ id, name }: { id: string; name: string }) {
+  return (
     <Link
       href={`/companies/${id}`}
       className="font-semibold text-slate-900 underline-offset-2 hover:underline dark:text-slate-100"
@@ -98,29 +88,11 @@ function CompanyName({
       {name}
     </Link>
   );
-  if (!signals?.length) return link;
-
-  return (
-    <span className="group/notes relative inline-block">
-      {link}
-      <span
-        aria-hidden="true"
-        className="pointer-events-none invisible absolute left-0 top-full z-20 mt-1.5 w-64 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-normal text-slate-600 shadow-lg group-hover/notes:visible group-focus-within/notes:visible dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-      >
-        <span className="mb-1 block font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-          From the pitch
-        </span>
-        {signals.map((s) => (
-          <span key={s} className="block">
-            🔎 {s}
-          </span>
-        ))}
-      </span>
-    </span>
-  );
 }
 
-// A compact recap under the headline, so the notes are visible without hovering.
+// The pitch notes sit inline rather than behind a hover: they're input to the
+// decision you're making, and hover is unreachable on touch. Jargon (Term)
+// stays hidden — you only need that if you don't know the word.
 function PitchNotes({ signals }: { signals: string[] }) {
   if (!signals.length) return null;
   return (
@@ -169,11 +141,7 @@ function ProRataCard({ d }: { d: Extract<DecisionView, { type: "pro_rata" }> }) 
       <EventStamp label="Follow-on" />
       <p className="text-sm text-slate-700 dark:text-slate-300">
         📈{" "}
-        <CompanyName
-          id={d.companyId}
-          name={d.companyName}
-          signals={d.signals}
-        />{" "}
+        <CompanyName id={d.companyId} name={d.companyName} />{" "}
         is raising a {STAGE_LABELS[d.stage as keyof typeof STAGE_LABELS] ?? d.stage}:{" "}
         {formatDollars(d.raised)} at a {formatDollars(d.postMoney)} post-money.
       </p>
@@ -255,11 +223,7 @@ function AcquisitionCard({
       <EventStamp label="Exit offer" />
       <p className="text-sm text-slate-700 dark:text-slate-300">
         🤝 An acquirer is offering {formatDollars(d.offerValue)} for{" "}
-        <CompanyName
-          id={d.companyId}
-          name={d.companyName}
-          signals={d.signals}
-        />
+        <CompanyName id={d.companyId} name={d.companyName} />
         . Your stake would return <strong>{formatDollars(d.yourShare)}</strong>
         {d.invested > 0 && (
           <>
@@ -319,11 +283,7 @@ function BridgeCard({ d }: { d: Extract<DecisionView, { type: "bridge" }> }) {
       <EventStamp label="SOS" />
       <p className="text-sm text-slate-700 dark:text-slate-300">
         🆘{" "}
-        <CompanyName
-          id={d.companyId}
-          name={d.companyName}
-          signals={d.signals}
-        />{" "}
+        <CompanyName id={d.companyId} name={d.companyName} />{" "}
         is nearly out of cash and asking you for a {formatDollars(d.amount)}{" "}
         <Term def="A small round at flat-to-down pricing meant to keep a struggling company alive until it can raise properly. Insiders fund it — or nobody does.">
           bridge
@@ -390,11 +350,7 @@ function TermSheetCard({ d }: { d: Extract<DecisionView, { type: "term_sheet" }>
       <EventStamp label="Term sheets" />
       <p className="text-sm text-slate-700 dark:text-slate-300">
         🖊️{" "}
-        <CompanyName
-          id={d.companyId}
-          name={d.companyName}
-          signals={d.signals}
-        />{" "}
+        <CompanyName id={d.companyId} name={d.companyName} />{" "}
         has two term sheets for its{" "}
         {STAGE_LABELS[d.stage as keyof typeof STAGE_LABELS] ?? d.stage}, both raising{" "}
         {formatDollars(d.raised)} — and the founder is asking you which to sign.
@@ -460,11 +416,7 @@ function PivotCard({ d }: { d: Extract<DecisionView, { type: "pivot" }> }) {
       <EventStamp label="Crossroads" />
       <p className="text-sm text-slate-700 dark:text-slate-300">
         🧭 Growth has stalled at{" "}
-        <CompanyName
-          id={d.companyId}
-          name={d.companyName}
-          signals={d.signals}
-        />
+        <CompanyName id={d.companyId} name={d.companyName} />
         . The founder wants to{" "}
         <Term def="Change the product or market while keeping the team and the money already raised. Most pivots fizzle; a famous few (Slack, Instagram) found the real business.">
           pivot
