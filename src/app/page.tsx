@@ -176,28 +176,6 @@ export default async function Home() {
 
         <div className="mt-6 grid gap-6 sm:grid-cols-2">
           <Link
-            href="/dashboard"
-            className="group flex flex-col rounded-2xl border-2 border-slate-900/10 bg-white p-6 shadow-[6px_6px_0_rgba(15,23,42,0.12)] transition-transform motion-safe:hover:-translate-y-1 dark:border-white/10 dark:bg-slate-900 dark:shadow-[6px_6px_0_rgba(0,0,0,0.5)]"
-          >
-            <span aria-hidden className="text-4xl">
-              📊
-            </span>
-            <p className="mt-3 text-[10px] font-black uppercase tracking-[0.35em] text-slate-400 dark:text-slate-500">
-              Free play
-            </p>
-            <h3 className="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100">
-              Fund dashboard
-            </h3>
-            <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-              Build a portfolio by hand, simulate years, and watch the metrics — the
-              sandbox behind the campaign, plus your campaign portfolio in detail.
-            </p>
-            <span className="mt-4 text-sm font-bold text-indigo-600 group-hover:underline dark:text-indigo-400">
-              Open dashboard →
-            </span>
-          </Link>
-
-          <Link
             href="/guide"
             className="group flex flex-col rounded-2xl border-2 border-slate-900/10 bg-white p-6 shadow-[6px_6px_0_rgba(15,23,42,0.12)] transition-transform motion-safe:hover:-translate-y-1 dark:border-white/10 dark:bg-slate-900 dark:shadow-[6px_6px_0_rgba(0,0,0,0.5)]"
           >
@@ -217,6 +195,28 @@ export default async function Home() {
             </p>
             <span className="mt-4 text-sm font-bold text-indigo-600 group-hover:underline dark:text-indigo-400">
               Read the guide →
+            </span>
+          </Link>
+
+          <Link
+            href="/dashboard"
+            className="group flex flex-col rounded-2xl border-2 border-slate-900/10 bg-white p-6 shadow-[6px_6px_0_rgba(15,23,42,0.12)] transition-transform motion-safe:hover:-translate-y-1 dark:border-white/10 dark:bg-slate-900 dark:shadow-[6px_6px_0_rgba(0,0,0,0.5)]"
+          >
+            <span aria-hidden className="text-4xl">
+              📊
+            </span>
+            <p className="mt-3 text-[10px] font-black uppercase tracking-[0.35em] text-slate-400 dark:text-slate-500">
+              Free play
+            </p>
+            <h3 className="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100">
+              Fund dashboard
+            </h3>
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+              Build a portfolio by hand, simulate years, and watch the metrics — the
+              sandbox behind the campaign, plus your campaign portfolio in detail.
+            </p>
+            <span className="mt-4 text-sm font-bold text-indigo-600 group-hover:underline dark:text-indigo-400">
+              Open dashboard →
             </span>
           </Link>
         </div>
