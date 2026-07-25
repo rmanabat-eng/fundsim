@@ -92,20 +92,25 @@ const GROUPS: Group[] = [
 
 export function CampaignTips() {
   return (
-    <details className="group rounded-2xl border-2 border-slate-900/10 bg-white shadow-[4px_4px_0_rgba(15,23,42,0.1)] dark:border-white/10 dark:bg-slate-900 dark:shadow-[4px_4px_0_rgba(0,0,0,0.45)]">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl p-5 outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
-        <span className="text-sm font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
-          💡 Tips for playing
+    // Collapsed, this is just a small pill — a full-width bar left a long
+    // empty band across the top of the page.
+    <details className="group">
+      <summary className="inline-flex w-fit cursor-pointer select-none list-none items-center gap-2 rounded-xl border-2 border-amber-300 bg-amber-50 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-amber-900 shadow-[3px_3px_0_rgba(245,158,11,0.35)] outline-none transition-transform focus-visible:ring-2 focus-visible:ring-amber-500 motion-safe:hover:-translate-y-0.5 dark:border-amber-600/70 dark:bg-amber-950/40 dark:text-amber-200 dark:shadow-[3px_3px_0_rgba(0,0,0,0.45)] [&::-webkit-details-marker]:hidden">
+        <span aria-hidden className="text-sm">
+          💡
         </span>
-        <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
-          <span className="group-open:hidden">Show</span>
-          <span className="hidden group-open:inline">Hide</span>
+        Tips for playing
+        <span
+          aria-hidden
+          className="text-[10px] transition-transform group-open:rotate-180"
+        >
+          ▼
         </span>
       </summary>
 
       {/* Each group gets its own box: uneven tip counts would otherwise leave
           ragged gaps where a short section meets a tall one in the grid. */}
-      <div className="grid gap-4 border-t border-slate-100 p-5 dark:border-slate-800 sm:grid-cols-2">
+      <div className="mt-3 grid gap-4 rounded-2xl border-2 border-slate-900/10 bg-white p-5 shadow-[4px_4px_0_rgba(15,23,42,0.1)] dark:border-white/10 dark:bg-slate-900 dark:shadow-[4px_4px_0_rgba(0,0,0,0.45)] sm:grid-cols-2">
         {GROUPS.map((g) => (
           <section
             key={g.heading}
