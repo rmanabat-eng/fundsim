@@ -25,6 +25,7 @@ import { AdvanceYearButton } from "@/components/AdvanceYearButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Toaster } from "@/components/toast";
 import { UndoInvestmentButton } from "@/components/UndoInvestmentButton";
+import { CampaignTutorial } from "@/components/CampaignTutorial";
 import type {
   AcquisitionPayload,
   BridgePayload,
@@ -518,7 +519,7 @@ export default async function PlayPage() {
   return (
     <Shell year={game.year} market={game.market as Market}>
       {/* Year lives in the header pips now, so the HUD is all fund health. */}
-      <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3">
+      <div data-tour="hud" className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3">
         <Stat
           icon="💰"
           label="Dry powder"
@@ -645,6 +646,9 @@ export default async function PlayPage() {
           </div>
         )}
       </section>
+
+      {/* First-run coach marks, year 1 only. */}
+      {game.year === 1 && <CampaignTutorial />}
     </Shell>
   );
 }
@@ -670,6 +674,7 @@ const STARS = [
 function YearPips({ year }: { year: number }) {
   return (
     <div
+      data-tour="year-pips"
       className="flex flex-wrap items-center gap-1.5"
       role="img"
       aria-label={`Year ${year} of ${GAME_YEARS}`}
@@ -749,7 +754,7 @@ function Shell({
                 href="/"
                 className="text-xs font-bold uppercase tracking-widest text-white/60 hover:text-white"
               >
-                ← Portfolio
+                ← Home
               </Link>
               <p className="mt-2 text-[10px] font-black uppercase tracking-[0.35em] text-fuchsia-300">
                 FundSim presents
@@ -760,6 +765,7 @@ function Shell({
               <p className="mt-1 text-sm text-white/80">
                 {market !== null && year !== null ? (
                   <span
+                    data-tour="market"
                     className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold ${MARKET_CHIP_STYLES[market]}`}
                   >
                     {MARKET_LABELS[market]}

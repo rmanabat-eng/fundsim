@@ -99,7 +99,10 @@ export function DealCard({ deal }: { deal: DealView }) {
           .
         </p>
 
-        <ul className="mt-3 space-y-1.5 text-sm text-slate-600 dark:text-slate-400">
+        <ul
+          data-tour="deal-signals"
+          className="mt-3 space-y-1.5 text-sm text-slate-600 dark:text-slate-400"
+        >
           {deal.signals.map((s) => (
             <li key={s} className="flex gap-2">
               <span aria-hidden>🔎</span>
@@ -115,29 +118,31 @@ export function DealCard({ deal }: { deal: DealView }) {
           }}
           className="mt-auto flex flex-col gap-2 border-t border-slate-100 pt-4 dark:border-slate-800"
         >
-          <div className="flex items-baseline justify-between text-sm">
-            <span className="text-slate-500 dark:text-slate-400">Your check</span>
-            <span className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
-              {formatDollars(check)}{" "}
-              <span className="font-normal text-slate-500 dark:text-slate-400">
-                · {ownership.toFixed(2)}%
+          <div data-tour="deal-check" className="flex flex-col gap-2">
+            <div className="flex items-baseline justify-between text-sm">
+              <span className="text-slate-500 dark:text-slate-400">Your check</span>
+              <span className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+                {formatDollars(check)}{" "}
+                <span className="font-normal text-slate-500 dark:text-slate-400">
+                  · {ownership.toFixed(2)}%
+                </span>
               </span>
-            </span>
-          </div>
-          <input
-            name="check"
-            type="range"
-            min={CHECK_STEP}
-            max={deal.raised}
-            step={CHECK_STEP}
-            value={check}
-            onChange={(e) => setCheck(Number(e.target.value))}
-            className="w-full accent-indigo-600"
-            aria-label="Check size"
-          />
-          <div className="flex justify-between text-xs text-slate-400 dark:text-slate-500">
-            <span>{formatDollars(CHECK_STEP)}</span>
-            <span>{formatDollars(deal.raised)} (lead it)</span>
+            </div>
+            <input
+              name="check"
+              type="range"
+              min={CHECK_STEP}
+              max={deal.raised}
+              step={CHECK_STEP}
+              value={check}
+              onChange={(e) => setCheck(Number(e.target.value))}
+              className="w-full accent-indigo-600"
+              aria-label="Check size"
+            />
+            <div className="flex justify-between text-xs text-slate-400 dark:text-slate-500">
+              <span>{formatDollars(CHECK_STEP)}</span>
+              <span>{formatDollars(deal.raised)} (lead it)</span>
+            </div>
           </div>
           <div className="mt-1 flex items-center gap-2">
             <button

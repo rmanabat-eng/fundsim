@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 // A tiny toast system. The store lives at module scope so a toast fired from a
 // card that's about to unmount (its deal/decision leaves the list on the next
@@ -11,11 +11,22 @@ export type ToastTone = "success" | "info" | "error";
 type Toast = { id: number; message: string; tone: ToastTone };
 
 let toasts: Toast[] = [];
-const listeners = new Set<(t: Toast[]) => void>();
+const listeners = new Set<() => void>();
 let nextId = 1;
 
+// Reassigned (never mutated) on every change, so the reference doubles as the
+// store's version for useSyncExternalStore.
+const EMPTY: Toast[] = [];
+
 function emit() {
-  for (const listener of listeners) listener(toasts);
+  for (const listener of listeners) listener();
+}
+
+function subscribe(onChange: () => void) {
+  listeners.add(onChange);
+  return () => {
+    listeners.delete(onChange);
+  };
 }
 
 function dismiss(id: number) {
@@ -44,15 +55,13 @@ const toneIcon: Record<ToastTone, string> = {
 };
 
 export function Toaster() {
-  const [items, setItems] = useState<Toast[]>([]);
-
-  useEffect(() => {
-    listeners.add(setItems);
-    setItems(toasts); // catch anything queued before mount
-    return () => {
-      listeners.delete(setItems);
-    };
-  }, []);
+  // Subscribing to the module store (rather than mirroring it into state)
+  // picks up anything queued before mount without a setState-in-effect.
+  const items = useSyncExternalStore(
+    subscribe,
+    () => toasts,
+    () => EMPTY
+  );
 
   return (
     <div
