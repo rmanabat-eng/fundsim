@@ -88,7 +88,7 @@ const GROUPS: Group[] = [
 
 export function CampaignTips() {
   return (
-    <details className="group mt-8 rounded-2xl border-2 border-slate-900/10 bg-white shadow-[4px_4px_0_rgba(15,23,42,0.1)] dark:border-white/10 dark:bg-slate-900 dark:shadow-[4px_4px_0_rgba(0,0,0,0.45)]">
+    <details className="group rounded-2xl border-2 border-slate-900/10 bg-white shadow-[4px_4px_0_rgba(15,23,42,0.1)] dark:border-white/10 dark:bg-slate-900 dark:shadow-[4px_4px_0_rgba(0,0,0,0.45)]">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl p-5 outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
         <span className="text-sm font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
           💡 Tips for playing

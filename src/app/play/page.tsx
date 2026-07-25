@@ -519,6 +519,8 @@ export default async function PlayPage() {
 
   return (
     <Shell year={game.year} market={game.market as Market}>
+      <CampaignTips />
+
       {/* Year lives in the header pips now, so the HUD is all fund health. */}
       <div data-tour="hud" className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3">
         <Stat
@@ -647,8 +649,6 @@ export default async function PlayPage() {
           </div>
         )}
       </section>
-
-      <CampaignTips />
 
       {/* First-run coach marks, year 1 only. */}
       {game.year === 1 && <CampaignTutorial />}
