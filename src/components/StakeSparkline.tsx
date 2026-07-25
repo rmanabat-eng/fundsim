@@ -47,9 +47,10 @@ export function StakeSparkline({
           className="fill-violet-600 stroke-white dark:fill-violet-500 dark:stroke-slate-900"
           strokeWidth={1.5}
         >
-          <title>
-            {formatDate(p.date)}: {formatDollars(p.value)}
-          </title>
+          {/* One template-string child, not `{a}: {b}` — React's server
+              renderer drops <title> children when they arrive as an array of
+              more than one node, so the split form hydrates as a mismatch. */}
+          <title>{`${formatDate(p.date)}: ${formatDollars(p.value)}`}</title>
         </circle>
       ))}
     </svg>
