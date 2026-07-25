@@ -604,7 +604,10 @@ export default async function PlayPage() {
       <section className="mt-8">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-sm font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
-            🃏 This year&apos;s deal flow
+            🃏 This year&apos;s deal flow{" "}
+            <span className="text-slate-400 dark:text-slate-500">
+              (Year {game.year})
+            </span>
           </h2>
           <AdvanceYearButton
             year={game.year}
@@ -697,7 +700,7 @@ function YearPips({ year }: { year: number }) {
           />
         );
       })}
-      <span className="ml-2 text-[10px] font-black uppercase tracking-widest text-white/70">
+      <span className="ml-2 text-sm font-black uppercase tracking-widest text-white/90">
         Year {year}/{GAME_YEARS}
       </span>
     </div>
