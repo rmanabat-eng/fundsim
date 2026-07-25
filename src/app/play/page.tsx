@@ -26,6 +26,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Toaster } from "@/components/toast";
 import { UndoInvestmentButton } from "@/components/UndoInvestmentButton";
 import { CampaignTutorial } from "@/components/CampaignTutorial";
+import { CampaignTips } from "@/components/CampaignTips";
 import type {
   AcquisitionPayload,
   BridgePayload,
@@ -646,6 +647,8 @@ export default async function PlayPage() {
           </div>
         )}
       </section>
+
+      <CampaignTips />
 
       {/* First-run coach marks, year 1 only. */}
       {game.year === 1 && <CampaignTutorial />}
