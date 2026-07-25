@@ -3,8 +3,7 @@
 import { useState, useTransition } from "react";
 import { investInDeal, passDeal } from "@/app/play/actions";
 import { formatDollars } from "@/lib/fund-math";
-import { STAGE_LABELS } from "@/lib/constants";
-import { STAGE_STYLES } from "@/lib/badges";
+import { StageBadge } from "@/components/StageBadge";
 import { Term } from "@/components/Term";
 import { toast } from "@/components/toast";
 
@@ -87,12 +86,8 @@ export function DealCard({ deal }: { deal: DealView }) {
 
       <div className="flex flex-1 flex-col p-5">
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          <span
-            className={`mr-1 rounded px-1.5 py-0.5 text-xs font-bold ring-1 ring-inset ${STAGE_STYLES[deal.stage] ?? ""}`}
-          >
-            {STAGE_LABELS[deal.stage as keyof typeof STAGE_LABELS] ?? deal.stage}
-          </span>
-          raising {formatDollars(deal.raised)} at a {formatDollars(deal.postMoney)}{" "}
+          <StageBadge stage={deal.stage} /> raising {formatDollars(deal.raised)} at a{" "}
+          {formatDollars(deal.postMoney)}{" "}
           <Term def="The company's valuation with the new money already counted in. Your ownership is simply your check ÷ post-money.">
             post-money
           </Term>

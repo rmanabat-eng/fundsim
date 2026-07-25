@@ -11,7 +11,7 @@ import {
   resolveTermSheet,
 } from "@/app/play/actions";
 import { formatDollars, formatPercent } from "@/lib/fund-math";
-import { STAGE_LABELS } from "@/lib/constants";
+import { StageBadge } from "@/components/StageBadge";
 import { inputClasses } from "@/components/RoundFields";
 import { Term } from "@/components/Term";
 import { toast } from "@/components/toast";
@@ -170,8 +170,8 @@ function ProRataCard({ d }: { d: Extract<DecisionView, { type: "pro_rata" }> }) 
     <DecisionShell stamp="Follow-on">
       <p className="text-sm text-slate-700 dark:text-slate-300">
         📈 <CompanyName id={d.companyId} name={d.companyName} /> is raising a{" "}
-        {STAGE_LABELS[d.stage as keyof typeof STAGE_LABELS] ?? d.stage}:{" "}
-        {formatDollars(d.raised)} at a {formatDollars(d.postMoney)} post-money.
+        <StageBadge stage={d.stage} />: {formatDollars(d.raised)} at a{" "}
+        {formatDollars(d.postMoney)} post-money.
       </p>
 
       <PitchNotes signals={d.signals} />
@@ -423,9 +423,8 @@ function TermSheetCard({ d }: { d: Extract<DecisionView, { type: "term_sheet" }>
     <DecisionShell stamp="Term sheets">
       <p className="text-sm text-slate-700 dark:text-slate-300">
         🖊️ <CompanyName id={d.companyId} name={d.companyName} /> has two term sheets
-        for its {STAGE_LABELS[d.stage as keyof typeof STAGE_LABELS] ?? d.stage}, both
-        raising {formatDollars(d.raised)} — and the founder is asking you which to
-        sign.
+        for its <StageBadge stage={d.stage} />, both raising{" "}
+        {formatDollars(d.raised)} — and the founder is asking you which to sign.
       </p>
 
       <PitchNotes signals={d.signals} />
