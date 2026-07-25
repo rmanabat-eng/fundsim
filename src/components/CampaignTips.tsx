@@ -82,6 +82,10 @@ const GROUPS: Group[] = [
         lead: "Don't sell the fund-maker",
         body: "A 3× exit still loses you the run.",
       },
+      {
+        lead: "One run is one sample",
+        body: "There's a lot of luck in a single fund. Replay to see the pattern.",
+      },
     ],
   },
 ];
@@ -99,13 +103,18 @@ export function CampaignTips() {
         </span>
       </summary>
 
-      <div className="grid gap-6 border-t border-slate-100 p-5 dark:border-slate-800 sm:grid-cols-2">
+      {/* Each group gets its own box: uneven tip counts would otherwise leave
+          ragged gaps where a short section meets a tall one in the grid. */}
+      <div className="grid gap-4 border-t border-slate-100 p-5 dark:border-slate-800 sm:grid-cols-2">
         {GROUPS.map((g) => (
-          <section key={g.heading}>
+          <section
+            key={g.heading}
+            className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700/60 dark:bg-slate-800/40"
+          >
             <h3 className="text-xs font-black uppercase tracking-widest text-slate-900 dark:text-slate-100">
               {g.heading}
             </h3>
-            <ul className="mt-2 space-y-2.5">
+            <ul className="mt-3 space-y-2.5">
               {g.tips.map((t) => (
                 <li key={t.lead} className="text-sm leading-relaxed">
                   <span className="font-semibold text-slate-800 dark:text-slate-200">
