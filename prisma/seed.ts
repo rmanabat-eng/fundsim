@@ -9,7 +9,12 @@ const adapter = new PrismaBetterSqlite3({
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  // Full reset, not just the portfolio: a leftover Game row would leave the app
+  // resuming a campaign whose companies this seed just deleted. Companies go
+  // first because Company.dealId points at Deal (Decisions cascade with them).
   await prisma.company.deleteMany();
+  await prisma.deal.deleteMany();
+  await prisma.game.deleteMany();
 
   // AquaFlow shows dilution: a seed check, then a Series A the fund sat out,
   // then a Series B where it wrote a follow-on check.
