@@ -10,6 +10,7 @@ import {
   maybeTermSheet,
   pivotOutcome,
   PIVOT_BACKED_MAX,
+  campaignLog,
   PIVOT_BACKED_MIN,
   reputation,
   rollMarket,
@@ -239,5 +240,61 @@ describe("pivotOutcome", () => {
       sum += delta;
     }
     expect(sum / n).toBeGreaterThan(0); // expected value ≈ +0.15
+  });
+});
+
+describe("campaignLog", () => {
+  const START = "2026-01-01";
+  // Year 1 = 2026, year 2 = 2027, year 3 = 2028.
+  const company = (
+    name: string,
+    roundDates: string[],
+    exitValue: number | null = null,
+    exitDate: string | null = null
+  ) => ({
+    name,
+    exitValue,
+    exitDate,
+    rounds: roundDates.map((d) => ({ date: d })),
+  });
+
+  it("files the first round as backed and later rounds as raised", () => {
+    const log = campaignLog(
+      [company("Acme", ["2026-03-01", "2027-06-01"])],
+      START,
+      3
+    );
+    expect(log[0].backed).toEqual(["Acme"]);
+    expect(log[0].raised).toEqual([]);
+    expect(log[1].backed).toEqual([]);
+    expect(log[1].raised).toEqual(["Acme"]);
+    expect(log[2].backed).toEqual([]);
+  });
+
+  it("separates exits from write-offs by exit value", () => {
+    const log = campaignLog(
+      [
+        company("Winner", ["2026-03-01"], 30_000_000, "2028-02-01"),
+        company("Dud", ["2026-04-01"], 0, "2027-05-01"),
+      ],
+      START,
+      3
+    );
+    expect(log[1].writtenOff).toEqual(["Dud"]);
+    expect(log[1].exited).toEqual([]);
+    expect(log[2].exited).toEqual([{ name: "Winner", value: 30_000_000 }]);
+    expect(log[2].writtenOff).toEqual([]);
+  });
+
+  it("ignores companies that are still active", () => {
+    const log = campaignLog([company("Alive", ["2026-03-01"])], START, 2);
+    expect(log.every((e) => e.exited.length === 0 && e.writtenOff.length === 0)).toBe(
+      true
+    );
+  });
+
+  it("returns one entry per year up to the year asked for", () => {
+    const log = campaignLog([], START, 4);
+    expect(log.map((e) => e.year)).toEqual([1, 2, 3, 4]);
   });
 });

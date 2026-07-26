@@ -383,3 +383,69 @@ export function gradeFund(tvpi: number | null): FundGrade {
     tone: "great",
   };
 }
+
+// ---- The year-by-year log ----
+// Derived from the portfolio rather than stored: every event already leaves a
+// dated trace (a round's date, an exit's date), so replaying them by year
+// window can't drift out of sync with the actual data.
+
+export type LogCompany = {
+  name: string;
+  exitValue: number | null;
+  exitDate: Date | string | null;
+  rounds: { date: Date | string }[];
+};
+
+export type CampaignLogEntry = {
+  year: number;
+  backed: string[]; // first checks you wrote this year
+  raised: string[]; // portfolio companies that raised again
+  exited: { name: string; value: number }[];
+  writtenOff: string[];
+};
+
+function inWindow(date: Date | string, w: { start: Date; end: Date }): boolean {
+  const t = new Date(date).getTime();
+  return t >= w.start.getTime() && t < w.end.getTime();
+}
+
+export function campaignLog(
+  companies: LogCompany[],
+  startedAt: Date | string,
+  throughYear: number
+): CampaignLogEntry[] {
+  const entries: CampaignLogEntry[] = [];
+
+  for (let year = 1; year <= throughYear; year++) {
+    const w = yearWindow(startedAt, year);
+    const entry: CampaignLogEntry = {
+      year,
+      backed: [],
+      raised: [],
+      exited: [],
+      writtenOff: [],
+    };
+
+    for (const c of companies) {
+      const sorted = [...c.rounds].sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+      sorted.forEach((r, i) => {
+        if (!inWindow(r.date, w)) return;
+        // The first round is the check that got you in; later ones are the
+        // company raising again.
+        if (i === 0) entry.backed.push(c.name);
+        else entry.raised.push(c.name);
+      });
+
+      if (c.exitValue !== null && c.exitDate && inWindow(c.exitDate, w)) {
+        if (c.exitValue === 0) entry.writtenOff.push(c.name);
+        else entry.exited.push({ name: c.name, value: c.exitValue });
+      }
+    }
+
+    entries.push(entry);
+  }
+
+  return entries;
+}

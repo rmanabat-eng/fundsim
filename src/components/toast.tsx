@@ -38,7 +38,7 @@ export function toast(message: string, tone: ToastTone = "success") {
   const id = nextId++;
   toasts = [...toasts, { id, message, tone }];
   emit();
-  setTimeout(() => dismiss(id), 3500);
+  setTimeout(() => dismiss(id), 5000);
 }
 
 const toneStyles: Record<ToastTone, string> = {
@@ -72,15 +72,17 @@ export function Toaster() {
       {items.map((t) => (
         <div
           key={t.id}
-          className={`toast-in pointer-events-auto flex w-full max-w-sm items-start gap-2 rounded-xl border-2 bg-white px-4 py-3 text-sm font-medium shadow-lg dark:bg-slate-900 ${toneStyles[t.tone]}`}
+          className={`toast-in pointer-events-auto flex w-full max-w-lg items-center gap-3 rounded-2xl border-2 bg-white px-5 py-4 text-base font-semibold shadow-2xl dark:bg-slate-900 ${toneStyles[t.tone]}`}
         >
-          <span aria-hidden>{toneIcon[t.tone]}</span>
-          <span className="flex-1">{t.message}</span>
+          <span aria-hidden className="text-2xl">
+            {toneIcon[t.tone]}
+          </span>
+          <span className="flex-1 leading-snug">{t.message}</span>
           <button
             type="button"
             onClick={() => dismiss(t.id)}
             aria-label="Dismiss"
-            className="shrink-0 rounded text-slate-400 outline-none hover:text-slate-600 focus-visible:ring-2 focus-visible:ring-indigo-400 dark:hover:text-slate-200"
+            className="shrink-0 rounded-lg px-2 py-1 text-lg text-slate-400 outline-none hover:text-slate-600 focus-visible:ring-2 focus-visible:ring-indigo-400 dark:hover:text-slate-200"
           >
             ✕
           </button>

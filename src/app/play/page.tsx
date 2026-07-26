@@ -14,6 +14,7 @@ import {
   GAME_YEARS,
   INVESTMENT_PERIOD_YEARS,
   MARKET_LABELS,
+  campaignLog,
   gradeFund,
   reputation,
   type Market,
@@ -27,6 +28,10 @@ import { Toaster } from "@/components/toast";
 import { UndoInvestmentButton } from "@/components/UndoInvestmentButton";
 import { CampaignTutorial } from "@/components/CampaignTutorial";
 import { CampaignTips } from "@/components/CampaignTips";
+import { CampaignLog } from "@/components/CampaignLog";
+import { PortfolioPanel } from "@/components/PortfolioPanel";
+import { SaveScenarioForm } from "@/components/SaveScenarioForm";
+import { toCompanyRows, toChartPoints } from "@/lib/portfolio-view";
 import type {
   AcquisitionPayload,
   BridgePayload,
@@ -254,8 +259,10 @@ export default async function PlayPage() {
       })
       .filter((p) => p.invested > 0)
       .sort((a, b) => b.value - a.value);
-    const writeOffs = companies.filter((c) => c.exitValue === 0).length;
+    const deadCompanies = companies.filter((c) => c.exitValue === 0);
+    const writeOffs = deadCompanies.length;
     const medals = ["🥇", "🥈", "🥉"];
+    const finalLog = campaignLog(companies, game.startedAt, GAME_YEARS);
 
     return (
       <Shell year={null} market={null}>
@@ -389,16 +396,65 @@ export default async function PlayPage() {
               ))}
             </ul>
             <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
-              {writeOffs > 0 && (
-                <>
-                  {writeOffs} {writeOffs === 1 ? "company" : "companies"}{" "}
-                  went to zero — that&apos;s venture.{" "}
-                </>
-              )}
               Companies still active at close are marked at their last round.
             </p>
           </section>
         )}
+
+        {deadCompanies.length > 0 && (
+          <section className="mt-8">
+            <h3 className="text-sm font-black uppercase tracking-widest text-rose-600 dark:text-rose-400">
+              💀 The graveyard — {writeOffs}{" "}
+              {writeOffs === 1 ? "company" : "companies"} went to zero
+            </h3>
+            <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+              {deadCompanies.map((c) => {
+                const sunk = c.rounds.reduce((sum, r) => sum + r.yourCheck, 0);
+                return (
+                  <li
+                    key={c.id}
+                    className="flex items-center justify-between gap-3 rounded-2xl border-2 border-rose-300 bg-rose-50 px-4 py-3 text-sm dark:border-rose-800 dark:bg-rose-950/30"
+                  >
+                    <Link
+                      href={`/companies/${c.id}`}
+                      className="font-bold text-slate-900 underline-offset-2 hover:underline dark:text-slate-100"
+                    >
+                      {c.name}
+                    </Link>
+                    <span className="text-rose-700 dark:text-rose-300">
+                      −{formatDollars(sunk)}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
+              That&apos;s venture — roughly a third of a portfolio going to zero is
+              normal. The winners are supposed to pay for them.
+            </p>
+          </section>
+        )}
+
+        <PortfolioPanel
+          rows={toCompanyRows(companies)}
+          points={toChartPoints(companies)}
+          open
+        />
+
+        <CampaignLog entries={finalLog} />
+
+        <section className="mt-8 rounded-2xl border-2 border-slate-900/10 bg-white p-5 shadow-[4px_4px_0_rgba(15,23,42,0.1)] dark:border-white/10 dark:bg-slate-900 dark:shadow-[4px_4px_0_rgba(0,0,0,0.45)]">
+          <h3 className="text-sm font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+            💾 Save this run
+          </h3>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            Keep this fund as a scenario so you can compare it against your next
+            one — starting a new fund clears the portfolio.
+          </p>
+          <div className="mt-3">
+            <SaveScenarioForm />
+          </div>
+        </section>
 
         <div className="mt-8 flex justify-center">
           <StartCampaignButton label="🔁 Start a new fund" hasPortfolio />
@@ -642,7 +698,8 @@ export default async function PlayPage() {
           <p className="mt-4 rounded-2xl border-2 border-dashed border-slate-300 p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
             {game.year > INVESTMENT_PERIOD_YEARS ? (
               <>
-                🔒 The investment period ended after year {INVESTMENT_PERIOD_YEARS} —
+                🔒 The investment period ended after year {INVESTMENT_PERIOD_YEARS}
+                {" — "}
                 no new pitches. From here it&apos;s portfolio management: pro-ratas,
                 bridges, founder calls, and exits. Check the{" "}
                 <Link href="/" className="underline">
@@ -675,6 +732,13 @@ export default async function PlayPage() {
           </div>
         )}
       </section>
+
+      <PortfolioPanel
+        rows={toCompanyRows(companies)}
+        points={toChartPoints(companies)}
+      />
+
+      <CampaignLog entries={campaignLog(companies, game.startedAt, game.year)} />
 
       {/* First-run coach marks, year 1 only. */}
       {game.year === 1 && <CampaignTutorial />}

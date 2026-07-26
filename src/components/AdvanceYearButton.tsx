@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { advanceYear, type YearSummary } from "@/app/play/actions";
 import { GAME_YEARS, MARKET_LABELS } from "@/lib/campaign";
 import { formatDollars } from "@/lib/fund-math";
+import { toast } from "@/components/toast";
 
 // The turn crank. Warns about what's still on the table — advancing expires
 // every open deal and pending decision, and that pressure is the point.
@@ -30,7 +31,15 @@ export function AdvanceYearButton({
   function run() {
     setConfirming(false);
     startTransition(async () => {
-      setSummary(await advanceYear());
+      const result = await advanceYear();
+      setSummary(result);
+      // Deaths are easy to miss in a wall of results, so they also get a toast.
+      if (result && result.writtenOff > 0) {
+        toast(
+          `${result.writtenOff} ${result.writtenOff === 1 ? "company" : "companies"} went bankrupt this year`,
+          "error"
+        );
+      }
     });
   }
 
@@ -72,17 +81,42 @@ export function AdvanceYearButton({
         </button>
       )}
       {summary && !pending && !summary.closed && (
-        <p className="max-w-md text-right text-xs text-slate-500 dark:text-slate-400">
-          {MARKET_LABELS[summary.market]}. This year:{" "}
-          <strong>{summary.raised}</strong> raised, <strong>{summary.exited}</strong>{" "}
-          exited
-          {summary.distributions > 0 && <> ({formatDollars(summary.distributions)} back)</>}
-          , <strong>{summary.writtenOff}</strong> shut down,{" "}
-          <strong>{summary.quiet}</strong> quiet.
-          {summary.expiredDeals + summary.expiredDecisions > 0 && (
-            <> {summary.expiredDeals + summary.expiredDecisions} expired unanswered.</>
+        <div
+          role="status"
+          className="w-full max-w-md rounded-2xl border-2 border-slate-900/10 bg-white p-4 text-left shadow-[4px_4px_0_rgba(15,23,42,0.1)] dark:border-white/10 dark:bg-slate-900 dark:shadow-[4px_4px_0_rgba(0,0,0,0.45)]"
+        >
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+            Year {summary.year} results
+          </p>
+          <p className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-200">
+            {MARKET_LABELS[summary.market]}
+          </p>
+
+          {/* A company dying is the thing you most need to notice. */}
+          {summary.writtenOff > 0 && (
+            <p className="mt-2 rounded-lg border-2 border-rose-400 bg-rose-50 px-3 py-2 text-sm font-bold text-rose-700 dark:border-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
+              💀 {summary.writtenOff}{" "}
+              {summary.writtenOff === 1 ? "company" : "companies"} went bankrupt this
+              year
+            </p>
           )}
-        </p>
+
+          <ul className="mt-2 space-y-0.5 text-sm text-slate-600 dark:text-slate-400">
+            <li>📈 {summary.raised} raised again</li>
+            <li>
+              🏆 {summary.exited} exited
+              {summary.distributions > 0 && (
+                <> — {formatDollars(summary.distributions)} back to the fund</>
+              )}
+            </li>
+            <li>😴 {summary.quiet} had a quiet year</li>
+            {summary.expiredDeals + summary.expiredDecisions > 0 && (
+              <li className="text-amber-600 dark:text-amber-500">
+                ⌛ {summary.expiredDeals + summary.expiredDecisions} expired unanswered
+              </li>
+            )}
+          </ul>
+        </div>
       )}
     </div>
   );
