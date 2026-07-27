@@ -743,19 +743,19 @@ export default async function PlayPage() {
       )}
 
       <section className="mt-8">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-sm font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
-            🃏 This year&apos;s deal flow{" "}
-            <span className="text-slate-400 dark:text-slate-500">
-              (Year {game.year})
-            </span>
-          </h2>
-          <AdvanceYearButton
-            year={game.year}
-            openDeals={dealViews.length}
-            pendingDecisions={decisionViews.length}
-          />
-        </div>
+        <AdvanceYearButton
+          year={game.year}
+          openDeals={dealViews.length}
+          pendingDecisions={decisionViews.length}
+          heading={
+            <h2 className="text-sm font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+              🃏 This year&apos;s deal flow{" "}
+              <span className="text-slate-400 dark:text-slate-500">
+                (Year {game.year})
+              </span>
+            </h2>
+          }
+        />
         {dealViews.length === 0 ? (
           <p className="mt-4 rounded-2xl border-2 border-dashed border-slate-300 p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
             {game.year > INVESTMENT_PERIOD_YEARS ? (

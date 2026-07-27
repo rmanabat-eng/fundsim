@@ -12,10 +12,12 @@ export function AdvanceYearButton({
   year,
   openDeals,
   pendingDecisions,
+  heading,
 }: {
   year: number;
   openDeals: number;
   pendingDecisions: number;
+  heading?: React.ReactNode; // sits in the same row as the button
 }) {
   const [confirming, setConfirming] = useState(false);
   const [summary, setSummary] = useState<YearSummary | null>(null);
@@ -44,64 +46,76 @@ export function AdvanceYearButton({
   }
 
   return (
-    <div className="flex flex-col items-end gap-2">
-      {confirming ? (
-        <span className="flex flex-wrap items-center justify-end gap-2 text-sm text-slate-600 dark:text-slate-400">
-          {leftovers.length > 0
-            ? `${leftovers.join(" and ")} will expire — unanswered bridges count as refusals.`
-            : closing
-              ? "Close the fund and see your final grade?"
-              : "Roll a year of events across the portfolio?"}
-          <button
-            onClick={run}
-            className="font-medium text-violet-600 hover:underline dark:text-violet-400"
-          >
-            Confirm
-          </button>
-          <button
-            onClick={() => setConfirming(false)}
-            className="font-medium text-slate-600 hover:underline dark:text-slate-400"
-          >
-            Cancel
-          </button>
-        </span>
-      ) : (
-        <button
-          type="button"
-          data-tour="advance-year"
-          onClick={() => setConfirming(true)}
-          disabled={pending}
-          className="btn-arcade rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-2.5 text-sm font-black uppercase tracking-wide text-white disabled:opacity-50"
-        >
-          {pending
-            ? "Rolling..."
-            : closing
-              ? "🏁 Close the fund"
-              : `⏩ Advance to year ${year + 1}`}
-        </button>
-      )}
+    // The component owns the whole row — the heading included — so the year's
+    // results can sit full width underneath instead of being squeezed into a
+    // column beside it.
+    <div className="w-full">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {heading}
+        <div className="ml-auto">
+          {confirming ? (
+            <span className="flex flex-wrap items-center justify-end gap-2 text-sm text-slate-600 dark:text-slate-400">
+              {leftovers.length > 0
+                ? `${leftovers.join(" and ")} will expire — unanswered bridges count as refusals.`
+                : closing
+                  ? "Close the fund and see your final grade?"
+                  : "Roll a year of events across the portfolio?"}
+              <button
+                onClick={run}
+                className="font-medium text-violet-600 hover:underline dark:text-violet-400"
+              >
+                Confirm
+              </button>
+              <button
+                onClick={() => setConfirming(false)}
+                className="font-medium text-slate-600 hover:underline dark:text-slate-400"
+              >
+                Cancel
+              </button>
+            </span>
+          ) : (
+            <button
+              type="button"
+              data-tour="advance-year"
+              onClick={() => setConfirming(true)}
+              disabled={pending}
+              className="btn-arcade rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-2.5 text-sm font-black uppercase tracking-wide text-white disabled:opacity-50"
+            >
+              {pending
+                ? "Rolling..."
+                : closing
+                  ? "🏁 Close the fund"
+                  : `⏩ Advance to year ${year + 1}`}
+            </button>
+          )}
+        </div>
+      </div>
+
       {summary && !pending && !summary.closed && (
         <div
           role="status"
-          className="w-full max-w-md rounded-2xl border-2 border-slate-900/10 bg-white p-4 text-left shadow-[4px_4px_0_rgba(15,23,42,0.1)] dark:border-white/10 dark:bg-slate-900 dark:shadow-[4px_4px_0_rgba(0,0,0,0.45)]"
+          className="mt-4 w-full rounded-2xl border-2 border-slate-900/10 bg-white p-4 text-left shadow-[4px_4px_0_rgba(15,23,42,0.1)] dark:border-white/10 dark:bg-slate-900 dark:shadow-[4px_4px_0_rgba(0,0,0,0.45)]"
         >
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
-            Year {summary.year} results
-          </p>
-          <p className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-200">
-            {MARKET_LABELS[summary.market]}
-          </p>
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+              Year {summary.year} results
+            </p>
+            <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+              {MARKET_LABELS[summary.market]}
+            </p>
+          </div>
 
           {/* A company dying is the thing you most need to notice. */}
           {summary.writtenOff > 0 && (
-            <p className="mt-2 rounded-lg border-2 border-rose-400 bg-rose-50 px-3 py-2 text-sm font-bold text-rose-700 dark:border-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
+            <p className="mt-3 rounded-lg border-2 border-rose-400 bg-rose-50 px-3 py-2 text-sm font-bold text-rose-700 dark:border-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
               💀 {summary.writtenOff}{" "}
               {summary.writtenOff === 1 ? "company" : "companies"} went bankrupt this
               year
             </p>
           )}
 
-          <ul className="mt-2 space-y-0.5 text-sm text-slate-600 dark:text-slate-400">
+          {/* Spread across the width rather than stacking in a narrow column. */}
+          <ul className="mt-3 grid gap-x-6 gap-y-1 text-sm text-slate-600 dark:text-slate-400 sm:grid-cols-2">
             <li>📈 {summary.raised} raised again</li>
             <li>
               🏆 {summary.exited} exited
