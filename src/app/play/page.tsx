@@ -194,10 +194,13 @@ export default async function PlayPage() {
           <div aria-hidden className="game-float text-6xl">
             🚀
           </div>
-          <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">
+          <h2 className="mt-3 text-balance text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">
             Run a {formatDollars(settings.fundSize)} fund for {GAME_YEARS} years.
           </h2>
-          <div className="mt-6 grid gap-3 text-left sm:grid-cols-2">
+          {/* Columns, not a grid: grid rows stretch every box to the tallest in
+              the row, which left the short ones half empty. Flowing them lets
+              each box end where its text does. */}
+          <div className="mt-6 columns-1 gap-3 text-left sm:columns-2">
             {[
               {
                 icon: "🃏",
@@ -222,7 +225,7 @@ export default async function PlayPage() {
             ].map((f, i) => (
               <div
                 key={f.icon}
-                className="game-deal-in flex gap-3 rounded-2xl border-2 border-slate-900/10 bg-slate-50 p-4 dark:border-white/10 dark:bg-slate-800/60"
+                className="game-deal-in mb-3 flex break-inside-avoid gap-3 rounded-2xl border-2 border-slate-900/10 bg-slate-50 p-4 dark:border-white/10 dark:bg-slate-800/60"
                 style={{ animationDelay: `${i * 90}ms` }}
               >
                 <span aria-hidden className="text-2xl">
