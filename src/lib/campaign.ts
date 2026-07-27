@@ -267,6 +267,121 @@ export function pivotOutcome(): number {
   return PIVOT_BACKED_MIN + Math.random() * (PIVOT_BACKED_MAX - PIVOT_BACKED_MIN);
 }
 
+// ---- Exit routes ----
+// A company that has grown into real options doesn't just get bought: it can
+// go public, sell itself, or let you take money off the table while it carries
+// on. The lesson is liquidity vs. upside — and that certainty has a price.
+
+const EXIT_ROUTE_CHANCE = 0.16;
+const EXIT_ROUTE_MIN_POST = 40_000_000; // only grown-up companies have choices
+export const SECONDARY_DISCOUNT = 0.75; // buyers of your stake want a bargain
+
+export type ExitRoutePayload = {
+  stage: string;
+  postMoney: number;
+  ipoHigh: number; // if the window is open
+  ipoLow: number; // if it prices badly
+  ipoPullChance: number; // odds the offering is shelved entirely
+  acquisitionOffer: number; // certain, today
+  secondaryValuation: number; // implied price for your stake alone
+  date: string;
+};
+
+export function maybeExitRoute(
+  company: SimCompanyState,
+  market: Market,
+  window: { start: Date; end: Date }
+): ExitRoutePayload | null {
+  if (company.postMoney < EXIT_ROUTE_MIN_POST) return null;
+  if (Math.random() >= EXIT_ROUTE_CHANCE) return null;
+
+  const scale = market === "bull" ? 1.35 : market === "bear" ? 0.7 : 1;
+  const post = company.postMoney;
+  return {
+    stage: company.stage,
+    postMoney: post,
+    ipoHigh: roundTo500k(post * 3.2 * scale),
+    ipoLow: roundTo500k(post * 0.9 * scale),
+    ipoPullChance: market === "bear" ? 0.4 : market === "bull" ? 0.1 : 0.22,
+    acquisitionOffer: roundTo500k(post * (1.6 + Math.random() * 0.6) * scale),
+    secondaryValuation: roundTo500k(post * SECONDARY_DISCOUNT),
+    date: dateInWindow(window, company.lastDate),
+  };
+}
+
+export type IpoResult = { pulled: boolean; valuation: number };
+
+// The IPO is the only route whose outcome isn't known when you choose it.
+export function ipoResult(payload: ExitRoutePayload): IpoResult {
+  if (Math.random() < payload.ipoPullChance) return { pulled: true, valuation: 0 };
+  return {
+    pulled: false,
+    valuation: payload.ipoLow + Math.random() * (payload.ipoHigh - payload.ipoLow),
+  };
+}
+
+// ---- Replacing the founder-CEO ----
+// The board wants a professional operator. It usually does steady the company
+// — and it costs you with every founder who hears about it.
+
+const CEO_REPLACEMENT_CHANCE = 0.12;
+export const CEO_REPLACED_QUALITY_BOOST = 0.18;
+export const CEO_KEPT_MIN = -0.08;
+export const CEO_KEPT_MAX = 0.22;
+
+export function maybeCeoReplacement(): boolean {
+  return Math.random() < CEO_REPLACEMENT_CHANCE;
+}
+
+// Standing by the founder is the higher-variance answer.
+export function founderKeptOutcome(): number {
+  return CEO_KEPT_MIN + Math.random() * (CEO_KEPT_MAX - CEO_KEPT_MIN);
+}
+
+// ---- Pay-to-play ----
+// In a hard down round the insiders write a rule: participate pro-rata or your
+// preferred converts to common. This model has no preference stack, so a
+// non-participant is instead recapped at a punishing price — same lesson, which
+// is that sitting out a pay-to-play is how a stake gets wiped out.
+
+const PAY_TO_PLAY_CHANCE = 0.55; // of the down rounds that qualify
+export const PAY_TO_PLAY_RECAP_FACTOR = 0.3;
+
+export type PayToPlayPayload = {
+  stage: string;
+  raised: number;
+  postMoney: number;
+  requiredCheck: number; // your pro-rata share of the round
+  recapPostMoney: number; // the price your stake converts at if you sit out
+  date: string;
+};
+
+export function maybePayToPlay(
+  round: { stage: string; raised: number; postMoney: number; date: string },
+  previousPostMoney: number,
+  ownershipPct: number
+): PayToPlayPayload | null {
+  if (round.postMoney >= previousPostMoney) return null; // only down rounds
+  if (Math.random() >= PAY_TO_PLAY_CHANCE) return null;
+
+  const requiredCheck = clamp(
+    Math.round(((ownershipPct / 100) * round.raised) / 25_000) * 25_000,
+    25_000,
+    round.raised
+  );
+  return {
+    stage: round.stage,
+    raised: round.raised,
+    postMoney: round.postMoney,
+    requiredCheck,
+    recapPostMoney: Math.max(
+      roundTo500k(round.postMoney * PAY_TO_PLAY_RECAP_FACTOR),
+      round.raised + 500_000
+    ),
+    date: round.date,
+  };
+}
+
 export type ReputationCounts = {
   bridgesFunded: number; // showed up when a founder was drowning
   bridgesRefused: number; // said no — a real answer, founders can live with it
@@ -274,6 +389,7 @@ export type ReputationCounts = {
   adviceGiven: number; // term sheets and pivots you weighed in on
   decisionsExpired: number; // ghosted a founder waiting on you
   dealsExpired: number; // pitches that never got a yes or a no
+  foundersOusted: number; // voted a founder out of their own company
 };
 
 export type Reputation = {
@@ -294,7 +410,10 @@ export function reputation(c: ReputationCounts): Reputation {
       3 * c.adviceGiven -
       2 * c.bridgesRefused -
       10 * c.decisionsExpired -
-      4 * c.dealsExpired,
+      4 * c.dealsExpired -
+      // Ousting a founder is the efficient call and the expensive one: it
+      // travels further in founder circles than any single no.
+      12 * c.foundersOusted,
     0,
     100
   );

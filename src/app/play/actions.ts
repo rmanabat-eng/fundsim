@@ -5,10 +5,11 @@ import { prisma } from "@/lib/prisma";
 import { STAGES } from "@/lib/constants";
 import { getSettings } from "@/lib/settings";
 import { rollYearEvent } from "@/lib/simulate";
-import { exitProceeds, formatDollars } from "@/lib/fund-math";
+import { exitProceeds, formatDollars, ownershipAfterRounds } from "@/lib/fund-math";
 import {
   BRIDGE_FUNDED_QUALITY_BOOST,
   BRIDGE_REFUSED_QUALITY_HIT,
+  CEO_REPLACED_QUALITY_BOOST,
   DEALS_PER_YEAR,
   GAME_YEARS,
   INVESTMENT_PERIOD_YEARS,
@@ -19,14 +20,21 @@ import {
   campaignOdds,
   dateInWindow,
   generateDeal,
+  founderKeptOutcome,
+  ipoResult,
   maybeAcquisitionOffer,
   maybeBridgeRequest,
+  maybeCeoReplacement,
+  maybeExitRoute,
+  maybePayToPlay,
   maybePivotRequest,
   maybeTermSheet,
   pivotOutcome,
   rollMarket,
   yearWindow,
+  type ExitRoutePayload,
   type Market,
+  type PayToPlayPayload,
 } from "@/lib/campaign";
 
 export type FormState = { error: string } | null;
@@ -55,6 +63,10 @@ export type TermSheetPayload = {
 };
 // A pivot request carries no numbers — the whole decision is a judgment call.
 export type PivotPayload = Record<string, never>;
+// Nor does the board's move on a founder-CEO.
+export type CeoReplacementPayload = Record<string, never>;
+// ExitRoutePayload and PayToPlayPayload live in @/lib/campaign — a "use server"
+// module can only export async functions, so they aren't re-exported here.
 
 async function deployed(): Promise<number> {
   const rounds = await prisma.round.findMany({ select: { yourCheck: true } });
@@ -388,6 +400,147 @@ export async function resolvePivot(decisionId: string, choice: "back" | "focus")
   revalidatePath("/");
 }
 
+// ---- Exit route: go public, sell the company, or sell your stake ----
+// Any of them closes your position. An IPO or sale exits the company outright;
+// a secondary sells only your slice — the company carries on without you, which
+// this model records the same way, since it only ever tracks your position.
+export async function resolveExitRoute(
+  decisionId: string,
+  choice: "ipo" | "acquire" | "secondary"
+): Promise<FormState> {
+  const decision = await prisma.decision.findUnique({
+    where: { id: decisionId },
+    include: { company: true },
+  });
+  if (!decision || decision.status !== "pending" || decision.type !== "exit_route")
+    return { error: "This decision is gone." };
+  if (decision.company.exitValue !== null)
+    return { error: "This company has exited — its cap table is frozen." };
+  const payload: ExitRoutePayload = JSON.parse(decision.payload);
+
+  let exitValue: number;
+  if (choice === "ipo") {
+    const result = ipoResult(payload);
+    if (result.pulled) {
+      // The window shut before it priced. No exit, and the scramble leaves a mark.
+      await prisma.company.update({
+        where: { id: decision.companyId },
+        data: { quality: clampQuality(decision.company.quality - 0.1) },
+      });
+      await prisma.decision.update({
+        where: { id: decisionId },
+        data: { status: "resolved" },
+      });
+      revalidatePath("/play");
+      revalidatePath("/");
+      return { error: "The IPO was pulled — the window shut before it priced." };
+    }
+    exitValue = Math.round(result.valuation);
+  } else if (choice === "acquire") {
+    exitValue = payload.acquisitionOffer;
+  } else {
+    exitValue = payload.secondaryValuation;
+  }
+
+  await prisma.company.update({
+    where: { id: decision.companyId },
+    data: { exitValue, exitDate: new Date(payload.date) },
+  });
+  await prisma.decision.update({
+    where: { id: decisionId },
+    data: { status: "resolved" },
+  });
+  // The position is closed, so anything else pending on this company is moot.
+  await prisma.decision.updateMany({
+    where: { companyId: decision.companyId, status: "pending" },
+    data: { status: "moot" },
+  });
+  revalidatePath("/play");
+  revalidatePath("/");
+  return null;
+}
+
+// ---- Replacing the founder-CEO ----
+// The operator steadies the company; backing the founder is the higher-variance
+// answer. Only one of them costs you with founders.
+export async function resolveCeoReplacement(
+  decisionId: string,
+  choice: "replace" | "keep"
+) {
+  const decision = await prisma.decision.findUnique({
+    where: { id: decisionId },
+    include: { company: true },
+  });
+  if (
+    !decision ||
+    decision.status !== "pending" ||
+    decision.type !== "ceo_replacement"
+  )
+    return;
+  if (decision.company.exitValue !== null) return;
+
+  await prisma.company.update({
+    where: { id: decision.companyId },
+    data: {
+      quality: clampQuality(
+        decision.company.quality +
+          (choice === "replace" ? CEO_REPLACED_QUALITY_BOOST : founderKeptOutcome())
+      ),
+    },
+  });
+  // "ousted" is its own status so reputation can price it apart from simply
+  // having answered the founder.
+  await prisma.decision.update({
+    where: { id: decisionId },
+    data: { status: choice === "replace" ? "ousted" : "resolved" },
+  });
+  revalidatePath("/play");
+  revalidatePath("/");
+}
+
+// ---- Pay-to-play ----
+// Participate and you take the down round like everyone else. Sit out and your
+// stake converts at a punishing recap price — this model's stand-in for
+// preferred converting to common.
+export async function resolvePayToPlay(
+  decisionId: string,
+  choice: "pay" | "decline"
+): Promise<FormState> {
+  const decision = await prisma.decision.findUnique({
+    where: { id: decisionId },
+    include: { company: true },
+  });
+  if (!decision || decision.status !== "pending" || decision.type !== "pay_to_play")
+    return { error: "This decision is gone." };
+  if (decision.company.exitValue !== null)
+    return { error: "This company has exited — its cap table is frozen." };
+  const payload: PayToPlayPayload = JSON.parse(decision.payload);
+
+  if (choice === "pay") {
+    const remaining = await remainingCapital();
+    if (payload.requiredCheck > remaining)
+      return { error: `Only ${formatDollars(remaining)} left to deploy.` };
+  }
+
+  await prisma.round.create({
+    data: {
+      companyId: decision.companyId,
+      stage: payload.stage as (typeof STAGES)[number],
+      date: new Date(payload.date),
+      raised: payload.raised,
+      postMoney: choice === "pay" ? payload.postMoney : payload.recapPostMoney,
+      yourCheck: choice === "pay" ? payload.requiredCheck : 0,
+    },
+  });
+  await prisma.decision.update({
+    where: { id: decisionId },
+    data: { status: choice === "pay" ? "resolved" : "declined" },
+  });
+  revalidatePath("/play");
+  revalidatePath("/");
+  return null;
+}
+
 export type YearSummary = {
   year: number; // the year just entered (or GAME_YEARS+... when closed)
   market: Market;
@@ -529,6 +682,25 @@ export async function advanceYear(): Promise<YearSummary | null> {
         summary.newDecisions++;
         continue; // nothing is signed yet — no round, no offers
       }
+      // A hard down round is where insiders impose pay-to-play. The round
+      // isn't booked yet — its terms depend on whether you participate.
+      const payToPlay = maybePayToPlay(
+        event,
+        latest.postMoney,
+        ownershipAfterRounds(company.rounds)
+      );
+      if (payToPlay) {
+        await prisma.decision.create({
+          data: {
+            year,
+            type: "pay_to_play",
+            companyId: company.id,
+            payload: JSON.stringify(payToPlay satisfies PayToPlayPayload),
+          },
+        });
+        summary.newDecisions++;
+        continue;
+      }
       const round = await prisma.round.create({
         data: {
           companyId: company.id,
@@ -595,17 +767,46 @@ export async function advanceYear(): Promise<YearSummary | null> {
         summary.newDecisions++;
         continue; // a founder mid-soul-search isn't fielding acquirers either
       }
+      // A stalled year is also when a board starts asking whether the founder
+      // is still the right CEO.
+      if (maybeCeoReplacement()) {
+        await prisma.decision.create({
+          data: {
+            year,
+            type: "ceo_replacement",
+            companyId: company.id,
+            payload: JSON.stringify({} satisfies CeoReplacementPayload),
+          },
+        });
+        summary.newDecisions++;
+        continue; // a company mid-succession isn't fielding acquirers either
+      }
     }
 
     // Anchor any offer to the latest state — including a round created just
     // above — so the offer prices off (and postdates) the newest round.
-    const offer = maybeAcquisitionOffer(
+    const anchored =
       event.kind === "round"
         ? { stage: event.stage, postMoney: event.postMoney, lastDate: event.date }
-        : state,
-      market,
-      window
-    );
+        : state;
+
+    // A company that has grown up doesn't just get bought — it can go public,
+    // sell, or let you take money off the table. That supersedes a plain offer.
+    const route = maybeExitRoute(anchored, market, window);
+    if (route) {
+      await prisma.decision.create({
+        data: {
+          year,
+          type: "exit_route",
+          companyId: company.id,
+          payload: JSON.stringify(route satisfies ExitRoutePayload),
+        },
+      });
+      summary.newDecisions++;
+      continue;
+    }
+
+    const offer = maybeAcquisitionOffer(anchored, market, window);
     if (offer) {
       await prisma.decision.create({
         data: {

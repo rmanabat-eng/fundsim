@@ -7,6 +7,9 @@ import {
   declineDecision,
   fundBridge,
   fundProRata,
+  resolveCeoReplacement,
+  resolveExitRoute,
+  resolvePayToPlay,
   resolvePivot,
   resolveTermSheet,
 } from "@/app/play/actions";
@@ -61,6 +64,30 @@ export type DecisionView =
     })
   | (Common & {
       type: "pivot";
+    })
+  | (Common & {
+      type: "exit_route";
+      stage: string;
+      postMoney: number;
+      ipoLow: number;
+      ipoHigh: number;
+      ipoPullChance: number;
+      acquisitionOffer: number;
+      secondaryValuation: number;
+      owned: number; // your % — every route pays out on this
+    })
+  | (Common & {
+      type: "ceo_replacement";
+    })
+  | (Common & {
+      type: "pay_to_play";
+      stage: string;
+      raised: number;
+      postMoney: number;
+      requiredCheck: number;
+      ownedNow: number; // % before the round
+      ownedIfPay: number; // % if you participate
+      ownedIfDecline: number; // % after converting at the recap price
     });
 
 const cardClasses =
@@ -553,10 +580,253 @@ function PivotCard({ d }: { d: Extract<DecisionView, { type: "pivot" }> }) {
   );
 }
 
+function ExitRouteCard({ d }: { d: Extract<DecisionView, { type: "exit_route" }> }) {
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const share = (valuation: number) => (d.owned / 100) * valuation;
+
+  function choose(choice: "ipo" | "acquire" | "secondary", label: string) {
+    setError(null);
+    startTransition(async () => {
+      const res = await resolveExitRoute(d.id, choice);
+      if (res?.error) setError(res.error);
+      else toast(`${d.companyName}: ${label}`);
+    });
+  }
+
+  return (
+    <DecisionShell stamp="Exit strategy">
+      <p className="text-sm text-slate-700 dark:text-slate-300">
+        🚪 <CompanyName id={d.companyId} name={d.companyName} /> has grown into real
+        options and the board wants your vote on how to get liquid. It last priced
+        at {formatDollars(d.postMoney)}.
+      </p>
+
+      <PitchNotes signals={d.signals} />
+
+      <div className="grid gap-2 text-sm sm:grid-cols-3">
+        <div className="rounded-lg bg-white/70 px-3 py-2 dark:bg-black/20">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+            🔔 IPO
+          </p>
+          <p className="mt-0.5 font-bold text-slate-900 dark:text-slate-100">
+            {formatDollars(share(d.ipoLow))}–{formatDollars(share(d.ipoHigh))}
+          </p>
+          <p className="text-xs text-rose-600 dark:text-rose-400">
+            {Math.round(d.ipoPullChance * 100)}% chance it&apos;s pulled
+          </p>
+        </div>
+        <div className="rounded-lg bg-white/70 px-3 py-2 dark:bg-black/20">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+            🤝 Sell the company
+          </p>
+          <p className="mt-0.5 font-bold text-slate-900 dark:text-slate-100">
+            {formatDollars(share(d.acquisitionOffer))}
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">certain, today</p>
+        </div>
+        <div className="rounded-lg bg-white/70 px-3 py-2 dark:bg-black/20">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+            💵 Sell your stake
+          </p>
+          <p className="mt-0.5 font-bold text-slate-900 dark:text-slate-100">
+            {formatDollars(share(d.secondaryValuation))}
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            at a discount
+          </p>
+        </div>
+      </div>
+
+      <p className="text-sm text-slate-600 dark:text-slate-400">
+        The IPO has the highest ceiling and can still be shelved.{" "}
+        <Term def="Selling your position to another investor rather than waiting for the company to exit. You get cash now; the company carries on without you — and buyers of a private stake expect a discount for the trouble.">
+          A secondary
+        </Term>{" "}
+        takes the risk off your books without forcing a sale.
+      </p>
+
+      <DecisionActions>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => choose("ipo", "filed to go public")}
+          className={primaryButton}
+        >
+          {pending ? "Working..." : "🔔 Go public"}
+        </button>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => choose("acquire", "sold to an acquirer")}
+          className={secondaryButton}
+        >
+          🤝 Sell the company
+        </button>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => choose("secondary", "you sold your stake")}
+          className={secondaryButton}
+        >
+          💵 Sell your stake
+        </button>
+      </DecisionActions>
+      {error && (
+        <p className="text-xs text-rose-600 dark:text-rose-400" role="alert">
+          {error}
+        </p>
+      )}
+    </DecisionShell>
+  );
+}
+
+function CeoReplacementCard({
+  d,
+}: {
+  d: Extract<DecisionView, { type: "ceo_replacement" }>;
+}) {
+  const [pending, startTransition] = useTransition();
+
+  return (
+    <DecisionShell stamp="Board vote">
+      <p className="text-sm text-slate-700 dark:text-slate-300">
+        🪑 The board at <CompanyName id={d.companyId} name={d.companyName} /> wants
+        to replace the founder-CEO with a professional operator, and your vote
+        decides it.
+      </p>
+
+      <PitchNotes signals={d.signals} />
+
+      <p className="text-sm text-slate-600 dark:text-slate-400">
+        An experienced operator usually steadies a company — and founders talk.
+        Ousting one costs you more standing than any single no, and the reputation
+        you spend here is the deal flow you see later.
+      </p>
+
+      <DecisionActions>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() =>
+            startTransition(async () => {
+              await resolveCeoReplacement(d.id, "replace");
+              toast(`Voted out the founder of ${d.companyName}`, "error");
+            })
+          }
+          className={primaryButton}
+        >
+          {pending ? "Voting..." : "🪑 Bring in an operator"}
+        </button>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() =>
+            startTransition(async () => {
+              await resolveCeoReplacement(d.id, "keep");
+              toast(`Backed the founder at ${d.companyName}`);
+            })
+          }
+          className={secondaryButton}
+        >
+          🤝 Back the founder
+        </button>
+      </DecisionActions>
+    </DecisionShell>
+  );
+}
+
+function PayToPlayCard({ d }: { d: Extract<DecisionView, { type: "pay_to_play" }> }) {
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function choose(choice: "pay" | "decline", label: string) {
+    setError(null);
+    startTransition(async () => {
+      const res = await resolvePayToPlay(d.id, choice);
+      if (res?.error) setError(res.error);
+      else toast(`${d.companyName}: ${label}`, choice === "pay" ? "success" : "info");
+    });
+  }
+
+  return (
+    <DecisionShell stamp="Pay-to-play">
+      <p className="text-sm text-slate-700 dark:text-slate-300">
+        ⚖️ <CompanyName id={d.companyId} name={d.companyName} /> is raising a down
+        round — <StageBadge stage={d.stage} /> {formatDollars(d.raised)} at{" "}
+        {formatDollars(d.postMoney)} — and the insiders have imposed{" "}
+        <Term def="A down-round rule: existing investors must put in their full share or their preferred shares convert to common, losing their protections. It's designed to force insiders to keep funding the company.">
+          pay-to-play
+        </Term>
+        . Write your share or your stake converts.
+      </p>
+
+      <PitchNotes signals={d.signals} />
+
+      <div className="grid grid-cols-2 gap-2 text-sm">
+        <div className="rounded-lg bg-white/70 px-3 py-2 dark:bg-black/20">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+            Pay your share
+          </p>
+          <p className="mt-0.5 font-bold text-slate-900 dark:text-slate-100">
+            {formatPercent(d.ownedIfPay)}
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            costs {formatDollars(d.requiredCheck)}
+          </p>
+        </div>
+        <div className="rounded-lg bg-white/70 px-3 py-2 dark:bg-black/20">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+            Sit it out
+          </p>
+          <p className="mt-0.5 font-bold text-rose-600 dark:text-rose-400">
+            {formatPercent(d.ownedIfDecline)}
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            converted, costs nothing
+          </p>
+        </div>
+      </div>
+
+      <p className="text-sm text-slate-600 dark:text-slate-400">
+        You hold {formatPercent(d.ownedNow)} today. Good money after bad is a real
+        risk — but this is the rule that wipes out investors who stop showing up.
+      </p>
+
+      <DecisionActions>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => choose("pay", "you paid to play")}
+          className={primaryButton}
+        >
+          {pending ? "Wiring..." : "⚖️ Pay your share"}
+        </button>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => choose("decline", "you sat out the recap")}
+          className={secondaryButton}
+        >
+          Sit it out
+        </button>
+      </DecisionActions>
+      {error && (
+        <p className="text-xs text-rose-600 dark:text-rose-400" role="alert">
+          {error}
+        </p>
+      )}
+    </DecisionShell>
+  );
+}
+
 export function DecisionCard({ decision }: { decision: DecisionView }) {
   if (decision.type === "pro_rata") return <ProRataCard d={decision} />;
   if (decision.type === "acquisition") return <AcquisitionCard d={decision} />;
   if (decision.type === "term_sheet") return <TermSheetCard d={decision} />;
   if (decision.type === "pivot") return <PivotCard d={decision} />;
+  if (decision.type === "exit_route") return <ExitRouteCard d={decision} />;
+  if (decision.type === "ceo_replacement") return <CeoReplacementCard d={decision} />;
+  if (decision.type === "pay_to_play") return <PayToPlayCard d={decision} />;
   return <BridgeCard d={decision} />;
 }

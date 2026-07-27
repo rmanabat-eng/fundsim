@@ -15,6 +15,14 @@ import {
   reputation,
   rollMarket,
   yearWindow,
+  CEO_KEPT_MAX,
+  CEO_KEPT_MIN,
+  PAY_TO_PLAY_RECAP_FACTOR,
+  SECONDARY_DISCOUNT,
+  founderKeptOutcome,
+  ipoResult,
+  maybeExitRoute,
+  maybePayToPlay,
 } from "./campaign";
 
 const weightOf = new Map(SIGNALS.map((s) => [s.text, s.weight]));
@@ -159,6 +167,7 @@ describe("reputation", () => {
     adviceGiven: 0,
     decisionsExpired: 0,
     dealsExpired: 0,
+    foundersOusted: 0,
   };
 
   it("starts neutral when nothing founder-facing ever happened", () => {
@@ -296,5 +305,157 @@ describe("campaignLog", () => {
   it("returns one entry per year up to the year asked for", () => {
     const log = campaignLog([], START, 4);
     expect(log.map((e) => e.year)).toEqual([1, 2, 3, 4]);
+  });
+});
+
+describe("maybeExitRoute", () => {
+  const window = yearWindow("2026-01-01", 1);
+  const mature = { stage: "SERIES_C", postMoney: 200_000_000, lastDate: "2026-01-02" };
+  const small = { stage: "SEED", postMoney: 8_000_000, lastDate: "2026-01-02" };
+
+  it("never offers routes to a company that hasn't grown up", () => {
+    for (let i = 0; i < 200; i++) {
+      expect(maybeExitRoute(small, "bull", window)).toBeNull();
+    }
+  });
+
+  it("prices the secondary below the last round — that's the discount", () => {
+    for (let i = 0; i < 200; i++) {
+      const r = maybeExitRoute(mature, "normal", window);
+      if (!r) continue;
+      expect(r.secondaryValuation).toBeLessThan(r.postMoney);
+      expect(r.secondaryValuation).toBeCloseTo(r.postMoney * SECONDARY_DISCOUNT, -6);
+    }
+  });
+
+  it("gives the IPO a higher ceiling than the sale, and more risk in a bear", () => {
+    let bull = 0;
+    let bear = 0;
+    for (let i = 0; i < 400; i++) {
+      const b = maybeExitRoute(mature, "bull", window);
+      if (b) {
+        expect(b.ipoHigh).toBeGreaterThan(b.acquisitionOffer);
+        bull = b.ipoPullChance;
+      }
+      const r = maybeExitRoute(mature, "bear", window);
+      if (r) bear = r.ipoPullChance;
+    }
+    expect(bear).toBeGreaterThan(bull);
+  });
+});
+
+describe("ipoResult", () => {
+  const payload = {
+    stage: "SERIES_C",
+    postMoney: 100_000_000,
+    ipoLow: 90_000_000,
+    ipoHigh: 320_000_000,
+    ipoPullChance: 0.25,
+    acquisitionOffer: 180_000_000,
+    secondaryValuation: 75_000_000,
+    date: "2026-06-01",
+  };
+
+  it("prices inside the range when it isn't pulled", () => {
+    for (let i = 0; i < 300; i++) {
+      const r = ipoResult(payload);
+      if (r.pulled) continue;
+      expect(r.valuation).toBeGreaterThanOrEqual(payload.ipoLow);
+      expect(r.valuation).toBeLessThanOrEqual(payload.ipoHigh);
+    }
+  });
+
+  it("gets pulled roughly as often as the payload says", () => {
+    let pulled = 0;
+    const n = 4000;
+    for (let i = 0; i < n; i++) if (ipoResult(payload).pulled) pulled++;
+    expect(pulled / n).toBeGreaterThan(0.2);
+    expect(pulled / n).toBeLessThan(0.3);
+  });
+
+  it("never gets pulled when the chance is zero", () => {
+    for (let i = 0; i < 200; i++) {
+      expect(ipoResult({ ...payload, ipoPullChance: 0 }).pulled).toBe(false);
+    }
+  });
+});
+
+describe("maybePayToPlay", () => {
+  const round = {
+    stage: "SERIES_A",
+    raised: 10_000_000,
+    postMoney: 20_000_000,
+    date: "2026-06-01",
+  };
+
+  it("only fires on a down round", () => {
+    for (let i = 0; i < 200; i++) {
+      // previous price below the new one is an up round — never pay-to-play
+      expect(maybePayToPlay(round, 10_000_000, 10)).toBeNull();
+    }
+  });
+
+  it("recaps non-participants well below the round price", () => {
+    for (let i = 0; i < 200; i++) {
+      const p = maybePayToPlay(round, 60_000_000, 10);
+      if (!p) continue;
+      expect(p.recapPostMoney).toBeLessThan(p.postMoney);
+      expect(p.recapPostMoney).toBeGreaterThan(p.raised); // still a sane price
+    }
+  });
+
+  it("asks for roughly your pro-rata share of the round", () => {
+    for (let i = 0; i < 200; i++) {
+      const p = maybePayToPlay(round, 60_000_000, 10);
+      if (!p) continue;
+      // 10% of a $10M round ≈ $1M, rounded to the nearest $25k
+      expect(p.requiredCheck).toBeGreaterThanOrEqual(975_000);
+      expect(p.requiredCheck).toBeLessThanOrEqual(1_025_000);
+      expect(p.requiredCheck).toBeLessThanOrEqual(p.raised);
+    }
+  });
+
+  it("keeps the recap factor punishing", () => {
+    expect(PAY_TO_PLAY_RECAP_FACTOR).toBeLessThan(0.5);
+  });
+});
+
+describe("founderKeptOutcome", () => {
+  it("stays inside its band and can cut both ways", () => {
+    let min = Infinity;
+    let max = -Infinity;
+    for (let i = 0; i < 2000; i++) {
+      const d = founderKeptOutcome();
+      expect(d).toBeGreaterThanOrEqual(CEO_KEPT_MIN);
+      expect(d).toBeLessThanOrEqual(CEO_KEPT_MAX);
+      min = Math.min(min, d);
+      max = Math.max(max, d);
+    }
+    expect(min).toBeLessThan(0); // backing a founder can go badly
+    expect(max).toBeGreaterThan(0);
+  });
+});
+
+describe("reputation — ousting founders", () => {
+  const nobody = {
+    bridgesFunded: 0,
+    bridgesRefused: 0,
+    proRataBacked: 0,
+    adviceGiven: 0,
+    decisionsExpired: 0,
+    dealsExpired: 0,
+    foundersOusted: 0,
+  };
+
+  it("costs more than refusing a bridge", () => {
+    const ousted = reputation({ ...nobody, foundersOusted: 1 }).score;
+    const refused = reputation({ ...nobody, bridgesRefused: 1 }).score;
+    expect(ousted).toBeLessThan(refused);
+  });
+
+  it("stacks with each founder shown the door", () => {
+    expect(reputation({ ...nobody, foundersOusted: 2 }).score).toBeLessThan(
+      reputation({ ...nobody, foundersOusted: 1 }).score
+    );
   });
 });

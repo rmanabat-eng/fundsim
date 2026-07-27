@@ -84,11 +84,11 @@ model Deal {
 model Decision {
   id        String  @id @default(cuid())
   year      Int
-  type      String // "pro_rata" | "acquisition" | "bridge" | "term_sheet" | "pivot"
+  type      String // "pro_rata" | "acquisition" | "bridge" | "term_sheet" | "pivot" | "exit_route" | "ceo_replacement" | "pay_to_play"
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   payload   String // JSON, shape depends on type
-  status    String  @default("pending") // "pending" | "resolved" | "declined" | "expired" | "moot"
+  status    String  @default("pending") // "pending" | "resolved" | "declined" | "expired" | "moot" | "ousted"
 }
 
 model Round {

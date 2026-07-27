@@ -38,6 +38,7 @@ import type {
   ProRataPayload,
   TermSheetPayload,
 } from "@/app/play/actions";
+import type { ExitRoutePayload, PayToPlayPayload } from "@/lib/campaign";
 
 const GRADE_STYLES = {
   great:
@@ -130,15 +131,20 @@ async function currentReputation() {
     adviceGiven,
     decisionsExpired,
     dealsExpired,
+    foundersOusted,
   ] = await Promise.all([
     prisma.decision.count({ where: { type: "bridge", status: "resolved" } }),
     prisma.decision.count({ where: { type: "bridge", status: "declined" } }),
     prisma.decision.count({ where: { type: "pro_rata", status: "resolved" } }),
     prisma.decision.count({
-      where: { type: { in: ["term_sheet", "pivot"] }, status: "resolved" },
+      where: {
+        type: { in: ["term_sheet", "pivot", "ceo_replacement"] },
+        status: "resolved",
+      },
     }),
     prisma.decision.count({ where: { status: "expired" } }),
     prisma.deal.count({ where: { status: "expired" } }),
+    prisma.decision.count({ where: { status: "ousted" } }),
   ]);
   const rep = reputation({
     bridgesFunded,
@@ -147,6 +153,7 @@ async function currentReputation() {
     adviceGiven,
     decisionsExpired,
     dealsExpired,
+    foundersOusted,
   });
   const drivers = [
     bridgesFunded > 0 &&
@@ -161,6 +168,8 @@ async function currentReputation() {
       `${decisionsExpired} ${decisionsExpired === 1 ? "founder" : "founders"} ghosted`,
     dealsExpired > 0 &&
       `${dealsExpired} ${dealsExpired === 1 ? "pitch" : "pitches"} never answered`,
+    foundersOusted > 0 &&
+      `${foundersOusted} ${foundersOusted === 1 ? "founder" : "founders"} ousted`,
   ].filter(Boolean) as string[];
   return { rep, drivers };
 }
@@ -572,6 +581,57 @@ export default async function PlayPage() {
         type: "pivot",
         companyId: d.companyId,
         companyName: d.company.name,
+        signals,
+      };
+    }
+    if (d.type === "ceo_replacement") {
+      return {
+        id: d.id,
+        type: "ceo_replacement",
+        companyId: d.companyId,
+        companyName: d.company.name,
+        signals,
+      };
+    }
+    if (d.type === "exit_route") {
+      const payload = JSON.parse(d.payload) as ExitRoutePayload;
+      return {
+        id: d.id,
+        type: "exit_route",
+        companyId: d.companyId,
+        companyName: d.company.name,
+        stage: payload.stage,
+        postMoney: payload.postMoney,
+        ipoLow: payload.ipoLow,
+        ipoHigh: payload.ipoHigh,
+        ipoPullChance: payload.ipoPullChance,
+        acquisitionOffer: payload.acquisitionOffer,
+        secondaryValuation: payload.secondaryValuation,
+        owned: ownershipAfterRounds(rounds),
+        signals,
+      };
+    }
+    if (d.type === "pay_to_play") {
+      const payload = JSON.parse(d.payload) as PayToPlayPayload;
+      const ownedNow = ownershipAfterRounds(rounds);
+      // Participating dilutes you like any round, then your check buys back in;
+      // sitting out converts the whole stake at the punitive recap price.
+      const dilute = (owned: number, post: number) =>
+        (owned * (post - payload.raised)) / post;
+      return {
+        id: d.id,
+        type: "pay_to_play",
+        companyId: d.companyId,
+        companyName: d.company.name,
+        stage: payload.stage,
+        raised: payload.raised,
+        postMoney: payload.postMoney,
+        requiredCheck: payload.requiredCheck,
+        ownedNow,
+        ownedIfPay:
+          dilute(ownedNow, payload.postMoney) +
+          (payload.requiredCheck / payload.postMoney) * 100,
+        ownedIfDecline: dilute(ownedNow, payload.recapPostMoney),
         signals,
       };
     }
