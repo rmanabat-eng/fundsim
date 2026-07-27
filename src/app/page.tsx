@@ -147,7 +147,7 @@ export default async function Home() {
               <p className="text-[10px] font-black uppercase tracking-[0.35em] text-fuchsia-300">
                 The main event
               </p>
-              <h2 className="mt-1 text-3xl font-black uppercase tracking-tight text-white drop-shadow-[0_3px_0_rgba(0,0,0,0.4)]">
+              <h2 className="mt-1 font-display text-3xl font-bold uppercase tracking-tight text-white drop-shadow-[0_3px_0_rgba(0,0,0,0.4)]">
                 Campaign mode
               </h2>
               <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/80">
@@ -185,7 +185,7 @@ export default async function Home() {
             <p className="mt-3 text-[10px] font-black uppercase tracking-[0.35em] text-slate-400 dark:text-slate-500">
               Start here
             </p>
-            <h3 className="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100">
+            <h3 className="mt-1 font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
               Learning guide
             </h3>
             <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
@@ -208,7 +208,7 @@ export default async function Home() {
             <p className="mt-3 text-[10px] font-black uppercase tracking-[0.35em] text-slate-400 dark:text-slate-500">
               Free play
             </p>
-            <h3 className="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100">
+            <h3 className="mt-1 font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
               Fund dashboard
             </h3>
             <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">

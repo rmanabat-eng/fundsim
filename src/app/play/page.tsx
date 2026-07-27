@@ -106,7 +106,7 @@ function Stat({
             label
           )}
         </p>
-        <p className="truncate text-lg font-black tabular-nums text-slate-900 dark:text-slate-100">
+        <p className="truncate font-display text-lg font-bold tabular-nums text-slate-900 dark:text-slate-100">
           {value}
         </p>
       </div>
@@ -195,7 +195,7 @@ export default async function PlayPage() {
           <div aria-hidden className="game-float text-6xl">
             🚀
           </div>
-          <h2 className="mt-3 text-balance text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">
+          <h2 className="mt-3 font-display text-balance text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
             Run a {formatDollars(settings.fundSize)} fund for {GAME_YEARS} years.
           </h2>
           {/* Columns, not a grid: grid rows stretch every box to the tallest in
@@ -303,7 +303,9 @@ export default async function PlayPage() {
             {metrics.tvpi === null ? "no capital deployed" : formatMultiple(metrics.tvpi)}{" "}
             TVPI
           </p>
-          <h2 className="mt-1 text-4xl font-black tracking-tight">{grade.label}</h2>
+          <h2 className="mt-1 font-display text-4xl font-bold tracking-tight">
+            {grade.label}
+          </h2>
           <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed">{grade.blurb}</p>
         </div>
 
@@ -319,7 +321,9 @@ export default async function PlayPage() {
               <p className="text-xs font-bold uppercase tracking-widest opacity-70">
                 VC reputation
               </p>
-              <h3 className="text-2xl font-black tracking-tight">{rep.label}</h3>
+              <h3 className="font-display text-2xl font-bold tracking-tight">
+                {rep.label}
+              </h3>
             </div>
             <div className="ml-auto w-full max-w-xs">
               <div className="flex justify-between text-[10px] font-black uppercase tracking-widest opacity-70">
@@ -431,7 +435,7 @@ export default async function PlayPage() {
                         </span>
                         {/* The headline number gets to be a headline. */}
                         <strong
-                          className={`text-xl font-black tabular-nums ${
+                          className={`font-display text-xl font-bold tabular-nums ${
                             multiple >= 3
                               ? "text-emerald-600 dark:text-emerald-400"
                               : multiple >= 1

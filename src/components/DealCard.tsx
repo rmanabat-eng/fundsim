@@ -64,7 +64,7 @@ export function DealCard({ deal }: { deal: DealView }) {
       <div
         className={`flex items-center justify-between gap-2 rounded-t-[14px] bg-gradient-to-r px-5 py-3 ${art.banner}`}
       >
-        <h3 className="flex items-center gap-2 text-base font-black text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.25)]">
+        <h3 className="flex items-center gap-2 font-display text-base font-bold text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.25)]">
           <span aria-hidden className="text-2xl">
             {art.emoji}
           </span>

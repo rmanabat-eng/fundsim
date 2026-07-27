@@ -31,7 +31,7 @@ export function StatCard({
           label
         )}
       </p>
-      <p className="text-xl font-semibold">{value}</p>
+      <p className="font-display text-xl font-semibold">{value}</p>
       {hint && (
         <div
           aria-hidden="true"
