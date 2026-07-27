@@ -7,7 +7,7 @@ export default async function SettingsPage() {
   const settings = await getSettings();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
+    <div className="app-bg min-h-screen">
       <header className="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600">
         <div className="mx-auto max-w-5xl px-6 py-8 flex items-center justify-between">
           <div>

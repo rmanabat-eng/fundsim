@@ -91,7 +91,7 @@ export type DecisionView =
     });
 
 const cardClasses =
-  "h-full rounded-2xl border-2 border-amber-400 bg-amber-50/70 p-5 shadow-[5px_5px_0_rgba(245,158,11,0.3)] dark:border-amber-600/70 dark:bg-amber-950/20 dark:shadow-[5px_5px_0_rgba(0,0,0,0.5)]";
+  "h-full rounded-2xl border-2 border-amber-400 bg-amber-50/70 p-5 shadow-[5px_5px_0_rgba(245,158,11,0.3)] dark:border-amber-600/70 dark:bg-amber-950/20";
 const primaryButton =
   "btn-arcade shrink-0 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 text-sm font-black uppercase tracking-wide text-white disabled:opacity-50";
 const secondaryButton =

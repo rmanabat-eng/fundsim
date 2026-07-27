@@ -49,7 +49,7 @@ export default async function Home() {
   ]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
+    <div className="app-bg min-h-screen">
       <header className="relative overflow-hidden bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600">
         <div aria-hidden className="pointer-events-none absolute inset-0">
           {HERO_STARS.map((s, i) => (
@@ -120,7 +120,7 @@ export default async function Home() {
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-8">
-        <section className="relative overflow-hidden rounded-3xl border-2 border-slate-900/10 bg-gradient-to-br from-indigo-950 via-violet-950 to-fuchsia-950 p-6 shadow-[8px_8px_0_rgba(15,23,42,0.15)] dark:border-white/10 dark:shadow-[8px_8px_0_rgba(0,0,0,0.5)] sm:p-8">
+        <section className="relative overflow-hidden rounded-3xl border-2 border-slate-900/10 bg-gradient-to-br from-indigo-950 via-violet-950 to-fuchsia-950 p-6 pop-lg dark:border-white/10 sm:p-8">
           <div aria-hidden className="pointer-events-none absolute inset-0">
             {HERO_STARS.map((s, i) => (
               <span
@@ -177,7 +177,7 @@ export default async function Home() {
         <div className="mt-6 grid gap-6 sm:grid-cols-2">
           <Link
             href="/guide"
-            className="group flex flex-col rounded-2xl border-2 border-slate-900/10 bg-white p-6 shadow-[6px_6px_0_rgba(15,23,42,0.12)] transition-transform motion-safe:hover:-translate-y-1 dark:border-white/10 dark:bg-slate-900 dark:shadow-[6px_6px_0_rgba(0,0,0,0.5)]"
+            className="group flex flex-col rounded-2xl border-2 border-slate-900/10 bg-white p-6 pop transition-transform motion-safe:hover:-translate-y-1 dark:border-white/10 dark:bg-slate-900"
           >
             <span aria-hidden className="text-4xl">
               📚
@@ -200,7 +200,7 @@ export default async function Home() {
 
           <Link
             href="/dashboard"
-            className="group flex flex-col rounded-2xl border-2 border-slate-900/10 bg-white p-6 shadow-[6px_6px_0_rgba(15,23,42,0.12)] transition-transform motion-safe:hover:-translate-y-1 dark:border-white/10 dark:bg-slate-900 dark:shadow-[6px_6px_0_rgba(0,0,0,0.5)]"
+            className="group flex flex-col rounded-2xl border-2 border-slate-900/10 bg-white p-6 pop transition-transform motion-safe:hover:-translate-y-1 dark:border-white/10 dark:bg-slate-900"
           >
             <span aria-hidden className="text-4xl">
               📊

@@ -101,6 +101,47 @@ body {
   animation: game-blink 1.6s steps(1) infinite;
 }
 
+/* Card depth. A hard black offset reads as a chunky sticker on a light page,
+   but it's invisible against a dark one — so in dark mode the same class
+   switches to a cool-tinted offset plus a lit top edge, which is what actually
+   makes a surface look raised on a dark field. */
+.pop {
+  box-shadow: 4px 4px 0 rgba(15, 23, 42, 0.12);
+}
+.pop-lg {
+  box-shadow: 8px 8px 0 rgba(15, 23, 42, 0.14);
+}
+
+.dark .pop {
+  box-shadow:
+    4px 4px 0 rgba(79, 70, 229, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+.dark .pop-lg {
+  box-shadow:
+    8px 8px 0 rgba(79, 70, 229, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* The page itself shouldn't be a flat fill: a couple of very soft colour
+   washes give the dark theme somewhere for the cards to sit. */
+.app-bg {
+  background-color: #f8fafc;
+  /* Fixed to the viewport: anchored to the element these would sit up behind
+     the header on a long page and never be seen. */
+  background-attachment: fixed;
+  background-image:
+    radial-gradient(45rem 28rem at 10% 15%, rgba(99, 102, 241, 0.1), transparent 65%),
+    radial-gradient(40rem 26rem at 92% 55%, rgba(217, 70, 239, 0.08), transparent 65%);
+}
+
+.dark .app-bg {
+  background-color: #020617;
+  background-image:
+    radial-gradient(45rem 28rem at 10% 15%, rgba(99, 102, 241, 0.22), transparent 65%),
+    radial-gradient(40rem 26rem at 92% 55%, rgba(217, 70, 239, 0.16), transparent 65%);
+}
+
 /* Chunky game button: hard drop shadow that "presses" on click. */
 .btn-arcade {
   border: 2px solid rgb(15 23 42);

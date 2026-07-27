@@ -32,6 +32,7 @@ import { CampaignLog } from "@/components/CampaignLog";
 import { PortfolioPanel } from "@/components/PortfolioPanel";
 import { SaveScenarioForm } from "@/components/SaveScenarioForm";
 import { toCompanyRows, toChartPoints } from "@/lib/portfolio-view";
+import { sectorArt } from "@/lib/sectors";
 import type {
   AcquisitionPayload,
   BridgePayload,
@@ -82,7 +83,7 @@ function Stat({
 }) {
   return (
     <div
-      className="group game-deal-in relative flex items-center gap-3 rounded-2xl border-2 border-slate-900/10 bg-white p-3 shadow-[4px_4px_0_rgba(15,23,42,0.12)] dark:border-white/10 dark:bg-slate-900 dark:shadow-[4px_4px_0_rgba(0,0,0,0.5)]"
+      className="group game-deal-in relative flex items-center gap-3 rounded-2xl border-2 border-slate-900/10 bg-white p-3 pop dark:border-white/10 dark:bg-slate-900"
       style={{ animationDelay: `${delay}ms` }}
     >
       <span
@@ -190,7 +191,7 @@ export default async function PlayPage() {
   if (!game) {
     return (
       <Shell year={null} market={null}>
-        <div className="mx-auto mt-10 max-w-2xl rounded-3xl border-2 border-slate-900/10 bg-white p-8 text-center shadow-[8px_8px_0_rgba(15,23,42,0.12)] dark:border-white/10 dark:bg-slate-900 dark:shadow-[8px_8px_0_rgba(0,0,0,0.5)]">
+        <div className="mx-auto mt-10 max-w-2xl rounded-3xl border-2 border-slate-900/10 bg-white p-8 text-center pop-lg dark:border-white/10 dark:bg-slate-900">
           <div aria-hidden className="game-float text-6xl">
             🚀
           </div>
@@ -267,10 +268,20 @@ export default async function PlayPage() {
           c.exitValue !== null
             ? exitProceeds(c.rounds, c.exitValue)
             : currentValue(c.rounds);
-        return { id: c.id, name: c.name, invested, value, exited: c.exitValue !== null };
+        return {
+          id: c.id,
+          name: c.name,
+          sector: c.sector,
+          invested,
+          value,
+          exited: c.exitValue !== null,
+        };
       })
       .filter((p) => p.invested > 0)
       .sort((a, b) => b.value - a.value);
+    // Bars are scaled to the biggest position, so the power law is visible at a
+    // glance: one winner's bar dwarfs the rest.
+    const topValue = Math.max(...positions.map((p) => p.value), 1);
     const deadCompanies = companies.filter((c) => c.exitValue === 0);
     const writeOffs = deadCompanies.length;
     const medals = ["🥇", "🥈", "🥉"];
@@ -379,33 +390,62 @@ export default async function PlayPage() {
               🏅 Where the returns came from
             </h3>
             <ul className="mt-3 space-y-2">
-              {positions.slice(0, 5).map((p, i) => (
-                <li
-                  key={p.id}
-                  className="game-deal-in flex items-center justify-between gap-3 rounded-2xl border-2 border-slate-900/10 bg-white px-4 py-3 text-sm shadow-[4px_4px_0_rgba(15,23,42,0.1)] dark:border-white/10 dark:bg-slate-900 dark:shadow-[4px_4px_0_rgba(0,0,0,0.45)]"
-                  style={{ animationDelay: `${i * 90}ms` }}
-                >
-                  <span className="flex items-center gap-2">
-                    <span aria-hidden className="w-7 text-lg">
-                      {medals[i] ?? `${i + 1}.`}
-                    </span>
-                    <Link
-                      href={`/companies/${p.id}`}
-                      className="font-bold text-slate-900 underline-offset-2 hover:underline dark:text-slate-100"
-                    >
-                      {p.name}
-                    </Link>
-                  </span>
-                  <span className="text-slate-600 dark:text-slate-400">
-                    {formatDollars(p.invested)} →{" "}
-                    <strong className="text-slate-900 dark:text-slate-100">
-                      {formatDollars(p.value)}
-                    </strong>{" "}
-                    ({formatMultiple(p.invested > 0 ? p.value / p.invested : 0)}
-                    {p.exited ? "" : ", unrealized"})
-                  </span>
-                </li>
-              ))}
+              {positions.slice(0, 5).map((p, i) => {
+                const multiple = p.invested > 0 ? p.value / p.invested : 0;
+                const art = sectorArt(p.sector);
+                return (
+                  <li
+                    key={p.id}
+                    className="game-deal-in relative overflow-hidden rounded-2xl border-2 border-slate-900/10 bg-white pop dark:border-white/10 dark:bg-slate-900"
+                    style={{ animationDelay: `${i * 90}ms` }}
+                  >
+                    {/* The bar is the point: its length is this position's share
+                        of the best one, so the skew is impossible to miss. */}
+                    <div
+                      aria-hidden
+                      className={`absolute inset-y-0 left-0 bg-gradient-to-r opacity-20 dark:opacity-30 ${art.banner}`}
+                      style={{ width: `${Math.max((p.value / topValue) * 100, 1.5)}%` }}
+                    />
+                    <div className="relative flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3">
+                      <span className="flex items-center gap-2">
+                        <span aria-hidden className="w-7 text-lg">
+                          {medals[i] ?? `${i + 1}.`}
+                        </span>
+                        <span aria-hidden className="text-lg">
+                          {art.emoji}
+                        </span>
+                        <Link
+                          href={`/companies/${p.id}`}
+                          className="font-bold text-slate-900 underline-offset-2 hover:underline dark:text-slate-100"
+                        >
+                          {p.name}
+                        </Link>
+                      </span>
+                      <span className="flex items-baseline gap-3">
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                          {formatDollars(p.invested)} →{" "}
+                          <strong className="text-slate-700 dark:text-slate-200">
+                            {formatDollars(p.value)}
+                          </strong>
+                          {p.exited ? "" : " (unrealized)"}
+                        </span>
+                        {/* The headline number gets to be a headline. */}
+                        <strong
+                          className={`text-xl font-black tabular-nums ${
+                            multiple >= 3
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : multiple >= 1
+                                ? "text-slate-900 dark:text-slate-100"
+                                : "text-rose-600 dark:text-rose-400"
+                          }`}
+                        >
+                          {formatMultiple(multiple)}
+                        </strong>
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
             <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
               Companies still active at close are marked at their last round.
@@ -427,13 +467,18 @@ export default async function PlayPage() {
                     key={c.id}
                     className="flex items-center justify-between gap-3 rounded-2xl border-2 border-rose-300 bg-rose-50 px-4 py-3 text-sm dark:border-rose-800 dark:bg-rose-950/30"
                   >
-                    <Link
-                      href={`/companies/${c.id}`}
-                      className="font-bold text-slate-900 underline-offset-2 hover:underline dark:text-slate-100"
-                    >
-                      {c.name}
-                    </Link>
-                    <span className="text-rose-700 dark:text-rose-300">
+                    <span className="flex items-center gap-2">
+                      <span aria-hidden className="text-lg grayscale">
+                        {sectorArt(c.sector).emoji}
+                      </span>
+                      <Link
+                        href={`/companies/${c.id}`}
+                        className="font-bold text-slate-900 underline-offset-2 hover:underline dark:text-slate-100"
+                      >
+                        {c.name}
+                      </Link>
+                    </span>
+                    <span className="font-bold tabular-nums text-rose-700 dark:text-rose-300">
                       −{formatDollars(sunk)}
                     </span>
                   </li>
@@ -454,7 +499,7 @@ export default async function PlayPage() {
           points={toChartPoints(companies)}
         />
 
-        <section className="mt-8 rounded-2xl border-2 border-slate-900/10 bg-white p-5 shadow-[4px_4px_0_rgba(15,23,42,0.1)] dark:border-white/10 dark:bg-slate-900 dark:shadow-[4px_4px_0_rgba(0,0,0,0.45)]">
+        <section className="mt-8 rounded-2xl border-2 border-slate-900/10 bg-white p-5 pop dark:border-white/10 dark:bg-slate-900">
           <h3 className="text-sm font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
             💾 Save this run
           </h3>
@@ -866,7 +911,7 @@ function Shell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
+    <div className="app-bg min-h-screen">
       {/* The marquee: always dark, like a game committing to its own art style. */}
       <header className="relative overflow-hidden bg-gradient-to-br from-indigo-950 via-violet-950 to-fuchsia-950">
         <div aria-hidden className="pointer-events-none absolute inset-0">

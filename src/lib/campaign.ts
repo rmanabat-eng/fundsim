@@ -510,17 +510,22 @@ export function gradeFund(tvpi: number | null): FundGrade {
 
 export type LogCompany = {
   name: string;
+  sector: string;
   exitValue: number | null;
   exitDate: Date | string | null;
   rounds: { date: Date | string }[];
 };
 
+// Names aren't unique (the generator can deal the same one twice), so log
+// entries carry the sector along rather than being looked up by name later.
+export type LogCompanyRef = { name: string; sector: string };
+
 export type CampaignLogEntry = {
   year: number;
-  backed: string[]; // first checks you wrote this year
-  raised: string[]; // portfolio companies that raised again
-  exited: { name: string; value: number }[];
-  writtenOff: string[];
+  backed: LogCompanyRef[]; // first checks you wrote this year
+  raised: LogCompanyRef[]; // portfolio companies that raised again
+  exited: (LogCompanyRef & { value: number })[];
+  writtenOff: LogCompanyRef[];
 };
 
 function inWindow(date: Date | string, w: { start: Date; end: Date }): boolean {
@@ -546,6 +551,7 @@ export function campaignLog(
     };
 
     for (const c of companies) {
+      const ref: LogCompanyRef = { name: c.name, sector: c.sector };
       const sorted = [...c.rounds].sort(
         (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
       );
@@ -553,13 +559,13 @@ export function campaignLog(
         if (!inWindow(r.date, w)) return;
         // The first round is the check that got you in; later ones are the
         // company raising again.
-        if (i === 0) entry.backed.push(c.name);
-        else entry.raised.push(c.name);
+        if (i === 0) entry.backed.push(ref);
+        else entry.raised.push(ref);
       });
 
       if (c.exitValue !== null && c.exitDate && inWindow(c.exitDate, w)) {
-        if (c.exitValue === 0) entry.writtenOff.push(c.name);
-        else entry.exited.push({ name: c.name, value: c.exitValue });
+        if (c.exitValue === 0) entry.writtenOff.push(ref);
+        else entry.exited.push({ ...ref, value: c.exitValue });
       }
     }
 

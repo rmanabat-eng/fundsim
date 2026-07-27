@@ -5,13 +5,13 @@ import { GAME_YEARS, INVESTMENT_PERIOD_YEARS } from "@/lib/campaign";
 const h2 = "text-lg font-black text-slate-900 dark:text-slate-100";
 const p = "mt-3 text-sm text-slate-600 dark:text-slate-400 leading-relaxed";
 const card =
-  "rounded-2xl border-2 border-slate-900/10 bg-white p-6 shadow-[4px_4px_0_rgba(15,23,42,0.1)] dark:border-white/10 dark:bg-slate-900 dark:shadow-[4px_4px_0_rgba(0,0,0,0.45)]";
+  "rounded-2xl border-2 border-slate-900/10 bg-white p-6 pop dark:border-white/10 dark:bg-slate-900";
 const em = "font-semibold text-slate-800 dark:text-slate-200";
 const link = "text-violet-600 underline dark:text-violet-400";
 
 export default function GuidePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
+    <div className="app-bg min-h-screen">
       <header className="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600">
         <div className="mx-auto max-w-5xl px-6 py-8 flex items-start justify-between gap-4">
           <div className="max-w-2xl">

@@ -262,10 +262,12 @@ describe("campaignLog", () => {
     exitDate: string | null = null
   ) => ({
     name,
+    sector: "SaaS",
     exitValue,
     exitDate,
     rounds: roundDates.map((d) => ({ date: d })),
   });
+  const ref = (name: string) => ({ name, sector: "SaaS" });
 
   it("files the first round as backed and later rounds as raised", () => {
     const log = campaignLog(
@@ -273,10 +275,10 @@ describe("campaignLog", () => {
       START,
       3
     );
-    expect(log[0].backed).toEqual(["Acme"]);
+    expect(log[0].backed).toEqual([ref("Acme")]);
     expect(log[0].raised).toEqual([]);
     expect(log[1].backed).toEqual([]);
-    expect(log[1].raised).toEqual(["Acme"]);
+    expect(log[1].raised).toEqual([ref("Acme")]);
     expect(log[2].backed).toEqual([]);
   });
 
@@ -289,9 +291,9 @@ describe("campaignLog", () => {
       START,
       3
     );
-    expect(log[1].writtenOff).toEqual(["Dud"]);
+    expect(log[1].writtenOff).toEqual([ref("Dud")]);
     expect(log[1].exited).toEqual([]);
-    expect(log[2].exited).toEqual([{ name: "Winner", value: 30_000_000 }]);
+    expect(log[2].exited).toEqual([{ ...ref("Winner"), value: 30_000_000 }]);
     expect(log[2].writtenOff).toEqual([]);
   });
 

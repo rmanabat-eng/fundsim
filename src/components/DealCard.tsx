@@ -6,6 +6,7 @@ import { formatDollars } from "@/lib/fund-math";
 import { StageBadge } from "@/components/StageBadge";
 import { Term } from "@/components/Term";
 import { toast } from "@/components/toast";
+import { sectorArt } from "@/lib/sectors";
 
 const CHECK_STEP = 25_000;
 
@@ -17,16 +18,6 @@ export type DealView = {
   raised: number;
   postMoney: number;
   signals: string[];
-};
-
-// The collectible-card art for each sector: a mascot and a banner gradient.
-const SECTOR_ART: Record<string, { emoji: string; banner: string }> = {
-  "Water Tech": { emoji: "💧", banner: "from-cyan-500 to-sky-600" },
-  Climate: { emoji: "🌍", banner: "from-emerald-500 to-teal-600" },
-  SaaS: { emoji: "☁️", banner: "from-violet-500 to-indigo-600" },
-  Fintech: { emoji: "💳", banner: "from-amber-500 to-orange-600" },
-  Health: { emoji: "🩺", banner: "from-rose-500 to-pink-600" },
-  Other: { emoji: "🎲", banner: "from-slate-500 to-slate-600" },
 };
 
 // A pitch card: the numbers, the signals, and a decision. The signals are
@@ -43,7 +34,7 @@ export function DealCard({ deal }: { deal: DealView }) {
   const [check, setCheck] = useState(defaultCheck);
 
   const ownership = (check / deal.postMoney) * 100;
-  const art = SECTOR_ART[deal.sector] ?? SECTOR_ART.Other;
+  const art = sectorArt(deal.sector);
 
   // Call the action imperatively so the confirmation toast fires from the
   // module-level store before this card unmounts on the next revalidate.
@@ -69,7 +60,7 @@ export function DealCard({ deal }: { deal: DealView }) {
   }
 
   return (
-    <div className="flex h-full flex-col rounded-2xl border-2 border-slate-900/10 bg-white shadow-[5px_5px_0_rgba(15,23,42,0.12)] transition-transform duration-150 motion-safe:hover:-translate-y-1 motion-safe:hover:-rotate-[0.5deg] dark:border-white/10 dark:bg-slate-900 dark:shadow-[5px_5px_0_rgba(0,0,0,0.5)]">
+    <div className="flex h-full flex-col rounded-2xl border-2 border-slate-900/10 bg-white pop transition-transform duration-150 motion-safe:hover:-translate-y-1 motion-safe:hover:-rotate-[0.5deg] dark:border-white/10 dark:bg-slate-900">
       <div
         className={`flex items-center justify-between gap-2 rounded-t-[14px] bg-gradient-to-r px-5 py-3 ${art.banner}`}
       >
