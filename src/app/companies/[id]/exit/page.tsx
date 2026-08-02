@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { ExitForm } from "@/components/ExitForm";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { recordExit } from "@/app/actions";
 
 export default async function ExitPage({
@@ -33,7 +32,6 @@ export default async function ExitPage({
               valuation. A write-off ends the position at $0.
             </p>
           </div>
-          <ThemeToggle />
         </div>
       </header>
       <main className="mx-auto max-w-5xl px-6 py-8">

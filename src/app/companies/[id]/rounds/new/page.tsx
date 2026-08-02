@@ -1,7 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { RoundForm } from "@/components/RoundForm";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { addRound } from "@/app/actions";
 
 export default async function NewRoundPage({
@@ -33,7 +32,6 @@ export default async function NewRoundPage({
               stake will dilute.
             </p>
           </div>
-          <ThemeToggle />
         </div>
       </header>
       <main className="mx-auto max-w-5xl px-6 py-8">

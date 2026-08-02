@@ -15,7 +15,6 @@ import { SummaryBar } from "@/components/SummaryBar";
 import { CompanyTable, type CompanyRow } from "@/components/CompanyTable";
 import { ClearAllButton } from "@/components/ClearAllButton";
 import { SimulateYearButton } from "@/components/SimulateYearButton";
-import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default async function DashboardPage() {
   const [companies, settings, game] = await Promise.all([
@@ -94,7 +93,6 @@ export default async function DashboardPage() {
               </Link>
             </p>
           </div>
-          <ThemeToggle />
         </div>
       </header>
 

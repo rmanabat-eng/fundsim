@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { GAME_YEARS, INVESTMENT_PERIOD_YEARS } from "@/lib/campaign";
 
 const h2 = "text-lg font-black text-slate-900 dark:text-slate-100";
@@ -32,7 +31,6 @@ export default function GuidePage() {
               Here&apos;s how to play it so the lessons land.
             </p>
           </div>
-          <ThemeToggle />
         </div>
       </header>
 

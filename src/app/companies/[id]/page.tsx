@@ -16,7 +16,6 @@ import { DeleteRoundButton } from "@/components/DeleteRoundButton";
 import { UndoExitButton } from "@/components/UndoExitButton";
 import { StakeSparkline } from "@/components/StakeSparkline";
 import { StatCard } from "@/components/StatCard";
-import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default async function CompanyPage({
   params,
@@ -67,7 +66,6 @@ export default async function CompanyPage({
               {formatDollars(invested)} invested for {formatPercent(currentOwnership)}
             </p>
           </div>
-          <ThemeToggle />
         </div>
       </header>
 

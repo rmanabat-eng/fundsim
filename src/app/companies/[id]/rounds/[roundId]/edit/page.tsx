@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { RoundForm } from "@/components/RoundForm";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { updateRound } from "@/app/actions";
 
 export default async function EditRoundPage({
@@ -25,7 +24,6 @@ export default async function EditRoundPage({
           <h1 className="text-3xl font-bold text-white tracking-tight">
             Edit round — {round.company.name}
           </h1>
-          <ThemeToggle />
         </div>
       </header>
       <main className="mx-auto max-w-5xl px-6 py-8">

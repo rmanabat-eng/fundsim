@@ -1,5 +1,4 @@
 import { StartupPicker } from "@/components/StartupPicker";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { createCompany } from "@/app/actions";
 
 export default function NewCompanyPage() {
@@ -15,7 +14,6 @@ export default function NewCompanyPage() {
               Invest in a real startup&apos;s early round, or invent your own deal
             </p>
           </div>
-          <ThemeToggle />
         </div>
       </header>
       <main className="mx-auto max-w-5xl px-6 py-8">

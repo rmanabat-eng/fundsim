@@ -12,7 +12,6 @@ import {
 } from "@/lib/fund-math";
 import { SaveScenarioForm } from "@/components/SaveScenarioForm";
 import { ScenarioActions } from "@/components/ScenarioActions";
-import { ThemeToggle } from "@/components/ThemeToggle";
 
 const cell = "py-3 px-4 text-slate-700 dark:text-slate-300";
 
@@ -75,7 +74,6 @@ export default async function ScenariosPage() {
               save it first.
             </p>
           </div>
-          <ThemeToggle />
         </div>
       </header>
 

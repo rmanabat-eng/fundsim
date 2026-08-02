@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getSettings } from "@/lib/settings";
 import { SettingsForm } from "@/components/SettingsForm";
-import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default async function SettingsPage() {
   const settings = await getSettings();
@@ -22,7 +21,6 @@ export default async function SettingsPage() {
               it. Change the size and feel how the math shifts.
             </p>
           </div>
-          <ThemeToggle />
         </div>
       </header>
       <main className="mx-auto max-w-5xl px-6 py-8">

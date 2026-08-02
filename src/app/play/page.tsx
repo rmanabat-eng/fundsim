@@ -23,7 +23,6 @@ import { DealCard, type DealView } from "@/components/DealCard";
 import { DecisionCard, type DecisionView } from "@/components/DecisionCard";
 import { StartCampaignButton } from "@/components/StartCampaignButton";
 import { AdvanceYearButton } from "@/components/AdvanceYearButton";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { Toaster } from "@/components/toast";
 import { UndoInvestmentButton } from "@/components/UndoInvestmentButton";
 import { CampaignTutorial } from "@/components/CampaignTutorial";
@@ -981,7 +980,6 @@ function Shell({
                 )}
               </p>
             </div>
-            <ThemeToggle />
           </div>
           {year !== null && (
             <div className="mt-4">
