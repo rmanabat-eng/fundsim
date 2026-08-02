@@ -45,3 +45,6 @@ next-env.d.ts
 # sqlite database
 /dev.db
 /dev.db-journal
+
+# riana's personal working notes, not project docs
+/updates.txt
