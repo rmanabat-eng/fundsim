@@ -12,7 +12,8 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-space-grotesk);
+  --font-display: var(--font-bricolage-grotesque);
+  --font-bungee: var(--font-bungee-google);
 }
 
 .dark {
@@ -28,9 +29,13 @@ body {
 
 /* Every page's identity heading gets the display face; body copy, tables,
    and small uppercase labels stay on Geist Sans, where a chunky face would
-   hurt legibility at small sizes. */
-h1 {
-  font-family: var(--font-display);
+   hurt legibility at small sizes. In @layer base so it stays overridable by
+   utility classes (like font-bungee on the wordmark) — unlayered rules beat
+   layered ones regardless of specificity, so this has to be layered too. */
+@layer base {
+  h1 {
+    font-family: var(--font-display);
+  }
 }
 
 /* ---- Campaign mode arcade skin (used only under /play) ---- */

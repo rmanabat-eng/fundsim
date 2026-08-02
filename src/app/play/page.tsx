@@ -303,7 +303,9 @@ export default async function PlayPage() {
             {metrics.tvpi === null ? "no capital deployed" : formatMultiple(metrics.tvpi)}{" "}
             TVPI
           </p>
-          <h2 className="mt-1 font-display text-4xl font-bold tracking-tight">
+          {/* The one hero moment that gets the poster face — everything else
+              on the scorecard stays on the calmer display font. */}
+          <h2 className="mt-1 font-bungee text-4xl font-normal uppercase">
             {grade.label}
           </h2>
           <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed">{grade.blurb}</p>

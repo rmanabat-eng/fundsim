@@ -84,7 +84,7 @@ export default async function Home() {
             <p className="text-[10px] font-black uppercase tracking-[0.35em] text-fuchsia-200">
               Venture capital, the game
             </p>
-            <h1 className="mt-1 flex items-center gap-3 text-4xl font-black tracking-tight text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.3)] sm:text-5xl">
+            <h1 className="mt-1 flex items-center gap-3 font-bungee text-4xl font-normal text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.3)] sm:text-5xl">
               <span aria-hidden className="game-float text-3xl sm:text-4xl">
                 📈
               </span>

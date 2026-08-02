@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
+import { Bricolage_Grotesque, Bungee, Geist, Geist_Mono } from "next/font/google";
 import { InlineScript } from "@/components/InlineScript";
 import "./globals.css";
 
@@ -16,10 +16,19 @@ const geistMono = Geist_Mono({
 // The display face for headlines, big numbers, and the arcade skin's
 // oversized labels — Geist Sans stays the workhorse for body copy and
 // tables, where a chunkier face would hurt legibility.
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
+const bricolageGrotesque = Bricolage_Grotesque({
+  variable: "--font-bricolage-grotesque",
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: ["500", "600", "700", "800"],
+});
+
+// Reserved for exactly two spots: the "FundSim" wordmark and the campaign
+// grade reveal ("Top decile" etc.) — its single heavy weight is a poster
+// face, not something to run every heading in.
+const bungee = Bungee({
+  variable: "--font-bungee-google",
+  subsets: ["latin"],
+  weight: ["400"],
 });
 
 export const metadata: Metadata = {
@@ -35,7 +44,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${bricolageGrotesque.variable} ${bungee.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
