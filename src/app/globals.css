@@ -200,3 +200,204 @@ body {
     transform: none;
   }
 }
+
+/* ---- Maximalism/Dopamine skin (homepage hero) ----
+   A louder sibling of the arcade skin above: five clashing accents, stacked
+   hard shadows instead of one offset, and layered background patterns. Scoped
+   to .max-hero so it never leaks into the rest of the (calmer) app chrome. */
+
+.max-hero {
+  --max-magenta: #ff3af2;
+  --max-cyan: #00f5d4;
+  --max-yellow: #ffe600;
+  --max-orange: #ff6b35;
+  --max-purple: #7b2fff;
+}
+
+.max-pattern-dots {
+  background-image: radial-gradient(circle, var(--max-magenta) 1px, transparent 1px);
+  background-size: 26px 26px;
+  opacity: 0.18;
+}
+
+.max-pattern-stripes {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(255, 230, 0, 0.15) 10px,
+    rgba(255, 230, 0, 0.15) 20px
+  );
+}
+
+/* Faint grid cells with a dot at each intersection — used as the Learning
+   Guide section's background, distinct from the diagonal stripe+dot combo
+   used elsewhere so adjacent sections don't repeat the same texture. */
+.max-pattern-grid {
+  background-image:
+    linear-gradient(to right, rgba(123, 47, 255, 0.16) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(123, 47, 255, 0.16) 1px, transparent 1px),
+    radial-gradient(circle, var(--max-magenta) 1px, transparent 1px);
+  background-size:
+    40px 40px,
+    40px 40px,
+    40px 40px;
+  background-position:
+    -1px -1px,
+    -1px -1px,
+    19px 19px;
+  opacity: 0.5;
+}
+
+.max-headline {
+  text-shadow:
+    3px 3px 0 var(--max-purple),
+    6px 6px 0 var(--max-magenta);
+}
+
+.max-grad-text {
+  background-image: linear-gradient(
+    90deg,
+    var(--max-magenta),
+    var(--max-cyan),
+    var(--max-yellow),
+    var(--max-magenta)
+  );
+  background-size: 300% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: max-gradient-shift 5s ease infinite;
+}
+
+.max-btn-primary {
+  box-shadow:
+    0 0 22px rgba(255, 58, 242, 0.55),
+    7px 7px 0 var(--max-yellow),
+    14px 14px 0 var(--max-magenta);
+  animation: max-pulse-glow 2.6s ease-in-out infinite;
+  transition:
+    transform 0.25s cubic-bezier(0.68, -0.55, 0.265, 1.55),
+    box-shadow 0.25s ease-out;
+}
+.max-btn-primary:hover {
+  transform: scale(1.06) rotate(-1deg);
+}
+.max-btn-primary:active {
+  transform: scale(0.96);
+  box-shadow:
+    0 0 12px rgba(255, 58, 242, 0.4),
+    3px 3px 0 var(--max-yellow);
+}
+
+.max-btn-outline {
+  box-shadow: 7px 7px 0 var(--max-cyan);
+  transition:
+    transform 0.2s ease-out,
+    box-shadow 0.2s ease-out,
+    background-color 0.2s ease-out;
+}
+.max-btn-outline:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 9px 9px 0 var(--max-cyan);
+}
+.max-btn-outline:active {
+  transform: translate(0, 0);
+  box-shadow: 2px 2px 0 var(--max-cyan);
+}
+
+@keyframes max-gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes max-pulse-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 22px rgba(255, 58, 242, 0.55),
+      7px 7px 0 var(--max-yellow),
+      14px 14px 0 var(--max-magenta);
+  }
+  50% {
+    box-shadow:
+      0 0 38px rgba(255, 58, 242, 0.8),
+      0 0 55px rgba(0, 245, 212, 0.4),
+      7px 7px 0 var(--max-yellow),
+      14px 14px 0 var(--max-magenta);
+  }
+}
+
+@keyframes max-spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes max-wiggle {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+
+@keyframes max-bounce-subtle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes max-float-reverse {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(14px);
+  }
+}
+
+.max-spin-slow {
+  animation: max-spin-slow 18s linear infinite;
+}
+.max-wiggle {
+  animation: max-wiggle 1.2s ease-in-out infinite;
+}
+.max-bounce-subtle {
+  animation: max-bounce-subtle 3s ease-in-out infinite;
+}
+.max-float-reverse {
+  animation: max-float-reverse 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .max-grad-text,
+  .max-btn-primary,
+  .max-spin-slow,
+  .max-wiggle,
+  .max-bounce-subtle,
+  .max-float-reverse {
+    animation: none !important;
+  }
+  .max-btn-primary:active,
+  .max-btn-outline:active {
+    transform: none;
+  }
+}
