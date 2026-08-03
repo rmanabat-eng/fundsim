@@ -74,6 +74,9 @@ export default async function CompanyPage({
             <h1 className="mt-1 font-bungee text-4xl font-normal uppercase tracking-tight text-white [text-shadow:2px_2px_0_var(--max-purple),4px_4px_0_var(--max-magenta),6px_6px_0_var(--max-cyan)]">
               {company.name}
             </h1>
+            {company.description && (
+              <p className="mt-2 text-sm text-white/60">{company.description}</p>
+            )}
             <p className="mt-2 text-sm text-white/80">
               {company.sector} · {STAGE_LABELS[latest.stage]} ·{" "}
               {formatDollars(invested)} invested for {formatPercent(currentOwnership)}

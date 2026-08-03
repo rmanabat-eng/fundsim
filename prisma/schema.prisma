@@ -40,6 +40,7 @@ model Company {
   id        String    @id @default(cuid())
   name      String
   sector    String
+  description String  @default("") // cosmetic flavor text, never affects quality
   createdAt DateTime  @default(now())
   exitValue Float? // company valuation at exit; 0 means written off; null = still active
   exitDate  DateTime?

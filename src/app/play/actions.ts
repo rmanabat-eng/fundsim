@@ -235,6 +235,7 @@ export async function investInDeal(
     data: {
       name: deal.name,
       sector: deal.sector,
+      description: deal.description,
       quality: deal.quality,
       dealId, // link back to the pitch so this first check can be undone
       rounds: {

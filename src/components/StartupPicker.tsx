@@ -38,6 +38,7 @@ export function StartupPicker({
       defaultValues = {
         companyName: preset.companyName,
         sector: preset.sector,
+        description: preset.blurb,
         stage: preset.stage,
         raised: preset.raised,
         yourCheck: preset.checkSize,
@@ -128,6 +129,7 @@ export function StartupPicker({
                 values: {
                   companyName: r.companyName,
                   sector: r.sector,
+                  description: r.description,
                   stage: r.stage,
                   raised: r.raised,
                   yourCheck: r.checkSize,

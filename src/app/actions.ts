@@ -76,6 +76,7 @@ export async function createCompany(
 ): Promise<FormState> {
   const name = String(formData.get("companyName") ?? "").trim();
   const sector = String(formData.get("sector") ?? "");
+  const description = String(formData.get("description") ?? "");
 
   if (!name) return { error: "Company name is required." };
   if (!SECTORS.includes(sector as (typeof SECTORS)[number]))
@@ -101,6 +102,7 @@ export async function createCompany(
     data: {
       name,
       sector,
+      description,
       rounds: { create: parsed.data },
     },
   });

@@ -9,6 +9,7 @@ import type { FormState } from "@/app/actions";
 export type CompanyFormValues = RoundDefaults & {
   companyName?: string;
   sector?: string;
+  description?: string;
 };
 
 export function CompanyForm({
@@ -28,6 +29,8 @@ export function CompanyForm({
       className="max-card-flat space-y-4 max-w-lg rounded-2xl p-6"
       style={{ "--max-card-border": "var(--max-magenta)" } as React.CSSProperties}
     >
+      <input type="hidden" name="description" defaultValue={defaultValues?.description ?? ""} />
+
       <div>
         <label className={labelClasses} htmlFor="companyName">
           Company name
