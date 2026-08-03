@@ -35,17 +35,17 @@ import { sectorArt } from "@/lib/sectors";
 import type {
   AcquisitionPayload,
   BridgePayload,
+  FundSecondaryPayload,
   ProRataPayload,
   TermSheetPayload,
 } from "@/app/play/actions";
 import type { ExitRoutePayload, PayToPlayPayload } from "@/lib/campaign";
 
 const GRADE_STYLES = {
-  great:
-    "border-[color:var(--max-cyan)] bg-[#2d1b4e]/50 backdrop-blur-sm text-white shadow-[6px_6px_0_var(--max-yellow)]",
-  good: "border-[color:var(--max-purple)] bg-[#2d1b4e]/50 backdrop-blur-sm text-white shadow-[6px_6px_0_var(--max-magenta)]",
-  ok: "border-[color:var(--max-yellow)] bg-[#2d1b4e]/50 backdrop-blur-sm text-white shadow-[6px_6px_0_var(--max-orange)]",
-  bad: "border-[color:var(--max-orange)] bg-[#2d1b4e]/50 backdrop-blur-sm text-white shadow-[6px_6px_0_var(--max-magenta)]",
+  great: "border-[color:var(--max-cyan)] bg-[#2d1b4e]/50 backdrop-blur-sm text-white",
+  good: "border-[color:var(--max-purple)] bg-[#2d1b4e]/50 backdrop-blur-sm text-white",
+  ok: "border-[color:var(--max-yellow)] bg-[#2d1b4e]/50 backdrop-blur-sm text-white",
+  bad: "border-[color:var(--max-orange)] bg-[#2d1b4e]/50 backdrop-blur-sm text-white",
 } as const;
 
 const GRADE_EMOJI = { great: "🏆", good: "🥈", ok: "🥉", bad: "💀" } as const;
@@ -95,7 +95,7 @@ function Stat({
   const border = STAT_BORDERS[index % STAT_BORDERS.length];
   return (
     <div
-      className="max-card group game-deal-in relative flex items-center gap-3 rounded-2xl p-3"
+      className="max-card-flat group game-deal-in relative flex items-center gap-3 rounded-2xl p-3 hover:z-30 focus-within:z-30"
       style={{ animationDelay: `${delay}ms`, "--max-card-border": border } as React.CSSProperties}
     >
       <span
@@ -125,7 +125,7 @@ function Stat({
       {hint && (
         <div
           aria-hidden="true"
-          className="max-card pointer-events-none invisible absolute left-1/2 top-full z-20 mt-1.5 w-56 -translate-x-1/2 rounded-lg px-3 py-2 text-xs font-normal normal-case tracking-normal text-white/80 group-hover:visible group-focus-within:visible"
+          className="max-card-flat pointer-events-none invisible absolute left-1/2 top-full z-20 mt-1.5 w-56 -translate-x-1/2 rounded-lg px-3 py-2 text-xs font-normal normal-case tracking-normal text-white/80 group-hover:visible group-focus-within:visible"
           style={{ "--max-card-border": "var(--max-cyan)" } as React.CSSProperties}
         >
           {hint}
@@ -424,7 +424,7 @@ export default async function PlayPage() {
                 return (
                   <li
                     key={p.id}
-                    className="max-card game-deal-in relative overflow-hidden rounded-2xl"
+                    className="max-card-flat game-deal-in relative overflow-hidden rounded-2xl"
                     style={{ animationDelay: `${i * 90}ms`, "--max-card-border": border } as React.CSSProperties}
                   >
                     {/* The bar is the point: its length is this position's share
@@ -528,7 +528,7 @@ export default async function PlayPage() {
         />
 
         <section
-          className="max-card mt-8 rounded-2xl p-5"
+          className="max-card-flat mt-8 rounded-2xl p-5"
           style={{ "--max-card-border": "var(--max-cyan)" } as React.CSSProperties}
         >
           <h3 className="text-sm font-black uppercase tracking-widest text-white/60">
@@ -627,6 +627,19 @@ export default async function PlayPage() {
       return {
         id: d.id,
         type: "acquisition",
+        companyId: d.companyId,
+        companyName: d.company.name,
+        offerValue: payload.offerValue,
+        yourShare: (ownershipAfterRounds(rounds) / 100) * payload.offerValue,
+        invested: rounds.reduce((sum, r) => sum + r.yourCheck, 0),
+        signals,
+      };
+    }
+    if (d.type === "fund_secondary") {
+      const payload = JSON.parse(d.payload) as FundSecondaryPayload;
+      return {
+        id: d.id,
+        type: "fund_secondary",
         companyId: d.companyId,
         companyName: d.company.name,
         offerValue: payload.offerValue,

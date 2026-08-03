@@ -61,7 +61,7 @@ export function DealCard({ deal }: { deal: DealView }) {
 
   return (
     <div
-      className="max-card flex h-full flex-col rounded-2xl transition-transform duration-150 motion-safe:hover:-translate-y-1 motion-safe:hover:-rotate-[0.5deg]"
+      className="max-card-flat relative flex h-full flex-col rounded-2xl transition-transform duration-150 hover:z-30 focus-within:z-30 motion-safe:hover:-translate-y-1 motion-safe:hover:-rotate-[0.5deg]"
       style={{ "--max-card-border": "var(--max-cyan)" } as React.CSSProperties}
     >
       <div

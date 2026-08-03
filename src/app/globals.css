@@ -326,6 +326,20 @@ body {
   transform: translateY(-2px);
 }
 
+/* Same border/glass surface as .max-card, no hard shadow and no hover lift —
+   for surfaces that repeat many-at-once (HUD tiles, deal grids, data panels,
+   tooltips) where a stacked shadow on every one reads as noise instead of
+   depth. Shadow stays reserved for buttons, the single active decision card,
+   and one-off high-stakes moments (start screen, game-over grade). */
+.max-card-flat {
+  border-width: 4px;
+  border-style: solid;
+  border-color: var(--max-card-border, var(--max-magenta));
+  background: rgba(45, 27, 78, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+
 /* Small inline stat/detail box used inside cards (replaces the light
    bg-white/70 boxes from the arcade skin). */
 .max-chip-box {

@@ -30,7 +30,7 @@ export function ExitForm({
   return (
     <form
       action={formAction}
-      className="max-card space-y-4 max-w-lg rounded-2xl p-6"
+      className="max-card-flat space-y-4 max-w-lg rounded-2xl p-6"
       style={{ "--max-card-border": "var(--max-orange)" } as React.CSSProperties}
     >
       {randomizeFrom && (

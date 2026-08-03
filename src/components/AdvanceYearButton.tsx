@@ -94,7 +94,7 @@ export function AdvanceYearButton({
       {summary && !pending && !summary.closed && (
         <div
           role="status"
-          className="max-card mt-4 w-full rounded-2xl p-4 text-left"
+          className="max-card-flat mt-4 w-full rounded-2xl p-4 text-left"
           style={{ "--max-card-border": "var(--max-cyan)" } as React.CSSProperties}
         >
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -105,6 +105,18 @@ export function AdvanceYearButton({
               {MARKET_LABELS[summary.market]}
             </p>
           </div>
+
+          {summary.macroShock && (
+            <p className="mt-3 rounded-lg border-4 border-[color:var(--max-orange)] bg-[color:var(--max-orange)]/15 px-3 py-2 text-sm font-bold text-[color:var(--max-orange)]">
+              ⚡ Macro shock — the whole portfolio leaned distressed this year
+            </p>
+          )}
+          {summary.reservesScarce && (
+            <p className="mt-3 rounded-lg border-4 border-[color:var(--max-yellow)] bg-[color:var(--max-yellow)]/15 px-3 py-2 text-sm font-bold text-[color:var(--max-yellow)]">
+              💸 Reserves are scarce — this year&apos;s asks outrun what&apos;s left to
+              deploy. Pick your spots.
+            </p>
+          )}
 
           {/* A company dying is the thing you most need to notice. */}
           {summary.writtenOff > 0 && (

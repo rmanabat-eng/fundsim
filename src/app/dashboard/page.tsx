@@ -157,7 +157,7 @@ export default async function DashboardPage() {
               <FundChartToggle />
             </div>
             <div
-              className="max-card mt-3 rounded-2xl p-5 [.chart-hidden_&]:hidden"
+              className="max-card-flat mt-3 rounded-2xl p-5 [.chart-hidden_&]:hidden"
               style={{ "--max-card-border": "var(--max-cyan)" } as React.CSSProperties}
             >
               <FundChart points={chartPoints} />
@@ -194,14 +194,14 @@ export default async function DashboardPage() {
         </div>
 
         <div
-          className="max-card mt-3 overflow-hidden rounded-2xl"
+          className="max-card-flat mt-3 overflow-hidden rounded-2xl"
           style={{ "--max-card-border": "var(--max-purple)" } as React.CSSProperties}
         >
           <CompanyTable companies={rows} />
         </div>
 
         <section
-          className="max-card mt-8 rounded-2xl p-6"
+          className="max-card-flat mt-8 rounded-2xl p-6"
           style={{ "--max-card-border": "var(--max-yellow)" } as React.CSSProperties}
         >
           <h2 className="font-display text-lg font-bold text-white [text-shadow:2px_2px_0_var(--max-purple)]">

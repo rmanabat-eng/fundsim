@@ -144,17 +144,22 @@ export function dateInWindow(
 
 export type AcquisitionOffer = { offerValue: number; exitDate: string };
 
-// Roughly 1 year in 12 an acquirer comes knocking (more in a bull market).
+// Base per-year chance an acquirer comes knocking, by market — now read as a
+// scenario-pool weight (src/lib/scenario-pool.ts) rather than rolled here.
+export const ACQUISITION_CHANCE: Record<Market, number> = {
+  bull: 0.12,
+  normal: 0.08,
+  bear: 0.05,
+};
+
 // The offer anchors to the last round: usually 1.5×–3×, and the player has
-// to weigh cash-now against the power law.
-export function maybeAcquisitionOffer(
+// to weigh cash-now against the power law. Eligibility/odds are decided by
+// the scenario pool; this just builds the payload once picked.
+export function buildAcquisitionOffer(
   company: SimCompanyState,
   market: Market,
   window: { start: Date; end: Date }
-): AcquisitionOffer | null {
-  const chance = market === "bull" ? 0.12 : market === "bear" ? 0.05 : 0.08;
-  if (Math.random() >= chance) return null;
-
+): AcquisitionOffer {
   const scale = market === "bull" ? 1.35 : market === "bear" ? 0.65 : 1;
   const offerValue = Math.max(
     Math.round((company.postMoney * (1.5 + Math.random() * 1.5) * scale) / 500_000) *
@@ -174,17 +179,22 @@ export type BridgeRequest = {
   date: string;
 };
 
-// A company that had a quiet year sometimes comes back asking for a bridge
-// — a small round at flat-to-down pricing to keep the lights on. Chance is
-// higher in a bear market, when other investors have closed their wallets.
-export function maybeBridgeRequest(
+// Base per-year chance a quiet company asks for a bridge, by market — read as
+// a scenario-pool weight now. Higher in a bear market, when other investors
+// have closed their wallets.
+export const BRIDGE_CHANCE: Record<Market, number> = {
+  bull: 0.25,
+  normal: 0.25,
+  bear: 0.4,
+};
+
+// A small round at flat-to-down pricing to keep the lights on. Eligibility/
+// odds are decided by the scenario pool; this just builds the payload.
+export function buildBridgeRequest(
   company: SimCompanyState,
   market: Market,
   window: { start: Date; end: Date }
-): BridgeRequest | null {
-  const chance = market === "bear" ? 0.4 : 0.25;
-  if (Math.random() >= chance) return null;
-
+): BridgeRequest {
   const postMoney = Math.max(
     Math.round((company.postMoney * (0.6 + Math.random() * 0.4)) / 500_000) * 500_000,
     1_000_000
@@ -248,7 +258,9 @@ export function maybeTermSheet(round: {
   };
 }
 
-const PIVOT_CHANCE = 0.18;
+// Base per-year chance a quiet company's founder calls asking to pivot — read
+// as a scenario-pool weight now.
+export const PIVOT_CHANCE = 0.18;
 // Backing a pivot is a high-variance reroll: most fizzle, some find the real
 // business. Urging focus is the safe, small win. A founder who pivots without
 // your support does it half-hearted.
@@ -256,11 +268,10 @@ export const PIVOT_FOCUS_QUALITY_BOOST = 0.05;
 export const PIVOT_UNSUPPORTED_QUALITY_HIT = -0.2;
 export const PIVOT_BACKED_MIN = -0.15;
 export const PIVOT_BACKED_MAX = 0.45;
-
-// Whether a quiet company's founder calls asking to pivot this year.
-export function maybePivotRequest(): boolean {
-  return Math.random() < PIVOT_CHANCE;
-}
+// A backed pivot widens the range of a company's future rolls; urging focus
+// narrows it. Multiplies CompanyDynState.varianceMultiplier.
+export const PIVOT_BACKED_VARIANCE_MULT = 1.4;
+export const PIVOT_FOCUS_VARIANCE_MULT = 0.8;
 
 // The quality swing of a backed pivot — upside-tilted, but no sure thing.
 export function pivotOutcome(): number {
@@ -272,8 +283,10 @@ export function pivotOutcome(): number {
 // go public, sell itself, or let you take money off the table while it carries
 // on. The lesson is liquidity vs. upside — and that certainty has a price.
 
-const EXIT_ROUTE_CHANCE = 0.16;
-const EXIT_ROUTE_MIN_POST = 40_000_000; // only grown-up companies have choices
+// Base per-year chance a grown-up company's board asks for your vote on an
+// exit route — read as a scenario-pool weight now.
+export const EXIT_ROUTE_CHANCE = 0.16;
+export const EXIT_ROUTE_MIN_POST = 40_000_000; // only grown-up companies have choices
 export const SECONDARY_DISCOUNT = 0.75; // buyers of your stake want a bargain
 
 export type ExitRoutePayload = {
@@ -287,14 +300,11 @@ export type ExitRoutePayload = {
   date: string;
 };
 
-export function maybeExitRoute(
+export function buildExitRoute(
   company: SimCompanyState,
   market: Market,
   window: { start: Date; end: Date }
-): ExitRoutePayload | null {
-  if (company.postMoney < EXIT_ROUTE_MIN_POST) return null;
-  if (Math.random() >= EXIT_ROUTE_CHANCE) return null;
-
+): ExitRoutePayload {
   const scale = market === "bull" ? 1.35 : market === "bear" ? 0.7 : 1;
   const post = company.postMoney;
   return {
@@ -320,18 +330,43 @@ export function ipoResult(payload: ExitRoutePayload): IpoResult {
   };
 }
 
+// ---- Secondary offer on the fund's own stake ----
+// Mirrors an acquisition offer, but a buyer wants only YOUR position in a
+// winner — the company itself carries on. Trading a capped return now for
+// the power-law upside of staying in. Only eligible for grown-up companies
+// (gated in the scenario pool), so it competes with exit_route/acquisition
+// rather than ever appearing for a seed-stage company.
+export const FUND_SECONDARY_CHANCE = 0.06;
+export const FUND_SECONDARY_MIN_POST = 100_000_000; // reserved for real winners
+
+export type FundSecondaryOffer = { offerValue: number; exitDate: string };
+
+export function buildFundSecondaryOffer(
+  company: SimCompanyState,
+  market: Market,
+  window: { start: Date; end: Date }
+): FundSecondaryOffer {
+  const scale = market === "bull" ? 1.35 : market === "bear" ? 0.65 : 1;
+  const offerValue = Math.max(
+    Math.round(
+      (company.postMoney * SECONDARY_DISCOUNT * (2.2 + Math.random() * 1.3) * scale) /
+        500_000
+    ) * 500_000,
+    500_000
+  );
+  return { offerValue, exitDate: dateInWindow(window, company.lastDate) };
+}
+
 // ---- Replacing the founder-CEO ----
 // The board wants a professional operator. It usually does steady the company
 // — and it costs you with every founder who hears about it.
 
-const CEO_REPLACEMENT_CHANCE = 0.12;
+// Base per-year chance the board raises a CEO vote — read as a scenario-pool
+// weight now.
+export const CEO_REPLACEMENT_CHANCE = 0.12;
 export const CEO_REPLACED_QUALITY_BOOST = 0.18;
 export const CEO_KEPT_MIN = -0.08;
 export const CEO_KEPT_MAX = 0.22;
-
-export function maybeCeoReplacement(): boolean {
-  return Math.random() < CEO_REPLACEMENT_CHANCE;
-}
 
 // Standing by the founder is the higher-variance answer.
 export function founderKeptOutcome(): number {

@@ -94,7 +94,7 @@ export default async function ScenariosPage() {
         <SaveScenarioForm />
 
         <div
-          className="max-card mt-6 overflow-x-auto rounded-2xl"
+          className="max-card-flat mt-6 overflow-x-auto rounded-2xl"
           style={{ "--max-card-border": "var(--max-cyan)" } as React.CSSProperties}
         >
           <table className="w-full text-sm">

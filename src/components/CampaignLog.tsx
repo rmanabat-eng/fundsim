@@ -47,7 +47,7 @@ export function CampaignLog({ entries }: { entries: CampaignLogEntry[] }) {
         {withEvents.map((e, i) => (
           <li
             key={e.year}
-            className="max-card rounded-2xl p-4"
+            className="max-card-flat rounded-2xl p-4"
             style={{ "--max-card-border": STAT_BORDERS[i % STAT_BORDERS.length] } as React.CSSProperties}
           >
             <p className="text-[10px] font-black uppercase tracking-widest text-white/50">

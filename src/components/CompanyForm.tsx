@@ -25,7 +25,7 @@ export function CompanyForm({
   return (
     <form
       action={formAction}
-      className="max-card space-y-4 max-w-lg rounded-2xl p-6"
+      className="max-card-flat space-y-4 max-w-lg rounded-2xl p-6"
       style={{ "--max-card-border": "var(--max-magenta)" } as React.CSSProperties}
     >
       <div>

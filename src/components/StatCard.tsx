@@ -16,7 +16,7 @@ export function StatCard({
 }) {
   return (
     <div
-      className={`group relative rounded-xl bg-gradient-to-br ${gradient} p-4 text-white shadow-sm`}
+      className={`group relative rounded-xl bg-gradient-to-br ${gradient} p-4 text-white shadow-sm hover:z-30 focus-within:z-30`}
     >
       <p className="text-xs uppercase tracking-wide text-white/80">
         {hint ? (
@@ -35,7 +35,7 @@ export function StatCard({
       {hint && (
         <div
           aria-hidden="true"
-          className="max-card pointer-events-none invisible absolute left-1/2 top-full z-20 mt-1.5 w-48 -translate-x-1/2 rounded-lg px-3 py-2 text-xs font-normal normal-case tracking-normal text-white/85 group-hover:visible group-focus-within:visible"
+          className="max-card-flat pointer-events-none invisible absolute left-1/2 top-full z-20 mt-1.5 w-48 -translate-x-1/2 rounded-lg px-3 py-2 text-xs font-normal normal-case tracking-normal text-white/85 group-hover:visible group-focus-within:visible"
           style={{ "--max-card-border": "var(--max-cyan)" } as React.CSSProperties}
         >
           {hint}

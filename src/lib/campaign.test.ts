@@ -5,8 +5,8 @@ import {
   dateInWindow,
   generateDeal,
   gradeFund,
-  maybeAcquisitionOffer,
-  maybeBridgeRequest,
+  buildAcquisitionOffer,
+  buildBridgeRequest,
   maybeTermSheet,
   pivotOutcome,
   PIVOT_BACKED_MAX,
@@ -21,7 +21,8 @@ import {
   SECONDARY_DISCOUNT,
   founderKeptOutcome,
   ipoResult,
-  maybeExitRoute,
+  buildExitRoute,
+  EXIT_ROUTE_MIN_POST,
   maybePayToPlay,
 } from "./campaign";
 
@@ -113,30 +114,22 @@ describe("decision generators", () => {
   const window = yearWindow("2030-03-15", 1);
 
   it("acquisition offers price above zero and respect round validation", () => {
-    let seen = 0;
-    for (let i = 0; i < 500 && seen < 10; i++) {
-      const offer = maybeAcquisitionOffer(company, "bull", window);
-      if (!offer) continue;
-      seen++;
+    for (let i = 0; i < 20; i++) {
+      const offer = buildAcquisitionOffer(company, "bull", window);
       expect(offer.offerValue).toBeGreaterThan(0);
       expect(new Date(offer.exitDate).getTime()).toBeGreaterThan(
         new Date(company.lastDate).getTime()
       );
     }
-    expect(seen).toBe(10);
   });
 
   it("bridge terms satisfy the same invariants the round form enforces", () => {
-    let seen = 0;
-    for (let i = 0; i < 500 && seen < 20; i++) {
-      const bridge = maybeBridgeRequest(company, "bear", window);
-      if (!bridge) continue;
-      seen++;
+    for (let i = 0; i < 20; i++) {
+      const bridge = buildBridgeRequest(company, "bear", window);
       expect(bridge.amount).toBeGreaterThan(0);
       expect(bridge.postMoney).toBeGreaterThan(bridge.amount);
       expect(bridge.stage).toBe("SEED"); // bridges don't advance the stage
     }
-    expect(seen).toBe(20);
   });
 });
 
@@ -310,21 +303,20 @@ describe("campaignLog", () => {
   });
 });
 
-describe("maybeExitRoute", () => {
+describe("buildExitRoute", () => {
+  // Eligibility (postMoney >= EXIT_ROUTE_MIN_POST) now lives in the scenario
+  // pool (src/lib/scenario-pool.ts + actions.ts OFFER_POOL) — this builder is
+  // pure payload construction, called only once a route has been picked.
   const window = yearWindow("2026-01-01", 1);
   const mature = { stage: "SERIES_C", postMoney: 200_000_000, lastDate: "2026-01-02" };
-  const small = { stage: "SEED", postMoney: 8_000_000, lastDate: "2026-01-02" };
 
-  it("never offers routes to a company that hasn't grown up", () => {
-    for (let i = 0; i < 200; i++) {
-      expect(maybeExitRoute(small, "bull", window)).toBeNull();
-    }
+  it("only makes sense once a company has grown up", () => {
+    expect(mature.postMoney).toBeGreaterThanOrEqual(EXIT_ROUTE_MIN_POST);
   });
 
   it("prices the secondary below the last round — that's the discount", () => {
     for (let i = 0; i < 200; i++) {
-      const r = maybeExitRoute(mature, "normal", window);
-      if (!r) continue;
+      const r = buildExitRoute(mature, "normal", window);
       expect(r.secondaryValuation).toBeLessThan(r.postMoney);
       expect(r.secondaryValuation).toBeCloseTo(r.postMoney * SECONDARY_DISCOUNT, -6);
     }
@@ -333,14 +325,12 @@ describe("maybeExitRoute", () => {
   it("gives the IPO a higher ceiling than the sale, and more risk in a bear", () => {
     let bull = 0;
     let bear = 0;
-    for (let i = 0; i < 400; i++) {
-      const b = maybeExitRoute(mature, "bull", window);
-      if (b) {
-        expect(b.ipoHigh).toBeGreaterThan(b.acquisitionOffer);
-        bull = b.ipoPullChance;
-      }
-      const r = maybeExitRoute(mature, "bear", window);
-      if (r) bear = r.ipoPullChance;
+    for (let i = 0; i < 20; i++) {
+      const b = buildExitRoute(mature, "bull", window);
+      expect(b.ipoHigh).toBeGreaterThan(b.acquisitionOffer);
+      bull = b.ipoPullChance;
+      const r = buildExitRoute(mature, "bear", window);
+      bear = r.ipoPullChance;
     }
     expect(bear).toBeGreaterThan(bull);
   });

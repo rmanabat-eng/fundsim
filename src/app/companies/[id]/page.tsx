@@ -85,7 +85,7 @@ export default async function CompanyPage({
       <main className="relative mx-auto max-w-5xl px-6 py-8">
         {exited && (
           <div
-            className="max-card mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl p-4"
+            className="max-card-flat mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl p-4"
             style={
               {
                 "--max-card-border":
@@ -191,7 +191,7 @@ export default async function CompanyPage({
 
         {pitchNotes.length > 0 && (
           <section
-            className="max-card mt-8 rounded-2xl p-5"
+            className="max-card-flat mt-8 rounded-2xl p-5"
             style={{ "--max-card-border": "var(--max-purple)" } as React.CSSProperties}
           >
             <h2 className="text-sm font-black uppercase tracking-widest text-white/60">
@@ -237,7 +237,7 @@ export default async function CompanyPage({
         </div>
 
         <div
-          className="max-card mt-3 overflow-x-auto rounded-2xl"
+          className="max-card-flat mt-3 overflow-x-auto rounded-2xl"
           style={{ "--max-card-border": "var(--max-cyan)" } as React.CSSProperties}
         >
           <table className="w-full text-sm">
@@ -338,7 +338,7 @@ export default async function CompanyPage({
         </div>
 
         <section
-          className="max-card mt-8 rounded-2xl p-6"
+          className="max-card-flat mt-8 rounded-2xl p-6"
           style={{ "--max-card-border": "var(--max-yellow)" } as React.CSSProperties}
         >
           <h2 className="font-display text-lg font-bold text-white [text-shadow:2px_2px_0_var(--max-purple)]">

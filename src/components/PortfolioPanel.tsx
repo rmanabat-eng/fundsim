@@ -32,7 +32,7 @@ export function PortfolioPanel({
       <div className="mt-3 space-y-4">
         {points.length >= 2 && (
           <div
-            className="max-card rounded-2xl p-5"
+            className="max-card-flat rounded-2xl p-5"
             style={{ "--max-card-border": "var(--max-cyan)" } as React.CSSProperties}
           >
             <FundChart points={points} />
@@ -43,7 +43,7 @@ export function PortfolioPanel({
             </p>
           </div>
         )}
-        <div className="max-card overflow-hidden rounded-2xl" style={{ "--max-card-border": "var(--max-purple)" } as React.CSSProperties}>
+        <div className="max-card-flat overflow-hidden rounded-2xl" style={{ "--max-card-border": "var(--max-purple)" } as React.CSSProperties}>
           <CompanyTable companies={rows} />
         </div>
       </div>

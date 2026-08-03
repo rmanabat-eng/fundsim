@@ -111,7 +111,7 @@ export function CampaignTips() {
       {/* Each group gets its own box: uneven tip counts would otherwise leave
           ragged gaps where a short section meets a tall one in the grid. */}
       <div
-        className="max-card mt-3 grid gap-4 rounded-2xl p-5 sm:grid-cols-2"
+        className="max-card-flat mt-3 grid gap-4 rounded-2xl p-5 sm:grid-cols-2"
         style={{ "--max-card-border": "var(--max-yellow)" } as React.CSSProperties}
       >
         {GROUPS.map((g, i) => (

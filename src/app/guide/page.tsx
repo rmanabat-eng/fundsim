@@ -3,7 +3,7 @@ import { GAME_YEARS, INVESTMENT_PERIOD_YEARS } from "@/lib/campaign";
 
 const h2 = "font-display text-lg font-bold text-white [text-shadow:2px_2px_0_var(--max-purple)]";
 const p = "mt-3 text-sm text-white/75 leading-relaxed";
-const card = "max-card rounded-2xl p-6";
+const card = "max-card-flat rounded-2xl p-6";
 const em = "font-semibold text-white";
 const link = "text-[color:var(--max-cyan)] underline";
 

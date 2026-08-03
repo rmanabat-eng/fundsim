@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import {
   acceptAcquisition,
+  acceptFundSecondary,
   declineDecision,
   fundBridge,
   fundProRata,
@@ -42,6 +43,12 @@ export type DecisionView =
     })
   | (Common & {
       type: "acquisition";
+      offerValue: number;
+      yourShare: number; // ownership × offer
+      invested: number; // total checks into this company so far
+    })
+  | (Common & {
+      type: "fund_secondary";
       offerValue: number;
       yourShare: number; // ownership × offer
       invested: number; // total checks into this company so far
@@ -90,7 +97,7 @@ export type DecisionView =
       ownedIfDecline: number; // % after converting at the recap price
     });
 
-const cardClasses = "max-card h-full rounded-2xl p-5";
+const cardClasses = "max-card-flat relative h-full rounded-2xl p-5 hover:z-30 focus-within:z-30";
 const cardStyle = { "--max-card-border": "var(--max-yellow)" } as React.CSSProperties;
 const primaryButton =
   "max-btn-primary shrink-0 rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-r from-[color:var(--max-magenta)] via-[color:var(--max-purple)] to-[color:var(--max-cyan)] px-4 py-2 text-sm font-black uppercase tracking-wide text-white disabled:opacity-50";
@@ -356,6 +363,83 @@ function AcquisitionCard({
             startTransition(async () => {
               await declineDecision(d.id);
               toast(`Held ${d.companyName} — passed on the offer`, "info");
+            })
+          }
+          className={secondaryButton}
+        >
+          Hold
+        </button>
+      </DecisionActions>
+    </DecisionShell>
+  );
+}
+
+function FundSecondaryCard({
+  d,
+}: {
+  d: Extract<DecisionView, { type: "fund_secondary" }>;
+}) {
+  const [pending, startTransition] = useTransition();
+  const multiple = d.invested > 0 ? d.yourShare / d.invested : 0;
+
+  return (
+    <DecisionShell stamp="Secondary offer">
+      <p className="text-sm text-white/85">
+        💰 A buyer wants only your stake in{" "}
+        <CompanyName id={d.companyId} name={d.companyName} /> — {formatDollars(d.offerValue)}
+        , the company itself carries on without you.
+      </p>
+
+      <PitchNotes signals={d.signals} />
+
+      <div className="max-chip-box rounded-lg px-3 py-2">
+        <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
+          Your stake returns
+        </p>
+        <p className="mt-0.5 text-base font-black text-white">
+          {formatDollars(d.yourShare)}
+          {d.invested > 0 && (
+            <span className="ml-2 text-sm font-bold text-[color:var(--max-cyan)]">
+              {multiple.toFixed(1)}×
+            </span>
+          )}
+        </p>
+        {d.invested > 0 && (
+          <p className="text-xs text-white/60">
+            on {formatDollars(d.invested)} invested
+          </p>
+        )}
+      </div>
+
+      <p className="text-sm text-white/70">
+        A capped return today, or hold your position for{" "}
+        <Term def="In venture, a handful of huge winners return more than everything else combined. Selling a potential winner early caps the outcome that pays for the whole fund.">
+          the power law
+        </Term>
+        .
+      </p>
+
+      <DecisionActions>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() =>
+            startTransition(async () => {
+              await acceptFundSecondary(d.id);
+              toast(`Sold your stake in ${d.companyName} — ${formatDollars(d.yourShare)}`);
+            })
+          }
+          className={primaryButton}
+        >
+          {pending ? "Signing..." : "Sell the stake"}
+        </button>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() =>
+            startTransition(async () => {
+              await declineDecision(d.id);
+              toast(`Held ${d.companyName} — kept the position`, "info");
             })
           }
           className={secondaryButton}
@@ -823,6 +907,7 @@ function PayToPlayCard({ d }: { d: Extract<DecisionView, { type: "pay_to_play" }
 export function DecisionCard({ decision }: { decision: DecisionView }) {
   if (decision.type === "pro_rata") return <ProRataCard d={decision} />;
   if (decision.type === "acquisition") return <AcquisitionCard d={decision} />;
+  if (decision.type === "fund_secondary") return <FundSecondaryCard d={decision} />;
   if (decision.type === "term_sheet") return <TermSheetCard d={decision} />;
   if (decision.type === "pivot") return <PivotCard d={decision} />;
   if (decision.type === "exit_route") return <ExitRouteCard d={decision} />;

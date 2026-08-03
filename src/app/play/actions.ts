@@ -7,13 +7,23 @@ import { getSettings } from "@/lib/settings";
 import { rollYearEvent } from "@/lib/simulate";
 import { exitProceeds, formatDollars, ownershipAfterRounds } from "@/lib/fund-math";
 import {
+  ACQUISITION_CHANCE,
+  BRIDGE_CHANCE,
   BRIDGE_FUNDED_QUALITY_BOOST,
   BRIDGE_REFUSED_QUALITY_HIT,
   CEO_REPLACED_QUALITY_BOOST,
+  CEO_REPLACEMENT_CHANCE,
   DEALS_PER_YEAR,
+  EXIT_ROUTE_CHANCE,
+  EXIT_ROUTE_MIN_POST,
+  FUND_SECONDARY_CHANCE,
+  FUND_SECONDARY_MIN_POST,
   GAME_YEARS,
   INVESTMENT_PERIOD_YEARS,
+  PIVOT_BACKED_VARIANCE_MULT,
+  PIVOT_CHANCE,
   PIVOT_FOCUS_QUALITY_BOOST,
+  PIVOT_FOCUS_VARIANCE_MULT,
   PIVOT_UNSUPPORTED_QUALITY_HIT,
   TERM_SHEET_HIGH_PRICE_QUALITY_HIT,
   TERM_SHEET_TOP_TIER_QUALITY_BOOST,
@@ -22,20 +32,28 @@ import {
   generateDeal,
   founderKeptOutcome,
   ipoResult,
-  maybeAcquisitionOffer,
-  maybeBridgeRequest,
-  maybeCeoReplacement,
-  maybeExitRoute,
+  buildAcquisitionOffer,
+  buildBridgeRequest,
+  buildExitRoute,
+  buildFundSecondaryOffer,
   maybePayToPlay,
-  maybePivotRequest,
   maybeTermSheet,
   pivotOutcome,
   rollMarket,
   yearWindow,
   type ExitRoutePayload,
+  type FundSecondaryOffer,
   type Market,
   type PayToPlayPayload,
 } from "@/lib/campaign";
+import {
+  derivePerformance,
+  parseDynState,
+  pickScenario,
+  serializeDynState,
+  type CompanyDynState,
+  type ScenarioDef,
+} from "@/lib/scenario-pool";
 
 export type FormState = { error: string } | null;
 
@@ -53,6 +71,7 @@ export type BridgePayload = {
   stage: string;
   date: string;
 };
+export type FundSecondaryPayload = FundSecondaryOffer;
 // Two competing term sheets the founder asks you to pick between.
 export type TermSheetPayload = {
   stage: string;
@@ -68,6 +87,63 @@ export type CeoReplacementPayload = Record<string, never>;
 // ExitRoutePayload and PayToPlayPayload live in @/lib/campaign — a "use server"
 // module can only export async functions, so they aren't re-exported here.
 
+// ---- Scenario pools ----
+// Two pools per company-year: which "quiet year" decision fires (bridge,
+// pivot, ceo vote), and which "offer" fires (exit route, acquisition, fund
+// secondary). Eligibility gates on stage/postMoney/performance so, e.g., a
+// seed company never draws a Series B secondary; weight starts from the old
+// flat per-year chance and is nudged by market, performance, and the
+// company's chaining state (CompanyDynState).
+
+const QUIET_POOL: ScenarioDef[] = [
+  {
+    type: "bridge",
+    eligible: (ctx) => !ctx.state.removed,
+    weight: (ctx) =>
+      (BRIDGE_CHANCE[ctx.market] + (ctx.macroShock ? 0.15 : 0)) *
+      (ctx.company.performance === "down" ? 1.5 : 1) *
+      ctx.state.varianceMultiplier *
+      100,
+  },
+  {
+    type: "pivot",
+    eligible: (ctx) => !ctx.state.removed,
+    weight: (ctx) => PIVOT_CHANCE * (ctx.company.performance === "down" ? 1.3 : 1) * 100,
+  },
+  {
+    type: "ceo_replacement",
+    eligible: (ctx) =>
+      !ctx.state.removed && ctx.company.stage !== "PRE_SEED" && ctx.company.stage !== "SEED",
+    weight: () => CEO_REPLACEMENT_CHANCE * 100,
+  },
+];
+
+const OFFER_POOL: ScenarioDef[] = [
+  {
+    type: "fund_secondary",
+    eligible: (ctx) =>
+      !ctx.state.removed && ctx.company.postMoney >= FUND_SECONDARY_MIN_POST,
+    weight: (ctx) =>
+      FUND_SECONDARY_CHANCE * (ctx.macroShock ? 0.5 : 1) * ctx.state.varianceMultiplier * 100,
+  },
+  {
+    type: "exit_route",
+    eligible: (ctx) =>
+      !ctx.state.removed && ctx.company.postMoney >= EXIT_ROUTE_MIN_POST,
+    weight: (ctx) =>
+      EXIT_ROUTE_CHANCE * (ctx.macroShock ? 0.6 : 1) * ctx.state.varianceMultiplier * 100,
+  },
+  {
+    type: "acquisition",
+    eligible: (ctx) => !ctx.state.removed,
+    weight: (ctx) =>
+      ACQUISITION_CHANCE[ctx.market] *
+      (ctx.macroShock ? 0.6 : 1) *
+      ctx.state.varianceMultiplier *
+      100,
+  },
+];
+
 async function deployed(): Promise<number> {
   const rounds = await prisma.round.findMany({ select: { yourCheck: true } });
   return rounds.reduce((sum, r) => sum + r.yourCheck, 0);
@@ -80,6 +156,18 @@ async function remainingCapital(): Promise<number> {
 
 function clampQuality(q: number): number {
   return Math.min(Math.max(q, -1), 1);
+}
+
+async function updateDynState(
+  companyId: string,
+  raw: string,
+  patch: Partial<CompanyDynState>
+) {
+  const next: CompanyDynState = { ...parseDynState(raw), ...patch };
+  await prisma.company.update({
+    where: { id: companyId },
+    data: { scenarioState: serializeDynState(next) },
+  });
 }
 
 async function dealFlow(year: number) {
@@ -262,6 +350,31 @@ export async function acceptAcquisition(decisionId: string) {
   revalidatePath("/");
 }
 
+// A buyer wants only your stake in a winner — capped return now, no more
+// power-law upside on this one. The company itself is untouched, so unlike
+// acquisition/exit_route this doesn't close out the company or its rounds.
+export async function acceptFundSecondary(decisionId: string) {
+  const decision = await prisma.decision.findUnique({ where: { id: decisionId } });
+  if (!decision || decision.status !== "pending" || decision.type !== "fund_secondary")
+    return;
+  const payload: FundSecondaryPayload = JSON.parse(decision.payload);
+
+  await prisma.company.update({
+    where: { id: decision.companyId },
+    data: { exitValue: payload.offerValue, exitDate: new Date(payload.exitDate) },
+  });
+  await prisma.decision.update({
+    where: { id: decisionId },
+    data: { status: "resolved" },
+  });
+  await prisma.decision.updateMany({
+    where: { companyId: decision.companyId, status: "pending" },
+    data: { status: "moot" },
+  });
+  revalidatePath("/play");
+  revalidatePath("/");
+}
+
 export async function fundBridge(decisionId: string): Promise<FormState> {
   const decision = await prisma.decision.findUnique({
     where: { id: decisionId },
@@ -293,6 +406,10 @@ export async function fundBridge(decisionId: string): Promise<FormState> {
       quality: clampQuality(decision.company.quality + BRIDGE_FUNDED_QUALITY_BOOST),
     },
   });
+  const dynState = parseDynState(decision.company.scenarioState);
+  await updateDynState(decision.companyId, decision.company.scenarioState, {
+    bridgesFunded: dynState.bridgesFunded + 1,
+  });
   await prisma.decision.update({
     where: { id: decisionId },
     data: { status: "resolved" },
@@ -305,7 +422,9 @@ export async function fundBridge(decisionId: string): Promise<FormState> {
 // Decline any pending decision. Refusing a bridge leaves the company
 // struggling and unfunded — its quality takes a hit. Recorded as "declined"
 // (not "resolved") so the end-of-fund reputation can tell a deliberate no
-// apart from money wired.
+// apart from money wired. A struggling company that doesn't recover (quality
+// stays deep negative after the hit) is dropped from every future scenario
+// pool — it's done asking.
 export async function declineDecision(decisionId: string) {
   const decision = await prisma.decision.findUnique({
     where: { id: decisionId },
@@ -314,11 +433,17 @@ export async function declineDecision(decisionId: string) {
   if (!decision || decision.status !== "pending") return;
 
   if (decision.type === "bridge") {
+    const nextQuality = clampQuality(
+      decision.company.quality + BRIDGE_REFUSED_QUALITY_HIT
+    );
     await prisma.company.update({
       where: { id: decision.companyId },
-      data: {
-        quality: clampQuality(decision.company.quality + BRIDGE_REFUSED_QUALITY_HIT),
-      },
+      data: { quality: nextQuality },
+    });
+    const dynState = parseDynState(decision.company.scenarioState);
+    await updateDynState(decision.companyId, decision.company.scenarioState, {
+      bridgesRefused: dynState.bridgesRefused + 1,
+      removed: dynState.removed || nextQuality < -0.5,
     });
   }
   await prisma.decision.update({
@@ -391,6 +516,12 @@ export async function resolvePivot(decisionId: string, choice: "back" | "focus")
           (choice === "back" ? pivotOutcome() : PIVOT_FOCUS_QUALITY_BOOST)
       ),
     },
+  });
+  const dynState = parseDynState(decision.company.scenarioState);
+  await updateDynState(decision.companyId, decision.company.scenarioState, {
+    varianceMultiplier:
+      dynState.varianceMultiplier *
+      (choice === "back" ? PIVOT_BACKED_VARIANCE_MULT : PIVOT_FOCUS_VARIANCE_MULT),
   });
   await prisma.decision.update({
     where: { id: decisionId },
@@ -553,7 +684,14 @@ export type YearSummary = {
   quiet: number;
   distributions: number;
   newDecisions: number;
+  macroShock: boolean; // this year's whole portfolio was reweighted toward distress
+  reservesScarce: boolean; // this year's fresh asks outrun what's left to deploy
 };
+
+// A macro shock hits ~1 year in 10 and temporarily reweights every company's
+// scenario pool toward distress (more bridges/down offers, fewer clean exits)
+// for that year only — it isn't its own decision, just a portfolio-wide mood.
+const MACRO_SHOCK_CHANCE = 0.1;
 
 // The turn crank. Expires anything left on the table (that's the deadline
 // pressure), rolls a year of quality-weighted events across the portfolio,
@@ -627,11 +765,14 @@ export async function advanceYear(): Promise<YearSummary | null> {
       quiet: 0,
       distributions: 0,
       newDecisions: 0,
+      macroShock: false,
+      reservesScarce: false,
     };
   }
 
   const year = game.year + 1;
   const market = rollMarket();
+  const macroShock = Math.random() < MACRO_SHOCK_CHANCE;
   const window = yearWindow(game.startedAt, year);
 
   const summary: YearSummary = {
@@ -646,11 +787,17 @@ export async function advanceYear(): Promise<YearSummary | null> {
     quiet: 0,
     distributions: 0,
     newDecisions: 0,
+    macroShock,
+    reservesScarce: false,
   };
 
   const companies = await prisma.company.findMany({
     include: { rounds: { orderBy: { date: "asc" } } },
   });
+
+  // Sum of this year's fixed-amount follow-on asks (bridges, pay-to-play
+  // checks) — feeds the reserves-scarcity flag below.
+  let pendingAsks = 0;
 
   for (const company of companies) {
     if (company.exitValue !== null || company.rounds.length === 0) continue;
@@ -699,6 +846,7 @@ export async function advanceYear(): Promise<YearSummary | null> {
           },
         });
         summary.newDecisions++;
+        pendingAsks += payToPlay.requiredCheck;
         continue;
       }
       const round = await prisma.round.create({
@@ -742,8 +890,22 @@ export async function advanceYear(): Promise<YearSummary | null> {
       continue; // exited companies get no offers
     } else {
       summary.quiet++;
-      const bridge = maybeBridgeRequest(state, market, window);
-      if (bridge) {
+      const dynState = parseDynState(company.scenarioState);
+      const ctx = {
+        company: {
+          stage: state.stage,
+          sector: company.sector,
+          postMoney: state.postMoney,
+          performance: derivePerformance(company.rounds),
+        },
+        state: dynState,
+        market,
+        macroShock,
+      };
+      const picked = pickScenario(QUIET_POOL, ctx, 100);
+
+      if (picked?.type === "bridge") {
+        const bridge = buildBridgeRequest(state, market, window);
         await prisma.decision.create({
           data: {
             year,
@@ -753,9 +915,10 @@ export async function advanceYear(): Promise<YearSummary | null> {
           },
         });
         summary.newDecisions++;
+        pendingAsks += bridge.amount;
         continue; // a company asking for a bridge isn't fielding acquirers
       }
-      if (maybePivotRequest()) {
+      if (picked?.type === "pivot") {
         await prisma.decision.create({
           data: {
             year,
@@ -767,9 +930,7 @@ export async function advanceYear(): Promise<YearSummary | null> {
         summary.newDecisions++;
         continue; // a founder mid-soul-search isn't fielding acquirers either
       }
-      // A stalled year is also when a board starts asking whether the founder
-      // is still the right CEO.
-      if (maybeCeoReplacement()) {
+      if (picked?.type === "ceo_replacement") {
         await prisma.decision.create({
           data: {
             year,
@@ -790,10 +951,23 @@ export async function advanceYear(): Promise<YearSummary | null> {
         ? { stage: event.stage, postMoney: event.postMoney, lastDate: event.date }
         : state;
 
+    const offerCtx = {
+      company: {
+        stage: anchored.stage,
+        sector: company.sector,
+        postMoney: anchored.postMoney,
+        performance: derivePerformance(company.rounds),
+      },
+      state: parseDynState(company.scenarioState),
+      market,
+      macroShock,
+    };
+    const offerPick = pickScenario(OFFER_POOL, offerCtx, 100);
+
     // A company that has grown up doesn't just get bought — it can go public,
     // sell, or let you take money off the table. That supersedes a plain offer.
-    const route = maybeExitRoute(anchored, market, window);
-    if (route) {
+    if (offerPick?.type === "exit_route") {
+      const route = buildExitRoute(anchored, market, window);
       await prisma.decision.create({
         data: {
           year,
@@ -806,8 +980,23 @@ export async function advanceYear(): Promise<YearSummary | null> {
       continue;
     }
 
-    const offer = maybeAcquisitionOffer(anchored, market, window);
-    if (offer) {
+    // Or a buyer wants only the fund's stake in a winner, not the company.
+    if (offerPick?.type === "fund_secondary") {
+      const secondary = buildFundSecondaryOffer(anchored, market, window);
+      await prisma.decision.create({
+        data: {
+          year,
+          type: "fund_secondary",
+          companyId: company.id,
+          payload: JSON.stringify(secondary satisfies FundSecondaryPayload),
+        },
+      });
+      summary.newDecisions++;
+      continue;
+    }
+
+    if (offerPick?.type === "acquisition") {
+      const offer = buildAcquisitionOffer(anchored, market, window);
       await prisma.decision.create({
         data: {
           year,
@@ -819,6 +1008,14 @@ export async function advanceYear(): Promise<YearSummary | null> {
       summary.newDecisions++;
     }
   }
+
+  // Reserves scarcity: this year's fresh follow-on asks (bridges + pay-to-play
+  // checks) outrun what's left to deploy. There's no separate decision card —
+  // the existing per-decision "only $X left" guard already forces the player
+  // to pick and choose; this just flags the shortfall on the summary so the
+  // UI can call it out.
+  const remaining = await remainingCapital();
+  summary.reservesScarce = pendingAsks > remaining;
 
   await prisma.game.update({ where: { id: 1 }, data: { year, market } });
   // The checkbook closes for new names after the investment period — from
