@@ -43,9 +43,7 @@ export function StakeSparkline({
           stroke="#0d0d1a"
           strokeWidth={1.5}
         >
-          <title>
-            {formatDate(p.date)}: {formatDollars(p.value)}
-          </title>
+          <title>{`${formatDate(p.date)}: ${formatDollars(p.value)}`}</title>
         </circle>
       ))}
     </svg>

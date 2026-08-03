@@ -1,3 +1,14 @@
+## 2026-08-03 — Fix hydration mismatch on the company detail page's stake sparkline
+
+StakeSparkline gave each point's SVG <title> array children
+({date}: {value}) instead of one string, which React can't reconcile
+between server and client render — every visit to a company page
+discarded and re-rendered the whole tree client-side. Collapsed it
+into a single template string.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+
+
 ## 2026-08-03 — Prevent duplicate company names within the same year's deal flow
 
 dealFlow() now tracks the names used in a year's batch and retries
