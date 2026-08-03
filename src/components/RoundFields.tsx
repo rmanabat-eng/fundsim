@@ -1,10 +1,12 @@
 import { STAGES, STAGE_LABELS } from "@/lib/constants";
 
+// Dark by default now — every remaining consumer (company/round/exit forms,
+// the campaign's decision cards) lives on the maximalist skin, so this no
+// longer needs to double as a light-mode input.
 export const inputClasses =
-  "w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-200 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-violet-900";
+  "w-full rounded-lg border-2 border-white/20 bg-white/5 px-3 py-2 text-white placeholder:text-white/30 focus:border-[color:var(--max-cyan)] focus:outline-none focus:ring-2 focus:ring-[color:var(--max-cyan)]/30 transition-colors";
 
-export const labelClasses =
-  "block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300";
+export const labelClasses = "block text-sm font-bold mb-1 text-white/75";
 
 export type RoundDefaults = {
   stage?: string;

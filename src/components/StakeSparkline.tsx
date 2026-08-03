@@ -32,19 +32,15 @@ export function StakeSparkline({
       role="img"
       aria-label="Stake value after each round"
     >
-      <path
-        d={d}
-        fill="none"
-        strokeWidth={2}
-        className="stroke-violet-600 dark:stroke-violet-500"
-      />
+      <path d={d} fill="none" strokeWidth={2} stroke="var(--max-cyan)" />
       {points.map((p, i) => (
         <circle
           key={i}
           cx={x(p.date)}
           cy={y(p.value)}
           r={3}
-          className="fill-violet-600 stroke-white dark:fill-violet-500 dark:stroke-slate-900"
+          fill="var(--max-cyan)"
+          stroke="#0d0d1a"
           strokeWidth={1.5}
         >
           <title>

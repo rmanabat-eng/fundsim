@@ -51,17 +51,30 @@ export default async function CompanyPage({
   const totalLoss = exited && company.exitValue === 0;
 
   return (
-    <div className="app-bg min-h-screen">
-      <header className="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600">
-        <div className="mx-auto max-w-5xl px-6 py-8 flex items-center justify-between">
+    <div className="max-hero relative min-h-screen bg-[#0d0d1a]">
+      <div aria-hidden className="max-pattern-dots pointer-events-none fixed inset-0" />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 90rem 60rem at 15% 0%, rgba(255,58,242,.16) 0%, transparent 55%), radial-gradient(ellipse 80rem 60rem at 90% 30%, rgba(0,245,212,.13) 0%, transparent 55%), radial-gradient(ellipse 90rem 70rem at 50% 90%, rgba(123,47,255,.16) 0%, transparent 60%)",
+        }}
+      />
+      <header className="relative overflow-hidden border-b-8 border-[color:var(--max-magenta)]">
+        <div aria-hidden className="max-pattern-stripes pointer-events-none absolute inset-0" />
+        <div className="relative mx-auto flex max-w-5xl items-center justify-between px-6 py-8">
           <div>
-            <Link href="/" className="text-sm text-white/70 hover:text-white">
+            <Link
+              href="/"
+              className="text-xs font-bold uppercase tracking-widest text-white/60 hover:text-white"
+            >
               ← Portfolio
             </Link>
-            <h1 className="text-3xl font-bold text-white tracking-tight mt-1">
+            <h1 className="mt-1 font-bungee text-4xl font-normal uppercase tracking-tight text-white [text-shadow:2px_2px_0_var(--max-purple),4px_4px_0_var(--max-magenta),6px_6px_0_var(--max-cyan)]">
               {company.name}
             </h1>
-            <p className="text-sm text-white/80 mt-1">
+            <p className="mt-2 text-sm text-white/80">
               {company.sector} · {STAGE_LABELS[latest.stage]} ·{" "}
               {formatDollars(invested)} invested for {formatPercent(currentOwnership)}
             </p>
@@ -69,30 +82,33 @@ export default async function CompanyPage({
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-6 py-8">
+      <main className="relative mx-auto max-w-5xl px-6 py-8">
         {exited && (
           <div
-            className={`mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 ${
-              company.exitValue === 0
-                ? "border-rose-200 bg-rose-50 dark:border-rose-900 dark:bg-rose-950"
-                : "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950"
-            }`}
+            className="max-card mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl p-4"
+            style={
+              {
+                "--max-card-border":
+                  company.exitValue === 0 ? "var(--max-orange)" : "var(--max-cyan)",
+              } as React.CSSProperties
+            }
           >
-            <p className="text-sm text-slate-700 dark:text-slate-300">
+            <p className="text-sm text-white/80">
               {company.exitValue === 0 ? (
                 <>
-                  <strong>Written off</strong>
+                  <strong className="text-white">Written off</strong>
                   {company.exitDate && <> on {formatDate(company.exitDate)}</>} — the
                   company shut down and your {formatDollars(invested)} is gone.
                 </>
               ) : (
                 <>
-                  <strong>Exited</strong>
+                  <strong className="text-white">Exited</strong>
                   {company.exitDate && <> on {formatDate(company.exitDate)}</>} at a{" "}
                   {formatDollars(company.exitValue ?? 0)} valuation — your{" "}
                   {formatPercent(currentOwnership)} returned{" "}
-                  <strong>{formatDollars(stakeValue)}</strong> in cash (
-                  {formatMultiple(multiple)} on {formatDollars(invested)} invested).
+                  <strong className="text-white">{formatDollars(stakeValue)}</strong> in
+                  cash ({formatMultiple(multiple)} on {formatDollars(invested)}{" "}
+                  invested).
                 </>
               )}{" "}
               The cap table is frozen.
@@ -100,7 +116,7 @@ export default async function CompanyPage({
             <div className="flex items-center gap-4">
               <Link
                 href={`/companies/${company.id}/exit`}
-                className="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                className="text-xs font-bold text-[color:var(--max-cyan)] hover:underline"
               >
                 Edit exit
               </Link>
@@ -161,7 +177,7 @@ export default async function CompanyPage({
 
         {company.rounds.length >= 2 && (
           <div className="mt-6">
-            <p className="text-xs uppercase tracking-wide font-semibold text-slate-500 dark:text-slate-400">
+            <p className="text-xs uppercase tracking-widest font-black text-white/60">
               Stake value by round
             </p>
             <StakeSparkline
@@ -174,11 +190,14 @@ export default async function CompanyPage({
         )}
 
         {pitchNotes.length > 0 && (
-          <section className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <section
+            className="max-card mt-8 rounded-2xl p-5"
+            style={{ "--max-card-border": "var(--max-purple)" } as React.CSSProperties}
+          >
+            <h2 className="text-sm font-black uppercase tracking-widest text-white/60">
               🔎 Notes from the pitch
             </h2>
-            <ul className="mt-3 space-y-1.5 text-sm text-slate-600 dark:text-slate-400">
+            <ul className="mt-3 space-y-1.5 text-sm text-white/75">
               {pitchNotes.map((s) => (
                 <li key={s} className="flex gap-2">
                   <span aria-hidden>·</span>
@@ -186,22 +205,22 @@ export default async function CompanyPage({
                 </li>
               ))}
             </ul>
-            <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
+            <p className="mt-3 text-xs text-white/40">
               What the deck said when you backed them. Some of it predicted how this
               turned out; some of it was noise.
             </p>
           </section>
         )}
 
-        <div className="mt-8 flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-sm font-black uppercase tracking-widest text-white/60">
             Funding rounds
           </h2>
           <div className="flex items-center gap-3">
             {!exited && (
               <Link
                 href={`/companies/${company.id}/exit`}
-                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                className="max-btn-outline rounded-full border-4 border-white/25 bg-[#2d1b4e]/60 px-4 py-2 text-sm font-bold text-white/85"
               >
                 Record exit
               </Link>
@@ -209,7 +228,7 @@ export default async function CompanyPage({
             {!exited && (
               <Link
                 href={`/companies/${company.id}/rounds/new`}
-                className="rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-4 py-2 text-sm font-semibold shadow-sm hover:from-indigo-500 hover:to-violet-500 transition-colors"
+                className="max-btn-primary rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-r from-[color:var(--max-magenta)] via-[color:var(--max-purple)] to-[color:var(--max-cyan)] px-4 py-2 text-sm font-black uppercase tracking-wide text-white"
               >
                 + Add round
               </Link>
@@ -217,10 +236,13 @@ export default async function CompanyPage({
           </div>
         </div>
 
-        <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200 shadow-sm dark:border-slate-800">
-          <table className="w-full text-sm bg-white dark:bg-slate-900">
+        <div
+          className="max-card mt-3 overflow-x-auto rounded-2xl"
+          style={{ "--max-card-border": "var(--max-cyan)" } as React.CSSProperties}
+        >
+          <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+              <tr className="border-b-2 border-white/15 bg-white/5 text-left text-xs uppercase tracking-widest font-black text-white/60">
                 <th className="py-3 px-4">Stage</th>
                 <th className="py-3 px-4">Date</th>
                 <th className="py-3 px-4">Total raised</th>
@@ -237,46 +259,38 @@ export default async function CompanyPage({
                 const delta = prev !== null ? timeline[i] - prev : null;
                 const valueDelta = i > 0 ? values[i] - values[i - 1] : null;
                 return (
-                  <tr
-                    key={round.id}
-                    className="border-b border-slate-100 last:border-b-0 dark:border-slate-800"
-                  >
+                  <tr key={round.id} className="border-b border-white/10 last:border-b-0">
                     <td className="py-3 px-4">
                       <span
                         className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${
-                          STAGE_STYLES[round.stage] ??
-                          "bg-slate-100 text-slate-700 ring-slate-300"
+                          STAGE_STYLES[round.stage] ?? "bg-white/10 text-white/80 ring-white/25"
                         }`}
                       >
                         {STAGE_LABELS[round.stage]}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-slate-500 dark:text-slate-400">
-                      {formatDate(round.date)}
-                    </td>
-                    <td className="py-3 px-4 text-slate-700 dark:text-slate-300">
+                    <td className="py-3 px-4 text-white/60">{formatDate(round.date)}</td>
+                    <td className="py-3 px-4 text-white/75">
                       {formatDollars(round.raised)}
                     </td>
-                    <td className="py-3 px-4 text-slate-700 dark:text-slate-300">
+                    <td className="py-3 px-4 text-white/75">
                       {formatDollars(round.postMoney)}
                     </td>
-                    <td className="py-3 px-4 text-slate-700 dark:text-slate-300">
+                    <td className="py-3 px-4 text-white/75">
                       {round.yourCheck > 0 ? (
                         formatDollars(round.yourCheck)
                       ) : (
-                        <span className="text-slate-400 dark:text-slate-500">
-                          sat out
-                        </span>
+                        <span className="text-white/40">sat out</span>
                       )}
                     </td>
-                    <td className="py-3 px-4 font-semibold text-violet-700 dark:text-violet-400">
+                    <td className="py-3 px-4 font-semibold text-[color:var(--max-magenta)]">
                       {formatPercent(timeline[i])}
                       {delta !== null && (
                         <span
                           className={`ml-2 text-xs font-medium ${
                             delta >= 0
-                              ? "text-emerald-600 dark:text-emerald-400"
-                              : "text-rose-600 dark:text-rose-400"
+                              ? "text-[color:var(--max-cyan)]"
+                              : "text-[color:var(--max-orange)]"
                           }`}
                         >
                           {delta >= 0 ? "+" : ""}
@@ -284,14 +298,14 @@ export default async function CompanyPage({
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-slate-700 dark:text-slate-300">
+                    <td className="py-3 px-4 text-white/75">
                       {formatDollars(values[i])}
                       {valueDelta !== null && (
                         <span
                           className={`ml-2 text-xs font-medium ${
                             valueDelta >= 0
-                              ? "text-emerald-600 dark:text-emerald-400"
-                              : "text-rose-600 dark:text-rose-400"
+                              ? "text-[color:var(--max-cyan)]"
+                              : "text-[color:var(--max-orange)]"
                           }`}
                         >
                           {valueDelta >= 0 ? "+" : "−"}
@@ -304,7 +318,7 @@ export default async function CompanyPage({
                         <div className="flex items-center gap-3 justify-end">
                           <Link
                             href={`/companies/${company.id}/rounds/${round.id}/edit`}
-                            className="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                            className="text-xs font-bold text-[color:var(--max-cyan)] hover:underline"
                           >
                             Edit
                           </Link>
@@ -323,11 +337,14 @@ export default async function CompanyPage({
           </table>
         </div>
 
-        <section className="mt-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+        <section
+          className="max-card mt-8 rounded-2xl p-6"
+          style={{ "--max-card-border": "var(--max-yellow)" } as React.CSSProperties}
+        >
+          <h2 className="font-display text-lg font-bold text-white [text-shadow:2px_2px_0_var(--max-purple)]">
             How dilution works here
           </h2>
-          <p className="mt-3 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+          <p className="mt-3 text-sm text-white/75 leading-relaxed">
             When {company.name} raises a new round, the new investors&apos; money buys
             newly created shares — so everyone who invested before owns a smaller slice
             of a (hopefully) more valuable company. Your stake gets multiplied by
@@ -335,9 +352,9 @@ export default async function CompanyPage({
             your check ÷ post-money back. The &quot;Ownership after&quot; column shows
             your stake evolving round by round.
           </p>
-          <p className="mt-3 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+          <p className="mt-3 text-sm text-white/75 leading-relaxed">
             The &quot;Stake value&quot; column is that ownership marked at each
-            round&apos;s post-money valuation — a paper <strong>markup</strong> when the
+            round&apos;s post-money valuation — a paper <strong className="text-white">markup</strong> when the
             company raises at a higher price, a markdown when it raises a down round. No
             cash has come back to the fund; the value is only realized when the company
             exits.

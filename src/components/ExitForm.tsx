@@ -30,7 +30,8 @@ export function ExitForm({
   return (
     <form
       action={formAction}
-      className="space-y-4 max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+      className="max-card space-y-4 max-w-lg rounded-2xl p-6"
+      style={{ "--max-card-border": "var(--max-orange)" } as React.CSSProperties}
     >
       {randomizeFrom && (
         <div>
@@ -44,14 +45,14 @@ export function ExitForm({
                 nonce: Date.now(),
               });
             }}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:border-fuchsia-300 transition-all dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-fuchsia-700"
+            className="max-chip-box rounded-xl border-2 border-white/15 px-4 py-2 text-sm font-bold text-white/75 transition-all hover:border-[color:var(--max-yellow)] hover:text-[color:var(--max-yellow)]"
           >
             🎲 Randomize an outcome
           </button>
           {random && (
-            <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+            <p className="mt-2 text-xs text-white/40">
               Rolled{" "}
-              <strong className="text-fuchsia-600">
+              <strong className="text-[color:var(--max-yellow)]">
                 {writeOff ? "a shutdown" : "an exit"}
               </strong>{" "}
               — click again for a new one, or tweak the fields below.
@@ -59,14 +60,14 @@ export function ExitForm({
           )}
         </div>
       )}
-      <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+      <label className="flex items-center gap-2 text-sm font-bold text-white/75">
         <input
           type="checkbox"
           name="writeOff"
           value="true"
           checked={writeOff}
           onChange={(e) => setWriteOff(e.target.checked)}
-          className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+          className="h-4 w-4 rounded border-2 border-white/30 bg-white/5 text-[color:var(--max-magenta)] focus:ring-[color:var(--max-cyan)]"
         />
         Write-off — the company shut down and the stake is worth $0
       </label>
@@ -107,7 +108,7 @@ export function ExitForm({
 
       {state?.error && (
         <p
-          className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-950 dark:text-rose-300"
+          className="rounded-lg border-2 border-[color:var(--max-orange)] bg-[color:var(--max-orange)]/15 px-3 py-2 text-sm text-[color:var(--max-orange)]"
           role="alert"
         >
           {state.error}
@@ -118,13 +119,13 @@ export function ExitForm({
         <button
           type="submit"
           disabled={pending}
-          className="rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-4 py-2 text-sm font-semibold shadow-sm hover:from-indigo-500 hover:to-violet-500 transition-colors disabled:opacity-50"
+          className="max-btn-primary rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-r from-[color:var(--max-magenta)] via-[color:var(--max-purple)] to-[color:var(--max-cyan)] px-4 py-2 text-sm font-black uppercase tracking-wide text-white disabled:opacity-50"
         >
           {pending ? "Saving..." : writeOff ? "Write off company" : "Record exit"}
         </button>
         <Link
           href={cancelHref}
-          className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          className="max-btn-outline rounded-full border-4 border-white/25 bg-[#2d1b4e]/60 px-4 py-2 text-sm font-bold text-white/85"
         >
           Cancel
         </Link>

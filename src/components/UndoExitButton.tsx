@@ -9,20 +9,18 @@ export function UndoExitButton({ companyId }: { companyId: string }) {
 
   if (confirming) {
     return (
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-slate-600 dark:text-slate-400">
-          Reopen this position?
-        </span>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-white/60">Reopen this position?</span>
         <button
           onClick={() => startTransition(() => undoExit(companyId))}
           disabled={pending}
-          className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline disabled:opacity-50"
+          className="text-xs font-bold text-[color:var(--max-orange)] hover:underline disabled:opacity-50"
         >
           {pending ? "Undoing..." : "Confirm"}
         </button>
         <button
           onClick={() => setConfirming(false)}
-          className="text-xs font-medium text-slate-600 dark:text-slate-400 hover:underline"
+          className="text-xs font-bold text-white/60 hover:underline"
         >
           Cancel
         </button>
@@ -33,7 +31,7 @@ export function UndoExitButton({ companyId }: { companyId: string }) {
   return (
     <button
       onClick={() => setConfirming(true)}
-      className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline"
+      className="text-xs font-bold text-[color:var(--max-orange)] hover:underline"
     >
       Undo exit
     </button>

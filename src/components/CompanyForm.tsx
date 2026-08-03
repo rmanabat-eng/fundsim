@@ -25,7 +25,8 @@ export function CompanyForm({
   return (
     <form
       action={formAction}
-      className="space-y-4 max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+      className="max-card space-y-4 max-w-lg rounded-2xl p-6"
+      style={{ "--max-card-border": "var(--max-magenta)" } as React.CSSProperties}
     >
       <div>
         <label className={labelClasses} htmlFor="companyName">
@@ -63,7 +64,7 @@ export function CompanyForm({
         </select>
       </div>
 
-      <p className="pt-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+      <p className="pt-2 text-xs font-black uppercase tracking-widest text-white/50">
         Your first round
       </p>
 
@@ -71,7 +72,7 @@ export function CompanyForm({
 
       {state?.error && (
         <p
-          className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-950 dark:text-rose-300"
+          className="rounded-lg border-2 border-[color:var(--max-orange)] bg-[color:var(--max-orange)]/15 px-3 py-2 text-sm text-[color:var(--max-orange)]"
           role="alert"
         >
           {state.error}
@@ -82,13 +83,13 @@ export function CompanyForm({
         <button
           type="submit"
           disabled={pending}
-          className="rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-4 py-2 text-sm font-semibold shadow-sm hover:from-indigo-500 hover:to-violet-500 transition-colors disabled:opacity-50"
+          className="max-btn-primary rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-r from-[color:var(--max-magenta)] via-[color:var(--max-purple)] to-[color:var(--max-cyan)] px-4 py-2 text-sm font-black uppercase tracking-wide text-white disabled:opacity-50"
         >
           {pending ? "Saving..." : submitLabel}
         </button>
         <Link
           href="/"
-          className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          className="max-btn-outline rounded-full border-4 border-white/25 bg-[#2d1b4e]/60 px-4 py-2 text-sm font-bold text-white/85"
         >
           Cancel
         </Link>

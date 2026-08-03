@@ -48,44 +48,47 @@ export function StartupPicker({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <h2 className="text-sm font-black uppercase tracking-widest text-white/60">
           Pick a real startup&hellip;
         </h2>
-        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+        <p className="text-xs text-white/40 mt-1">
           Numbers approximate each company&apos;s actual early round — tweak anything
           before investing.
         </p>
         <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {STARTUP_PRESETS.map((p) => {
+          {STARTUP_PRESETS.map((p, i) => {
             const isActive =
               selection.kind === "preset" && selection.name === p.companyName;
+            const accent = [
+              "var(--max-magenta)",
+              "var(--max-cyan)",
+              "var(--max-yellow)",
+              "var(--max-orange)",
+              "var(--max-purple)",
+            ][i % 5];
             return (
               <button
                 key={p.companyName}
                 type="button"
                 onClick={() => setSelection({ kind: "preset", name: p.companyName })}
-                className={`rounded-xl border p-4 text-left transition-all ${
-                  isActive
-                    ? "border-violet-500 bg-violet-50 ring-2 ring-violet-200 shadow-sm dark:bg-violet-950 dark:ring-violet-800"
-                    : "border-slate-200 bg-white hover:border-violet-300 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:hover:border-violet-700"
-                }`}
+                className="max-chip-box rounded-xl border-2 p-4 text-left transition-all hover:-translate-y-0.5"
+                style={{
+                  borderColor: isActive ? accent : "rgba(255,255,255,0.16)",
+                  boxShadow: isActive ? `3px 3px 0 ${accent}` : undefined,
+                }}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-semibold text-slate-900 dark:text-slate-100">
-                    {p.companyName}
-                  </span>
+                  <span className="font-semibold text-white">{p.companyName}</span>
                   <span
                     className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                      SECTOR_STYLES[p.sector] ?? "bg-slate-100 text-slate-800"
+                      SECTOR_STYLES[p.sector] ?? "bg-white/10 text-white/80"
                     }`}
                   >
                     {p.sector}
                   </span>
                 </div>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  {p.blurb}
-                </p>
-                <p className="mt-2 text-xs font-medium text-violet-700 dark:text-violet-400">
+                <p className="mt-1 text-xs text-white/60">{p.blurb}</p>
+                <p className="mt-2 text-xs font-bold text-[color:var(--max-cyan)]">
                   {STAGE_LABELS[p.stage]} · {formatDollars(p.checkSize)} at{" "}
                   {formatDollars(p.postMoneyValuation)} post
                 </p>
@@ -96,18 +99,18 @@ export function StartupPicker({
       </div>
 
       <div>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <h2 className="text-sm font-black uppercase tracking-widest text-white/60">
           &hellip;or create your own
         </h2>
         <div className="mt-3 flex flex-wrap gap-3">
           <button
             type="button"
             onClick={() => setSelection({ kind: "blank" })}
-            className={`rounded-xl border px-4 py-2 text-sm font-medium transition-all ${
-              selection.kind === "blank"
-                ? "border-violet-500 bg-violet-50 text-violet-700 ring-2 ring-violet-200 dark:bg-violet-950 dark:text-violet-300 dark:ring-violet-800"
-                : "border-slate-200 bg-white text-slate-600 hover:border-violet-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-violet-700"
-            }`}
+            className="max-chip-box rounded-full border-2 px-4 py-2 text-sm font-bold transition-all"
+            style={{
+              borderColor: selection.kind === "blank" ? "var(--max-magenta)" : "rgba(255,255,255,0.16)",
+              color: selection.kind === "blank" ? "var(--max-magenta)" : "rgba(255,255,255,0.7)",
+            }}
           >
             Start from a blank form
           </button>
@@ -129,19 +132,19 @@ export function StartupPicker({
                 nonce: Date.now(),
               });
             }}
-            className={`rounded-xl border px-4 py-2 text-sm font-medium transition-all ${
-              selection.kind === "random"
-                ? "border-fuchsia-500 bg-fuchsia-50 text-fuchsia-700 ring-2 ring-fuchsia-200 dark:bg-fuchsia-950 dark:text-fuchsia-300 dark:ring-fuchsia-800"
-                : "border-slate-200 bg-white text-slate-600 hover:border-fuchsia-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-fuchsia-700"
-            }`}
+            className="max-chip-box rounded-full border-2 px-4 py-2 text-sm font-bold transition-all"
+            style={{
+              borderColor: selection.kind === "random" ? "var(--max-yellow)" : "rgba(255,255,255,0.16)",
+              color: selection.kind === "random" ? "var(--max-yellow)" : "rgba(255,255,255,0.7)",
+            }}
           >
             🎲 Randomize a fake startup
           </button>
         </div>
         {selection.kind === "random" && (
-          <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+          <p className="mt-2 text-xs text-white/40">
             Rolled{" "}
-            <strong className="text-fuchsia-600">
+            <strong className="text-[color:var(--max-yellow)]">
               {selection.values.companyName}
             </strong>{" "}
             — click again for a new one, or tweak the form below.
