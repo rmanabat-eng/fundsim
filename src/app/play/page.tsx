@@ -876,7 +876,7 @@ export default async function PlayPage() {
             )}
           </p>
         ) : (
-          <div className="mt-3 grid gap-4 md:grid-cols-2">
+          <div className="mt-3 flex flex-col gap-4">
             {dealViews.map((d, i) => (
               <div
                 key={d.id}
