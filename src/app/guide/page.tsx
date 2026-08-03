@@ -1,23 +1,35 @@
 import Link from "next/link";
 import { GAME_YEARS, INVESTMENT_PERIOD_YEARS } from "@/lib/campaign";
 
-const h2 = "text-lg font-black text-slate-900 dark:text-slate-100";
-const p = "mt-3 text-sm text-slate-600 dark:text-slate-400 leading-relaxed";
-const card =
-  "rounded-2xl border-2 border-slate-900/10 bg-white p-6 pop dark:border-white/10 dark:bg-slate-900";
-const em = "font-semibold text-slate-800 dark:text-slate-200";
-const link = "text-violet-600 underline dark:text-violet-400";
+const h2 = "font-display text-lg font-bold text-white [text-shadow:2px_2px_0_var(--max-purple)]";
+const p = "mt-3 text-sm text-white/75 leading-relaxed";
+const card = "max-card rounded-2xl p-6";
+const em = "font-semibold text-white";
+const link = "text-[color:var(--max-cyan)] underline";
 
 export default function GuidePage() {
   return (
-    <div className="app-bg min-h-screen">
-      <header className="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600">
-        <div className="mx-auto max-w-5xl px-6 py-8 flex items-start justify-between gap-4">
+    <div className="max-hero relative min-h-screen bg-[#0d0d1a]">
+      <div aria-hidden className="max-pattern-dots pointer-events-none fixed inset-0" />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 90rem 60rem at 15% 0%, rgba(255,58,242,.16) 0%, transparent 55%), radial-gradient(ellipse 80rem 60rem at 90% 30%, rgba(0,245,212,.13) 0%, transparent 55%), radial-gradient(ellipse 90rem 70rem at 50% 90%, rgba(123,47,255,.16) 0%, transparent 60%)",
+        }}
+      />
+      <header className="relative overflow-hidden border-b-8 border-[color:var(--max-magenta)]">
+        <div aria-hidden className="max-pattern-stripes pointer-events-none absolute inset-0" />
+        <div className="relative mx-auto flex max-w-5xl items-start justify-between gap-4 px-6 py-8">
           <div className="max-w-2xl">
-            <Link href="/" className="text-sm text-white/70 hover:text-white">
+            <Link
+              href="/"
+              className="text-xs font-bold uppercase tracking-widest text-white/60 hover:text-white"
+            >
               ← Home
             </Link>
-            <h1 className="mt-1 flex items-center gap-3 text-3xl font-black tracking-tight text-white">
+            <h1 className="mt-1 flex items-center gap-3 font-bungee text-3xl font-normal uppercase tracking-tight text-white [text-shadow:2px_2px_0_var(--max-purple),4px_4px_0_var(--max-magenta),6px_6px_0_var(--max-cyan)]">
               <span aria-hidden className="game-float text-3xl">
                 📚
               </span>
@@ -25,7 +37,7 @@ export default function GuidePage() {
             </h1>
             <p className="text-sm text-white/80 mt-2">
               FundSim in one sentence:{" "}
-              <strong>
+              <strong className="text-white">
                 you control the checks, the world controls the outcomes.
               </strong>{" "}
               Here&apos;s how to play it so the lessons land.
@@ -34,8 +46,8 @@ export default function GuidePage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-6 py-8 space-y-6">
-        <section className={card}>
+      <main className="relative mx-auto max-w-3xl px-6 py-8 space-y-6">
+        <section className={card} style={{ "--max-card-border": "var(--max-magenta)" } as React.CSSProperties}>
           <h2 className={h2}>🎮 Two ways to play</h2>
           <p className={p}>
             <Link href="/play" className={link}>
@@ -56,7 +68,7 @@ export default function GuidePage() {
           </p>
         </section>
 
-        <section className={card}>
+        <section className={card} style={{ "--max-card-border": "var(--max-cyan)" } as React.CSSProperties}>
           <h2 className={h2}>The core idea: you only control the inputs</h2>
           <p className={p}>
             Real VCs make exactly two kinds of decisions:{" "}
@@ -69,9 +81,9 @@ export default function GuidePage() {
           </p>
         </section>
 
-        <section className={card}>
+        <section className={card} style={{ "--max-card-border": "var(--max-yellow)" } as React.CSSProperties}>
           <h2 className={h2}>🃏 The campaign playbook</h2>
-          <ol className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-400 list-decimal list-inside leading-relaxed">
+          <ol className="mt-3 space-y-2 text-sm text-white/75 list-decimal list-inside leading-relaxed">
             <li>
               <span className={em}>Read the signals, not the vibes.</span> Each pitch
               shows three bullet points. Some genuinely predict success, some are
@@ -104,7 +116,7 @@ export default function GuidePage() {
           </ol>
         </section>
 
-        <section className={card}>
+        <section className={card} style={{ "--max-card-border": "var(--max-orange)" } as React.CSSProperties}>
           <h2 className={h2}>Lesson 1 — The power law</h2>
           <p className={p}>
             At the end of a fund, look at where the returns came from. Expect roughly
@@ -117,7 +129,7 @@ export default function GuidePage() {
           </p>
         </section>
 
-        <section className={card}>
+        <section className={card} style={{ "--max-card-border": "var(--max-purple)" } as React.CSSProperties}>
           <h2 className={h2}>Lesson 2 — Dilution is a bill that comes due</h2>
           <p className={p}>
             Watch your ownership in a hot company shrink round after round — 2.5% →
@@ -129,7 +141,7 @@ export default function GuidePage() {
           </p>
         </section>
 
-        <section className={card}>
+        <section className={card} style={{ "--max-card-border": "var(--max-magenta)" } as React.CSSProperties}>
           <h2 className={h2}>Lesson 3 — TVPI is paper, DPI is cash</h2>
           <p className={p}>
             After markups, your <span className={em}>TVPI</span> may look great while{" "}
@@ -140,7 +152,7 @@ export default function GuidePage() {
           </p>
         </section>
 
-        <section className={card}>
+        <section className={card} style={{ "--max-card-border": "var(--max-cyan)" } as React.CSSProperties}>
           <h2 className={h2}>Lesson 4 — Time matters: IRR and the J-curve</h2>
           <p className={p}>
             Watch the fund chart year by year. Write-offs hit immediately; markups
@@ -152,7 +164,7 @@ export default function GuidePage() {
           </p>
         </section>
 
-        <section className={card}>
+        <section className={card} style={{ "--max-card-border": "var(--max-yellow)" } as React.CSSProperties}>
           <h2 className={h2}>Lesson 5 — The market is weather, not skill</h2>
           <p className={p}>
             Each year rolls a mood. A <span className={em}>bull market</span> lifts
@@ -165,7 +177,7 @@ export default function GuidePage() {
           </p>
         </section>
 
-        <section className={card}>
+        <section className={card} style={{ "--max-card-border": "var(--max-orange)" } as React.CSSProperties}>
           <h2 className={h2}>Lesson 6 — Reputation compounds</h2>
           <p className={p}>
             Founders talk. You start at <span className={em}>70/100</span>. Funding a
@@ -178,13 +190,13 @@ export default function GuidePage() {
           </p>
         </section>
 
-        <section className={card}>
+        <section className={card} style={{ "--max-card-border": "var(--max-purple)" } as React.CSSProperties}>
           <h2 className={h2}>🏁 How you&apos;re graded</h2>
           <p className={p}>
             At year {GAME_YEARS} the fund closes and your TVPI is scored against real
             venture benchmarks:
           </p>
-          <ul className="mt-3 space-y-1.5 text-sm text-slate-600 dark:text-slate-400">
+          <ul className="mt-3 space-y-1.5 text-sm text-white/75">
             <li>
               <span className={em}>Under 1.0×</span> — bottom quartile. You returned
               less than you deployed.
@@ -213,7 +225,7 @@ export default function GuidePage() {
           </p>
         </section>
 
-        <section className={card}>
+        <section className={card} style={{ "--max-card-border": "var(--max-magenta)" } as React.CSSProperties}>
           <h2 className={h2}>Lesson 7 — Strategy is testable</h2>
           <p className={p}>
             This is what the{" "}
@@ -229,7 +241,7 @@ export default function GuidePage() {
           </p>
         </section>
 
-        <p className="text-xs text-slate-400 dark:text-slate-500">
+        <p className="text-xs text-white/40">
           Every metric also explains itself — hover (or tab to) any label with a dotted
           underline. The math behind all of it is written up in the project&apos;s
           README.

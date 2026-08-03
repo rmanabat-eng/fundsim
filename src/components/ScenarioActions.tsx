@@ -9,8 +9,8 @@ export function ScenarioActions({ id }: { id: string }) {
 
   if (confirming) {
     return (
-      <div className="flex items-center gap-2 justify-end">
-        <span className="text-xs text-slate-600 dark:text-slate-400">
+      <div className="flex flex-wrap items-center gap-2 justify-end">
+        <span className="text-xs text-white/60">
           {confirming === "load"
             ? "Replace your current portfolio with this snapshot?"
             : "Delete this scenario?"}
@@ -22,13 +22,13 @@ export function ScenarioActions({ id }: { id: string }) {
             )
           }
           disabled={pending}
-          className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline disabled:opacity-50"
+          className="text-xs font-bold text-[color:var(--max-orange)] hover:underline disabled:opacity-50"
         >
           {pending ? "Working..." : "Confirm"}
         </button>
         <button
           onClick={() => setConfirming(null)}
-          className="text-xs font-medium text-slate-600 dark:text-slate-400 hover:underline"
+          className="text-xs font-bold text-white/60 hover:underline"
         >
           Cancel
         </button>
@@ -40,13 +40,13 @@ export function ScenarioActions({ id }: { id: string }) {
     <div className="flex items-center gap-3 justify-end">
       <button
         onClick={() => setConfirming("load")}
-        className="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+        className="text-xs font-bold text-[color:var(--max-cyan)] hover:underline"
       >
         Load
       </button>
       <button
         onClick={() => setConfirming("delete")}
-        className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline"
+        className="text-xs font-bold text-[color:var(--max-orange)] hover:underline"
       >
         Delete
       </button>

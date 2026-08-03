@@ -25,7 +25,7 @@ export function SaveScenarioForm() {
           className={inputClasses}
         />
         {state?.error && (
-          <p className="mt-1 text-xs text-rose-600 dark:text-rose-400" role="alert">
+          <p className="mt-1 text-xs text-[color:var(--max-orange)]" role="alert">
             {state.error}
           </p>
         )}
@@ -33,7 +33,7 @@ export function SaveScenarioForm() {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-4 py-2 text-sm font-semibold shadow-sm hover:from-indigo-500 hover:to-violet-500 transition-colors disabled:opacity-50"
+        className="max-btn-primary rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-r from-[color:var(--max-magenta)] via-[color:var(--max-purple)] to-[color:var(--max-cyan)] px-4 py-2 text-sm font-black uppercase tracking-wide text-white disabled:opacity-50"
       >
         {pending ? "Saving..." : "💾 Save current portfolio"}
       </button>
