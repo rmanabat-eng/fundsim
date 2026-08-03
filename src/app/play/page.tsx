@@ -42,10 +42,10 @@ import type { ExitRoutePayload, PayToPlayPayload } from "@/lib/campaign";
 
 const GRADE_STYLES = {
   great:
-    "border-emerald-400 bg-emerald-50 text-emerald-900 shadow-[6px_6px_0_rgba(16,185,129,0.35)] dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200",
-  good: "border-violet-400 bg-violet-50 text-violet-900 shadow-[6px_6px_0_rgba(139,92,246,0.35)] dark:border-violet-700 dark:bg-violet-950/40 dark:text-violet-200",
-  ok: "border-amber-400 bg-amber-50 text-amber-900 shadow-[6px_6px_0_rgba(245,158,11,0.35)] dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200",
-  bad: "border-rose-400 bg-rose-50 text-rose-900 shadow-[6px_6px_0_rgba(244,63,94,0.35)] dark:border-rose-700 dark:bg-rose-950/40 dark:text-rose-200",
+    "border-[color:var(--max-cyan)] bg-[#2d1b4e]/50 backdrop-blur-sm text-white shadow-[6px_6px_0_var(--max-yellow)]",
+  good: "border-[color:var(--max-purple)] bg-[#2d1b4e]/50 backdrop-blur-sm text-white shadow-[6px_6px_0_var(--max-magenta)]",
+  ok: "border-[color:var(--max-yellow)] bg-[#2d1b4e]/50 backdrop-blur-sm text-white shadow-[6px_6px_0_var(--max-orange)]",
+  bad: "border-[color:var(--max-orange)] bg-[#2d1b4e]/50 backdrop-blur-sm text-white shadow-[6px_6px_0_var(--max-magenta)]",
 } as const;
 
 const GRADE_EMOJI = { great: "🏆", good: "🥈", ok: "🥉", bad: "💀" } as const;
@@ -60,10 +60,20 @@ const REP_BAR_STYLES = {
 } as const;
 
 const MARKET_CHIP_STYLES: Record<Market, string> = {
-  bull: "border-emerald-400/70 bg-emerald-400/15 text-emerald-200",
-  normal: "border-slate-300/50 bg-white/10 text-slate-200",
-  bear: "border-rose-400/70 bg-rose-400/15 text-rose-200",
+  bull: "border-[color:var(--max-cyan)] bg-[color:var(--max-cyan)]/15 text-[color:var(--max-cyan)]",
+  normal: "border-[color:var(--max-yellow)] bg-[color:var(--max-yellow)]/15 text-[color:var(--max-yellow)]",
+  bear: "border-[color:var(--max-magenta)] bg-[color:var(--max-magenta)]/15 text-[color:var(--max-magenta)]",
 };
+
+// Rotated per-instance via the `border` prop so a row of stats clashes
+// intentionally instead of repeating one accent down the line.
+const STAT_BORDERS = [
+  "var(--max-yellow)",
+  "var(--max-cyan)",
+  "var(--max-magenta)",
+  "var(--max-purple)",
+  "var(--max-orange)",
+] as const;
 
 function Stat({
   icon,
@@ -72,6 +82,7 @@ function Stat({
   accent,
   hint,
   delay = 0,
+  index = 0,
 }: {
   icon: string;
   label: string;
@@ -79,11 +90,13 @@ function Stat({
   accent: string; // gradient classes for the icon tile
   hint?: string; // hover definition, StatCard-style
   delay?: number;
+  index?: number;
 }) {
+  const border = STAT_BORDERS[index % STAT_BORDERS.length];
   return (
     <div
-      className="group game-deal-in relative flex items-center gap-3 rounded-2xl border-2 border-slate-900/10 bg-white p-3 pop dark:border-white/10 dark:bg-slate-900"
-      style={{ animationDelay: `${delay}ms` }}
+      className="max-card group game-deal-in relative flex items-center gap-3 rounded-2xl p-3"
+      style={{ animationDelay: `${delay}ms`, "--max-card-border": border } as React.CSSProperties}
     >
       <span
         aria-hidden
@@ -92,11 +105,11 @@ function Stat({
         {icon}
       </span>
       <div className="min-w-0">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-white/60">
           {hint ? (
             <span
               tabIndex={0}
-              className="cursor-help rounded-sm underline decoration-dotted decoration-slate-400 underline-offset-2 outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 dark:decoration-slate-500"
+              className="cursor-help rounded-sm underline decoration-dotted decoration-white/40 underline-offset-2 outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--max-cyan)]"
             >
               {label}
               <span className="sr-only">: {hint}</span>
@@ -105,14 +118,15 @@ function Stat({
             label
           )}
         </p>
-        <p className="truncate font-display text-lg font-bold tabular-nums text-slate-900 dark:text-slate-100">
+        <p className="truncate font-display text-lg font-bold tabular-nums text-white">
           {value}
         </p>
       </div>
       {hint && (
         <div
           aria-hidden="true"
-          className="pointer-events-none invisible absolute left-1/2 top-full z-20 mt-1.5 w-56 -translate-x-1/2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-normal normal-case tracking-normal text-slate-600 shadow-lg group-hover:visible group-focus-within:visible dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+          className="max-card pointer-events-none invisible absolute left-1/2 top-full z-20 mt-1.5 w-56 -translate-x-1/2 rounded-lg px-3 py-2 text-xs font-normal normal-case tracking-normal text-white/80 group-hover:visible group-focus-within:visible"
+          style={{ "--max-card-border": "var(--max-cyan)" } as React.CSSProperties}
         >
           {hint}
         </div>
@@ -190,11 +204,14 @@ export default async function PlayPage() {
   if (!game) {
     return (
       <Shell year={null} market={null}>
-        <div className="mx-auto mt-10 max-w-2xl rounded-3xl border-2 border-slate-900/10 bg-white p-8 text-center pop-lg dark:border-white/10 dark:bg-slate-900">
+        <div
+          className="max-card mx-auto mt-10 max-w-2xl rounded-3xl p-8 text-center"
+          style={{ "--max-card-border": "var(--max-yellow)" } as React.CSSProperties}
+        >
           <div aria-hidden className="game-float text-6xl">
             🚀
           </div>
-          <h2 className="mt-3 font-display text-balance text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+          <h2 className="mt-3 font-display text-balance text-3xl font-bold tracking-tight text-white">
             Run a {formatDollars(settings.fundSize)} fund for {GAME_YEARS} years.
           </h2>
           {/* Columns, not a grid: grid rows stretch every box to the tallest in
@@ -225,17 +242,17 @@ export default async function PlayPage() {
             ].map((f, i) => (
               <div
                 key={f.icon}
-                className="game-deal-in mb-3 flex break-inside-avoid gap-3 rounded-2xl border-2 border-slate-900/10 bg-slate-50 p-4 dark:border-white/10 dark:bg-slate-800/60"
+                className="max-chip-box game-deal-in mb-3 flex break-inside-avoid gap-3 rounded-2xl p-4"
                 style={{ animationDelay: `${i * 90}ms` }}
               >
                 <span aria-hidden className="text-2xl">
                   {f.icon}
                 </span>
-                <p className="text-sm text-slate-600 dark:text-slate-400">{f.text}</p>
+                <p className="text-sm text-white/75">{f.text}</p>
               </div>
             ))}
           </div>
-          <p className="game-blink mt-8 text-xs font-black uppercase tracking-[0.3em] text-violet-500 dark:text-violet-400">
+          <p className="game-blink mt-8 text-xs font-black uppercase tracking-[0.3em] text-[color:var(--max-cyan)]">
             Press start
           </p>
           <div className="mt-2 flex justify-center">
@@ -245,7 +262,7 @@ export default async function PlayPage() {
             />
           </div>
           {companies.length > 0 && (
-            <p className="mt-4 text-xs text-slate-400 dark:text-slate-500">
+            <p className="mt-4 text-xs text-white/50">
               Starting a campaign clears the current portfolio — save it as a
               scenario first if you want to keep it.
             </p>
@@ -288,11 +305,11 @@ export default async function PlayPage() {
 
     return (
       <Shell year={null} market={null}>
-        <p className="game-blink mt-8 text-center text-xs font-black uppercase tracking-[0.4em] text-slate-400 dark:text-slate-500">
+        <p className="game-blink mt-8 text-center text-xs font-black uppercase tracking-[0.4em] text-white/50">
           Game over
         </p>
         <div
-          className={`game-deal-in mt-3 rounded-3xl border-2 p-6 text-center ${GRADE_STYLES[grade.tone]}`}
+          className={`game-deal-in mt-3 rounded-3xl border-4 p-6 text-center ${GRADE_STYLES[grade.tone]}`}
         >
           <div aria-hidden className="game-float text-6xl">
             {GRADE_EMOJI[grade.tone]}
@@ -311,7 +328,7 @@ export default async function PlayPage() {
         </div>
 
         <div
-          className={`game-deal-in mt-6 rounded-3xl border-2 p-6 ${GRADE_STYLES[rep.tone]}`}
+          className={`game-deal-in mt-6 rounded-3xl border-4 p-6 ${GRADE_STYLES[rep.tone]}`}
           style={{ animationDelay: "120ms" }}
         >
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -331,7 +348,7 @@ export default async function PlayPage() {
                 <span>Founder cred</span>
                 <span>{rep.score}/100</span>
               </div>
-              <div className="mt-1 h-3 overflow-hidden rounded-full border border-current/30 bg-white/60 dark:bg-black/30">
+              <div className="mt-1 h-3 overflow-hidden rounded-full border border-current/30 bg-black/30">
                 <div
                   className={`h-full rounded-full bg-gradient-to-r ${REP_BAR_STYLES[rep.tone]}`}
                   style={{ width: `${rep.score}%` }}
@@ -354,6 +371,7 @@ export default async function PlayPage() {
             value={formatDollars(metrics.deployed)}
             accent="from-indigo-400 to-indigo-600"
             hint="Every check you wrote across the fund's life — first checks, follow-ons, and bridges."
+            index={0}
           />
           <Stat
             icon="🏦"
@@ -362,6 +380,7 @@ export default async function PlayPage() {
             accent="from-emerald-400 to-teal-600"
             hint="Cash actually returned by exits: your ownership × the exit valuation, summed. The only money LPs can spend."
             delay={60}
+            index={1}
           />
           <Stat
             icon="💰"
@@ -370,6 +389,7 @@ export default async function PlayPage() {
             accent="from-amber-400 to-orange-600"
             hint="Distributions to Paid-In: cash returned ÷ capital deployed. The realized multiple — “you can't eat TVPI.”"
             delay={120}
+            index={2}
           />
           <Stat
             icon="📊"
@@ -378,6 +398,7 @@ export default async function PlayPage() {
             accent="from-violet-400 to-fuchsia-600"
             hint="Total Value to Paid-In: (paper value + cash back) ÷ capital deployed. The headline multiple LPs grade a fund by."
             delay={180}
+            index={3}
           />
           <Stat
             icon="⚡"
@@ -386,29 +407,31 @@ export default async function PlayPage() {
             accent="from-rose-400 to-pink-600"
             hint="Internal rate of return: the annualized rate implied by your dated cash flows. Unlike multiples, it rewards getting money back fast."
             delay={240}
+            index={4}
           />
         </div>
 
         {positions.length > 0 && (
           <section className="mt-8">
-            <h3 className="text-sm font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+            <h3 className="text-sm font-black uppercase tracking-widest text-white/60">
               🏅 Where the returns came from
             </h3>
             <ul className="mt-3 space-y-2">
               {positions.slice(0, 5).map((p, i) => {
                 const multiple = p.invested > 0 ? p.value / p.invested : 0;
                 const art = sectorArt(p.sector);
+                const border = STAT_BORDERS[i % STAT_BORDERS.length];
                 return (
                   <li
                     key={p.id}
-                    className="game-deal-in relative overflow-hidden rounded-2xl border-2 border-slate-900/10 bg-white pop dark:border-white/10 dark:bg-slate-900"
-                    style={{ animationDelay: `${i * 90}ms` }}
+                    className="max-card game-deal-in relative overflow-hidden rounded-2xl"
+                    style={{ animationDelay: `${i * 90}ms`, "--max-card-border": border } as React.CSSProperties}
                   >
                     {/* The bar is the point: its length is this position's share
                         of the best one, so the skew is impossible to miss. */}
                     <div
                       aria-hidden
-                      className={`absolute inset-y-0 left-0 bg-gradient-to-r opacity-20 dark:opacity-30 ${art.banner}`}
+                      className={`absolute inset-y-0 left-0 bg-gradient-to-r opacity-30 ${art.banner}`}
                       style={{ width: `${Math.max((p.value / topValue) * 100, 1.5)}%` }}
                     />
                     <div className="relative flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3">
@@ -421,15 +444,15 @@ export default async function PlayPage() {
                         </span>
                         <Link
                           href={`/companies/${p.id}`}
-                          className="font-bold text-slate-900 underline-offset-2 hover:underline dark:text-slate-100"
+                          className="font-bold text-white underline-offset-2 hover:underline"
                         >
                           {p.name}
                         </Link>
                       </span>
                       <span className="flex items-baseline gap-3">
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                        <span className="text-xs text-white/60">
                           {formatDollars(p.invested)} →{" "}
-                          <strong className="text-slate-700 dark:text-slate-200">
+                          <strong className="text-white/90">
                             {formatDollars(p.value)}
                           </strong>
                           {p.exited ? "" : " (unrealized)"}
@@ -438,10 +461,10 @@ export default async function PlayPage() {
                         <strong
                           className={`font-display text-xl font-bold tabular-nums ${
                             multiple >= 3
-                              ? "text-emerald-600 dark:text-emerald-400"
+                              ? "text-[color:var(--max-cyan)]"
                               : multiple >= 1
-                                ? "text-slate-900 dark:text-slate-100"
-                                : "text-rose-600 dark:text-rose-400"
+                                ? "text-white"
+                                : "text-[color:var(--max-orange)]"
                           }`}
                         >
                           {formatMultiple(multiple)}
@@ -452,7 +475,7 @@ export default async function PlayPage() {
                 );
               })}
             </ul>
-            <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
+            <p className="mt-3 text-xs text-white/40">
               Companies still active at close are marked at their last round.
             </p>
           </section>
@@ -460,7 +483,7 @@ export default async function PlayPage() {
 
         {deadCompanies.length > 0 && (
           <section className="mt-8">
-            <h3 className="text-sm font-black uppercase tracking-widest text-rose-600 dark:text-rose-400">
+            <h3 className="text-sm font-black uppercase tracking-widest text-[color:var(--max-orange)]">
               💀 The graveyard — {writeOffs}{" "}
               {writeOffs === 1 ? "company" : "companies"} went to zero
             </h3>
@@ -470,7 +493,7 @@ export default async function PlayPage() {
                 return (
                   <li
                     key={c.id}
-                    className="flex items-center justify-between gap-3 rounded-2xl border-2 border-rose-300 bg-rose-50 px-4 py-3 text-sm dark:border-rose-800 dark:bg-rose-950/30"
+                    className="flex items-center justify-between gap-3 rounded-2xl border-4 border-[color:var(--max-orange)] bg-[#2d1b4e]/50 px-4 py-3 text-sm backdrop-blur-sm"
                   >
                     <span className="flex items-center gap-2">
                       <span aria-hidden className="text-lg grayscale">
@@ -478,19 +501,19 @@ export default async function PlayPage() {
                       </span>
                       <Link
                         href={`/companies/${c.id}`}
-                        className="font-bold text-slate-900 underline-offset-2 hover:underline dark:text-slate-100"
+                        className="font-bold text-white underline-offset-2 hover:underline"
                       >
                         {c.name}
                       </Link>
                     </span>
-                    <span className="font-bold tabular-nums text-rose-700 dark:text-rose-300">
+                    <span className="font-bold tabular-nums text-[color:var(--max-orange)]">
                       −{formatDollars(sunk)}
                     </span>
                   </li>
                 );
               })}
             </ul>
-            <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
+            <p className="mt-3 text-xs text-white/40">
               That&apos;s venture — roughly a third of a portfolio going to zero is
               normal. The winners are supposed to pay for them.
             </p>
@@ -504,11 +527,14 @@ export default async function PlayPage() {
           points={toChartPoints(companies)}
         />
 
-        <section className="mt-8 rounded-2xl border-2 border-slate-900/10 bg-white p-5 pop dark:border-white/10 dark:bg-slate-900">
-          <h3 className="text-sm font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+        <section
+          className="max-card mt-8 rounded-2xl p-5"
+          style={{ "--max-card-border": "var(--max-cyan)" } as React.CSSProperties}
+        >
+          <h3 className="text-sm font-black uppercase tracking-widest text-white/60">
             💾 Save this run
           </h3>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+          <p className="mt-1 text-sm text-white/70">
             Keep this fund as a scenario so you can compare it against your next
             one — starting a new fund clears the portfolio.
           </p>
@@ -720,6 +746,7 @@ export default async function PlayPage() {
           value={formatDollars(remaining)}
           accent="from-amber-400 to-orange-600"
           hint="Capital you haven't deployed yet. Every check — first, follow-on, or bridge — comes out of this, and exits don't refill it."
+          index={0}
         />
         <Stat
           icon="🏢"
@@ -728,6 +755,7 @@ export default async function PlayPage() {
           accent="from-indigo-400 to-blue-600"
           hint="Portfolio companies you've written checks into, out of the fund's cap. When it's full, new deals bounce — pace yourself."
           delay={60}
+          index={1}
         />
         <Stat
           icon="📈"
@@ -736,6 +764,7 @@ export default async function PlayPage() {
           accent="from-emerald-400 to-teal-600"
           hint="Active stakes marked at each company's latest post-money valuation, plus cash already returned by exits."
           delay={120}
+          index={2}
         />
         <Stat
           icon="🏆"
@@ -744,6 +773,7 @@ export default async function PlayPage() {
           accent="from-violet-400 to-fuchsia-600"
           hint="Total Value to Paid-In: (paper value + cash back) ÷ capital deployed. The headline multiple LPs grade a fund by."
           delay={180}
+          index={3}
         />
         <Stat
           icon={REP_EMOJI[rep.tone]}
@@ -752,12 +782,13 @@ export default async function PlayPage() {
           accent="from-pink-400 to-rose-600"
           hint="How founders talk about you. Funding bridges and answering follow-ons builds it; a quick no barely costs; ghosting costs the most."
           delay={240}
+          index={4}
         />
       </div>
 
       {backedThisYear.length > 0 && (
         <section className="mt-6">
-          <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+          <p className="text-xs font-bold uppercase tracking-widest text-white/60">
             ↩ Backed this year — undo before you advance
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
@@ -775,7 +806,7 @@ export default async function PlayPage() {
 
       {decisionViews.length > 0 && (
         <section className="mt-8">
-          <h2 className="text-sm font-black uppercase tracking-widest text-amber-600 dark:text-amber-500">
+          <h2 className="text-sm font-black uppercase tracking-widest text-[color:var(--max-yellow)]">
             ⚡ Decisions on your desk — unresolved ones expire at year end
           </h2>
           <div className="mt-3 grid gap-4 lg:grid-cols-2">
@@ -798,16 +829,16 @@ export default async function PlayPage() {
           openDeals={dealViews.length}
           pendingDecisions={decisionViews.length}
           heading={
-            <h2 className="text-sm font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+            <h2 className="text-sm font-black uppercase tracking-widest text-white/60">
               🃏 This year&apos;s deal flow{" "}
-              <span className="text-slate-400 dark:text-slate-500">
+              <span className="text-white/40">
                 (Year {game.year})
               </span>
             </h2>
           }
         />
         {dealViews.length === 0 ? (
-          <p className="mt-4 rounded-2xl border-2 border-dashed border-slate-300 p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+          <p className="mt-4 rounded-2xl border-4 border-dashed border-[color:var(--max-cyan)] p-6 text-center text-sm text-white/60">
             {game.year > INVESTMENT_PERIOD_YEARS ? (
               <>
                 🔒 The investment period ended after year {INVESTMENT_PERIOD_YEARS}
@@ -891,9 +922,9 @@ function YearPips({ year }: { year: number }) {
             key={n}
             className={`h-2.5 w-6 rounded-full ${
               n < year
-                ? "bg-amber-400"
+                ? "bg-[color:var(--max-yellow)]"
                 : n === year
-                  ? "game-blink bg-amber-300"
+                  ? "game-blink bg-[color:var(--max-magenta)] shadow-[0_0_10px_rgba(255,58,242,0.7)]"
                   : "bg-white/15"
             }`}
           />
@@ -916,14 +947,24 @@ function Shell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="app-bg min-h-screen">
+    <div className="max-hero relative min-h-screen bg-[#0d0d1a]">
+      <div aria-hidden className="max-pattern-dots pointer-events-none fixed inset-0" />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 90rem 60rem at 15% 0%, rgba(255,58,242,.16) 0%, transparent 55%), radial-gradient(ellipse 80rem 60rem at 90% 30%, rgba(0,245,212,.13) 0%, transparent 55%), radial-gradient(ellipse 90rem 70rem at 50% 90%, rgba(123,47,255,.16) 0%, transparent 60%)",
+        }}
+      />
       {/* The marquee: always dark, like a game committing to its own art style. */}
-      <header className="relative overflow-hidden bg-gradient-to-br from-indigo-950 via-violet-950 to-fuchsia-950">
+      <header className="relative overflow-hidden border-b-8 border-[color:var(--max-magenta)]">
+        <div aria-hidden className="max-pattern-stripes pointer-events-none absolute inset-0" />
         <div aria-hidden className="pointer-events-none absolute inset-0">
           {STARS.map((s, i) => (
             <span
               key={i}
-              className="game-twinkle absolute rounded-full bg-white/80"
+              className="game-twinkle absolute rounded-full bg-[color:var(--max-cyan)]"
               style={{
                 top: s.top,
                 left: s.left,
@@ -961,17 +1002,17 @@ function Shell({
               >
                 ← Home
               </Link>
-              <p className="mt-2 text-[10px] font-black uppercase tracking-[0.35em] text-fuchsia-300">
-                FundSim presents
+              <p className="mt-2 text-[10px] font-black uppercase tracking-[0.35em] text-[color:var(--max-magenta)]">
+                ★ FundSim presents ★
               </p>
-              <h1 className="text-4xl font-black uppercase tracking-tight text-white drop-shadow-[0_3px_0_rgba(0,0,0,0.4)]">
+              <h1 className="font-bungee text-4xl font-normal uppercase tracking-tight text-white [text-shadow:2px_2px_0_var(--max-purple),4px_4px_0_var(--max-magenta),6px_6px_0_var(--max-cyan)]">
                 Campaign
               </h1>
               <p className="mt-1 text-sm text-white/80">
                 {market !== null && year !== null ? (
                   <span
                     data-tour="market"
-                    className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold ${MARKET_CHIP_STYLES[market]}`}
+                    className={`inline-flex items-center gap-1 rounded-full border-2 px-2.5 py-0.5 text-xs font-bold ${MARKET_CHIP_STYLES[market]}`}
                   >
                     {MARKET_LABELS[market]}
                   </span>
@@ -988,7 +1029,7 @@ function Shell({
           )}
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-6 py-8">{children}</main>
+      <main className="relative mx-auto max-w-5xl px-6 py-8">{children}</main>
       <Toaster />
     </div>
   );

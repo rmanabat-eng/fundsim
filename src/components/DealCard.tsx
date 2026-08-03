@@ -60,9 +60,12 @@ export function DealCard({ deal }: { deal: DealView }) {
   }
 
   return (
-    <div className="flex h-full flex-col rounded-2xl border-2 border-slate-900/10 bg-white pop transition-transform duration-150 motion-safe:hover:-translate-y-1 motion-safe:hover:-rotate-[0.5deg] dark:border-white/10 dark:bg-slate-900">
+    <div
+      className="max-card flex h-full flex-col rounded-2xl transition-transform duration-150 motion-safe:hover:-translate-y-1 motion-safe:hover:-rotate-[0.5deg]"
+      style={{ "--max-card-border": "var(--max-cyan)" } as React.CSSProperties}
+    >
       <div
-        className={`flex items-center justify-between gap-2 rounded-t-[14px] bg-gradient-to-r px-5 py-3 ${art.banner}`}
+        className={`flex items-center justify-between gap-2 rounded-t-[14px] border-b-4 border-black/20 bg-gradient-to-r px-5 py-3 ${art.banner}`}
       >
         <h3 className="flex items-center gap-2 font-display text-base font-bold text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.25)]">
           <span aria-hidden className="text-2xl">
@@ -76,7 +79,7 @@ export function DealCard({ deal }: { deal: DealView }) {
       </div>
 
       <div className="flex flex-1 flex-col p-5">
-        <p className="text-sm text-slate-600 dark:text-slate-400">
+        <p className="text-sm text-white/70">
           <StageBadge stage={deal.stage} /> raising {formatDollars(deal.raised)} at a{" "}
           {formatDollars(deal.postMoney)}{" "}
           <Term def="The company's valuation with the new money already counted in. Your ownership is simply your check ÷ post-money.">
@@ -87,7 +90,7 @@ export function DealCard({ deal }: { deal: DealView }) {
 
         <ul
           data-tour="deal-signals"
-          className="mt-3 space-y-1.5 text-sm text-slate-600 dark:text-slate-400"
+          className="mt-3 space-y-1.5 text-sm text-white/70"
         >
           {deal.signals.map((s) => (
             <li key={s} className="flex gap-2">
@@ -102,14 +105,14 @@ export function DealCard({ deal }: { deal: DealView }) {
             e.preventDefault();
             invest();
           }}
-          className="mt-auto flex flex-col gap-2 border-t border-slate-100 pt-4 dark:border-slate-800"
+          className="mt-auto flex flex-col gap-2 border-t-2 border-white/10 pt-4"
         >
           <div data-tour="deal-check" className="flex flex-col gap-2">
             <div className="flex items-baseline justify-between text-sm">
-              <span className="text-slate-500 dark:text-slate-400">Your check</span>
-              <span className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+              <span className="text-white/60">Your check</span>
+              <span className="font-semibold tabular-nums text-white">
                 {formatDollars(check)}{" "}
-                <span className="font-normal text-slate-500 dark:text-slate-400">
+                <span className="font-normal text-white/60">
                   · {ownership.toFixed(2)}%
                 </span>
               </span>
@@ -122,10 +125,10 @@ export function DealCard({ deal }: { deal: DealView }) {
               step={CHECK_STEP}
               value={check}
               onChange={(e) => setCheck(Number(e.target.value))}
-              className="w-full accent-indigo-600"
+              className="w-full accent-[color:var(--max-magenta)]"
               aria-label="Check size"
             />
-            <div className="flex justify-between text-xs text-slate-400 dark:text-slate-500">
+            <div className="flex justify-between text-xs text-white/40">
               <span>{formatDollars(CHECK_STEP)}</span>
               <span>{formatDollars(deal.raised)} (lead it)</span>
             </div>
@@ -134,7 +137,7 @@ export function DealCard({ deal }: { deal: DealView }) {
             <button
               type="submit"
               disabled={pending}
-              className="btn-arcade shrink-0 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 text-sm font-black uppercase tracking-wide text-white disabled:opacity-50"
+              className="max-btn-primary shrink-0 rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-r from-[color:var(--max-magenta)] via-[color:var(--max-purple)] to-[color:var(--max-cyan)] px-4 py-2 text-sm font-black uppercase tracking-wide text-white disabled:opacity-50"
             >
               {pending ? "Wiring..." : "💸 Invest"}
             </button>
@@ -142,13 +145,13 @@ export function DealCard({ deal }: { deal: DealView }) {
               type="button"
               disabled={pending}
               onClick={pass}
-              className="btn-arcade shrink-0 rounded-xl bg-slate-100 px-3 py-2 text-sm font-bold text-slate-600 disabled:opacity-50 dark:bg-slate-800 dark:text-slate-300"
+              className="max-btn-outline shrink-0 rounded-full border-4 border-white/30 bg-[#2d1b4e]/60 px-3 py-2 text-sm font-bold text-white/80 disabled:opacity-50"
             >
               Pass
             </button>
           </div>
           {error && (
-            <p className="text-xs text-rose-600 dark:text-rose-400" role="alert">
+            <p className="text-xs text-[color:var(--max-orange)]" role="alert">
               {error}
             </p>
           )}

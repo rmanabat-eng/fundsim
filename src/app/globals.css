@@ -201,10 +201,11 @@ body {
   }
 }
 
-/* ---- Maximalism/Dopamine skin (homepage hero) ----
+/* ---- Maximalism/Dopamine skin ----
    A louder sibling of the arcade skin above: five clashing accents, stacked
    hard shadows instead of one offset, and layered background patterns. Scoped
-   to .max-hero so it never leaks into the rest of the (calmer) app chrome. */
+   to .max-hero so it never leaks into the rest of the (calmer) app chrome.
+   Used on the homepage and the campaign (/play) surface. */
 
 .max-hero {
   --max-magenta: #ff3af2;
@@ -304,6 +305,43 @@ body {
 .max-btn-outline:active {
   transform: translate(0, 0);
   box-shadow: 2px 2px 0 var(--max-cyan);
+}
+
+/* Reusable card surface for the campaign screen — glass panel, clashing
+   border, stacked hard shadow. Border/shadow colour is set per-instance via
+   the --max-card-border / --max-card-shadow custom properties so callers
+   pick their own accent pair without a new class per colour. */
+.max-card {
+  border-width: 4px;
+  border-style: solid;
+  border-color: var(--max-card-border, var(--max-magenta));
+  background: rgba(45, 27, 78, 0.5);
+  backdrop-filter: blur(4px);
+  box-shadow: 6px 6px 0 var(--max-card-shadow, var(--max-cyan));
+  transition:
+    transform 0.25s ease-out,
+    box-shadow 0.25s ease-out;
+}
+.max-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Small inline stat/detail box used inside cards (replaces the light
+   bg-white/70 boxes from the arcade skin). */
+.max-chip-box {
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid rgba(255, 255, 255, 0.16);
+  border-radius: 0.75rem;
+}
+
+/* The "EVENT!" stamp on decision cards. */
+.max-stamp {
+  display: inline-block;
+  transform: rotate(-2deg);
+  border-radius: 0.5rem;
+  border: 2px solid var(--max-yellow);
+  background: var(--max-yellow);
+  color: #241033;
 }
 
 @keyframes max-gradient-shift {

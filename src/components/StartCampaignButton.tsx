@@ -22,19 +22,19 @@ export function StartCampaignButton({
 
   if (confirming) {
     return (
-      <span className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+      <span className="flex flex-wrap items-center gap-2 text-sm text-white/75">
         {hasPortfolio
           ? "This clears your current portfolio and deals a fresh fund. Ready?"
           : "Deal the first year's pitches?"}
         <button
           onClick={run}
-          className="font-medium text-violet-600 hover:underline dark:text-violet-400"
+          className="font-bold text-[color:var(--max-cyan)] hover:underline"
         >
           Confirm
         </button>
         <button
           onClick={() => setConfirming(false)}
-          className="font-medium text-slate-600 hover:underline dark:text-slate-400"
+          className="font-bold text-white/60 hover:underline"
         >
           Cancel
         </button>
@@ -47,7 +47,7 @@ export function StartCampaignButton({
       type="button"
       onClick={() => setConfirming(true)}
       disabled={pending}
-      className="btn-arcade rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-3 text-base font-black uppercase tracking-wide text-white disabled:opacity-50"
+      className="max-btn-primary rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-r from-[color:var(--max-magenta)] via-[color:var(--max-purple)] to-[color:var(--max-cyan)] px-6 py-3 text-base font-black uppercase tracking-wide text-white disabled:opacity-50"
     >
       {pending ? "Dealing..." : label}
     </button>

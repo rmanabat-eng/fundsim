@@ -28,13 +28,13 @@ export function UndoInvestmentButton({
           toast(`Undid your check in ${name} — pitch is back in the deck`, "info");
         })
       }
-      className="inline-flex items-center gap-1.5 rounded-full border-2 border-slate-900/10 bg-white px-3 py-1 text-xs font-semibold text-slate-700 outline-none hover:border-rose-300 focus-visible:ring-2 focus-visible:ring-rose-400 disabled:opacity-50 dark:border-white/10 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-rose-700"
+      className="inline-flex items-center gap-1.5 rounded-full border-2 border-[color:var(--max-magenta)]/50 bg-[#2d1b4e]/50 px-3 py-1 text-xs font-semibold text-white/85 outline-none backdrop-blur-sm hover:border-[color:var(--max-orange)] focus-visible:ring-2 focus-visible:ring-[color:var(--max-cyan)] disabled:opacity-50"
     >
       <span aria-hidden>↩</span>
       <span>
         {pending ? "Undoing…" : "Undo"} {name}
       </span>
-      <span className="tabular-nums text-slate-400 dark:text-slate-500">
+      <span className="tabular-nums text-white/50">
         {formatDollars(check)}
       </span>
     </button>

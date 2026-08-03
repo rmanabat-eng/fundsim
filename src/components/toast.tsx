@@ -42,10 +42,9 @@ export function toast(message: string, tone: ToastTone = "success") {
 }
 
 const toneStyles: Record<ToastTone, string> = {
-  success:
-    "border-emerald-500 dark:border-emerald-600 text-slate-800 dark:text-slate-100",
-  info: "border-indigo-500 dark:border-indigo-600 text-slate-800 dark:text-slate-100",
-  error: "border-rose-500 dark:border-rose-600 text-slate-800 dark:text-slate-100",
+  success: "border-[color:var(--max-cyan)] text-white",
+  info: "border-[color:var(--max-purple)] text-white",
+  error: "border-[color:var(--max-orange)] text-white",
 };
 
 const toneIcon: Record<ToastTone, string> = {
@@ -72,7 +71,7 @@ export function Toaster() {
       {items.map((t) => (
         <div
           key={t.id}
-          className={`toast-in pointer-events-auto flex w-full max-w-lg items-center gap-3 rounded-2xl border-2 bg-white px-5 py-4 text-base font-semibold shadow-2xl dark:bg-slate-900 ${toneStyles[t.tone]}`}
+          className={`toast-in pointer-events-auto flex w-full max-w-lg items-center gap-3 rounded-2xl border-4 bg-[#2d1b4e]/90 px-5 py-4 text-base font-semibold shadow-2xl backdrop-blur-sm ${toneStyles[t.tone]}`}
         >
           <span aria-hidden className="text-2xl">
             {toneIcon[t.tone]}
@@ -82,7 +81,7 @@ export function Toaster() {
             type="button"
             onClick={() => dismiss(t.id)}
             aria-label="Dismiss"
-            className="shrink-0 rounded-lg px-2 py-1 text-lg text-slate-400 outline-none hover:text-slate-600 focus-visible:ring-2 focus-visible:ring-indigo-400 dark:hover:text-slate-200"
+            className="shrink-0 rounded-lg px-2 py-1 text-lg text-white/50 outline-none hover:text-white/80 focus-visible:ring-2 focus-visible:ring-[color:var(--max-cyan)]"
           >
             ✕
           </button>

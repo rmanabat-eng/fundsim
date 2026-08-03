@@ -163,7 +163,7 @@ export function CampaignTutorial() {
       <button
         type="button"
         onClick={replay}
-        className="fixed bottom-4 right-4 z-40 rounded-full border-2 border-slate-900/10 bg-white/90 px-3 py-1.5 text-xs font-bold text-slate-600 shadow-lg backdrop-blur outline-none hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-400 dark:border-white/10 dark:bg-slate-900/90 dark:text-slate-300 dark:hover:text-white"
+        className="fixed bottom-4 right-4 z-40 rounded-full border-4 border-[color:var(--max-magenta)] bg-[#2d1b4e]/90 px-3 py-1.5 text-xs font-bold text-white/80 shadow-lg backdrop-blur outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-[color:var(--max-cyan)]"
       >
         ↻ Tutorial
       </button>
@@ -205,44 +205,38 @@ export function CampaignTutorial() {
             height: rect.height + 12,
             // One shadow does both jobs: the amber ring and the page dimmer.
             // (A Tailwind `ring-*` would be overridden by this inline value.)
-            boxShadow:
-              "0 0 0 3px #fbbf24, 0 0 0 9999px rgba(2, 6, 23, 0.72)",
+            boxShadow: "0 0 0 3px #ffe600, 0 0 0 9999px rgba(13, 13, 26, 0.82)",
           }}
         />
       ) : (
-        <div aria-hidden className="absolute inset-0 bg-slate-950/75" />
+        <div aria-hidden className="absolute inset-0 bg-[#0d0d1a]/85" />
       )}
 
       <div
         ref={(el) => {
           if (el && el.offsetHeight && el.offsetHeight !== cardH) setCardH(el.offsetHeight);
         }}
-        className="absolute w-[320px] rounded-2xl border-2 border-slate-900/10 bg-white p-5 shadow-2xl dark:border-white/10 dark:bg-slate-900"
+        className="max-card absolute w-[320px] rounded-2xl p-5"
         style={
-          rect
-            ? { top, left }
-            : {
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-              }
+          {
+            "--max-card-border": "var(--max-magenta)",
+            ...(rect
+              ? { top, left }
+              : { top: "50%", left: "50%", transform: "translate(-50%, -50%)" }),
+          } as unknown as React.CSSProperties
         }
       >
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-violet-500 dark:text-violet-400">
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[color:var(--max-cyan)]">
           Step {index + 1} of {steps.length}
         </p>
-        <h2 className="mt-1 text-lg font-black text-slate-900 dark:text-slate-100">
-          {step.title}
-        </h2>
-        <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-          {step.body}
-        </p>
+        <h2 className="mt-1 text-lg font-black text-white">{step.title}</h2>
+        <p className="mt-2 text-sm leading-relaxed text-white/70">{step.body}</p>
 
         <div className="mt-4 flex items-center justify-between gap-2">
           <button
             type="button"
             onClick={finish}
-            className="rounded-lg px-2 py-1 text-xs font-bold text-slate-400 outline-none hover:text-slate-600 focus-visible:ring-2 focus-visible:ring-indigo-400 dark:hover:text-slate-200"
+            className="rounded-lg px-2 py-1 text-xs font-bold text-white/50 outline-none hover:text-white/80 focus-visible:ring-2 focus-visible:ring-[color:var(--max-cyan)]"
           >
             Skip tutorial
           </button>
@@ -251,7 +245,7 @@ export function CampaignTutorial() {
               <button
                 type="button"
                 onClick={() => setIndex((i) => Math.max(0, i - 1))}
-                className="rounded-lg border-2 border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 dark:border-slate-700 dark:text-slate-300"
+                className="rounded-full border-2 border-white/25 px-3 py-1.5 text-xs font-bold text-white/80 outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--max-cyan)]"
               >
                 Back
               </button>
@@ -260,7 +254,7 @@ export function CampaignTutorial() {
               type="button"
               onClick={next}
               autoFocus
-              className="rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-1.5 text-xs font-black uppercase tracking-wide text-white outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+              className="max-btn-primary rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-r from-[color:var(--max-magenta)] via-[color:var(--max-purple)] to-[color:var(--max-cyan)] px-4 py-1.5 text-xs font-black uppercase tracking-wide text-white outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--max-cyan)]"
             >
               {last ? "Let's go" : "Next"}
             </button>

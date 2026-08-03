@@ -19,7 +19,7 @@ export function PortfolioPanel({
 
   return (
     <details open={open} className="group mt-8">
-      <summary className="inline-flex w-fit cursor-pointer select-none list-none items-center gap-2 rounded-xl border-2 border-slate-900/10 bg-white px-4 py-2.5 text-xs font-black uppercase tracking-widest text-slate-600 pop outline-none transition-transform focus-visible:ring-2 focus-visible:ring-indigo-400 motion-safe:hover:-translate-y-0.5 dark:border-white/10 dark:bg-slate-900 dark:text-slate-300 [&::-webkit-details-marker]:hidden">
+      <summary className="max-btn-outline inline-flex w-fit cursor-pointer select-none list-none items-center gap-2 rounded-full border-4 border-[color:var(--max-magenta)] bg-[#2d1b4e]/60 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white outline-none transition-transform focus-visible:ring-2 focus-visible:ring-[color:var(--max-cyan)] [&::-webkit-details-marker]:hidden">
         {label}
         <span
           aria-hidden
@@ -31,16 +31,21 @@ export function PortfolioPanel({
 
       <div className="mt-3 space-y-4">
         {points.length >= 2 && (
-          <div className="rounded-2xl border-2 border-slate-900/10 bg-white p-5 pop dark:border-white/10 dark:bg-slate-900">
+          <div
+            className="max-card rounded-2xl p-5"
+            style={{ "--max-card-border": "var(--max-cyan)" } as React.CSSProperties}
+          >
             <FundChart points={points} />
-            <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
+            <p className="mt-3 text-xs text-white/50">
               Both lines move only when something happens — a check, a round, an
               exit. Write-offs knock total value below deployed capital; markups and
               exits pull it away. That dip-then-climb is the J-curve.
             </p>
           </div>
         )}
-        <CompanyTable companies={rows} />
+        <div className="max-card overflow-hidden rounded-2xl" style={{ "--max-card-border": "var(--max-purple)" } as React.CSSProperties}>
+          <CompanyTable companies={rows} />
+        </div>
       </div>
     </details>
   );

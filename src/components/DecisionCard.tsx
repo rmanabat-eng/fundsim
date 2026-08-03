@@ -90,18 +90,18 @@ export type DecisionView =
       ownedIfDecline: number; // % after converting at the recap price
     });
 
-const cardClasses =
-  "h-full rounded-2xl border-2 border-amber-400 bg-amber-50/70 p-5 shadow-[5px_5px_0_rgba(245,158,11,0.3)] dark:border-amber-600/70 dark:bg-amber-950/20";
+const cardClasses = "max-card h-full rounded-2xl p-5";
+const cardStyle = { "--max-card-border": "var(--max-yellow)" } as React.CSSProperties;
 const primaryButton =
-  "btn-arcade shrink-0 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 text-sm font-black uppercase tracking-wide text-white disabled:opacity-50";
+  "max-btn-primary shrink-0 rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-r from-[color:var(--max-magenta)] via-[color:var(--max-purple)] to-[color:var(--max-cyan)] px-4 py-2 text-sm font-black uppercase tracking-wide text-white disabled:opacity-50";
 const secondaryButton =
-  "btn-arcade shrink-0 rounded-xl bg-white px-3 py-2 text-sm font-bold text-slate-600 disabled:opacity-50 dark:bg-slate-800 dark:text-slate-300";
+  "max-btn-outline shrink-0 rounded-full border-4 border-white/30 bg-[#2d1b4e]/60 px-3 py-2 text-sm font-bold text-white/80 disabled:opacity-50";
 
 // The "EVENT!" stamp naming the situation. It sits on its own line rather than
 // floating, so the copy underneath doesn't have to wrap around it.
 function EventStamp({ label }: { label: string }) {
   return (
-    <span className="inline-block -rotate-2 rounded-lg border-2 border-amber-500 bg-amber-400/90 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-amber-950">
+    <span className="max-stamp px-2 py-0.5 text-[10px] font-black uppercase tracking-widest">
       {label}
     </span>
   );
@@ -117,7 +117,7 @@ function DecisionShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className={cardClasses}>
+    <div className={cardClasses} style={cardStyle}>
       <EventStamp label={stamp} />
       <div className="mt-3 space-y-3">{children}</div>
     </div>
@@ -126,7 +126,7 @@ function DecisionShell({
 
 function DecisionActions({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-wrap items-center gap-2 border-t border-amber-300/70 pt-3 dark:border-amber-700/40">
+    <div className="flex flex-wrap items-center gap-2 border-t-2 border-white/15 pt-3">
       {children}
     </div>
   );
@@ -136,7 +136,7 @@ function CompanyName({ id, name }: { id: string; name: string }) {
   return (
     <Link
       href={`/companies/${id}`}
-      className="font-semibold text-slate-900 underline-offset-2 hover:underline dark:text-slate-100"
+      className="font-semibold text-white underline-offset-2 hover:underline"
     >
       {name}
     </Link>
@@ -149,11 +149,11 @@ function CompanyName({ id, name }: { id: string; name: string }) {
 function PitchNotes({ signals }: { signals: string[] }) {
   if (!signals.length) return null;
   return (
-    <div className="rounded-lg bg-white/70 px-3 py-2 dark:bg-black/20">
-      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+    <div className="max-chip-box rounded-lg px-3 py-2">
+      <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
         From the pitch
       </p>
-      <ul className="mt-1 space-y-0.5 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+      <ul className="mt-1 space-y-0.5 text-xs leading-relaxed text-white/65">
         {signals.map((s) => (
           <li key={s}>🔎 {s}</li>
         ))}
@@ -195,7 +195,7 @@ function ProRataCard({ d }: { d: Extract<DecisionView, { type: "pro_rata" }> }) 
 
   return (
     <DecisionShell stamp="Follow-on">
-      <p className="text-sm text-slate-700 dark:text-slate-300">
+      <p className="text-sm text-white/85">
         📈 <CompanyName id={d.companyId} name={d.companyName} /> is raising a{" "}
         <StageBadge stage={d.stage} />: {formatDollars(d.raised)} at a{" "}
         {formatDollars(d.postMoney)} post-money.
@@ -205,32 +205,32 @@ function ProRataCard({ d }: { d: Extract<DecisionView, { type: "pro_rata" }> }) 
 
       {/* The trade-off as a two-column comparison — easier to weigh than prose. */}
       <div className="grid grid-cols-2 gap-2 text-sm">
-        <div className="rounded-lg bg-white/70 px-3 py-2 dark:bg-black/20">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+        <div className="max-chip-box rounded-lg px-3 py-2">
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
             Sit out
           </p>
-          <p className="mt-0.5 font-bold text-slate-900 dark:text-slate-100">
+          <p className="mt-0.5 font-bold text-white">
             {formatPercent(d.ownedNow)}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-white/60">
             {formatDollars((d.ownedNow / 100) * d.postMoney)} · costs nothing
           </p>
         </div>
-        <div className="rounded-lg bg-white/70 px-3 py-2 dark:bg-black/20">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+        <div className="max-chip-box rounded-lg px-3 py-2">
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
             Defend it
           </p>
-          <p className="mt-0.5 font-bold text-slate-900 dark:text-slate-100">
+          <p className="mt-0.5 font-bold text-white">
             {formatPercent(d.ownedBefore)}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-white/60">
             {formatDollars((d.ownedBefore / 100) * d.postMoney)} · costs{" "}
             {formatDollars(d.proRataCheck)}
           </p>
         </div>
       </div>
 
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <p className="text-sm text-white/70">
         Your {formatPercent(d.ownedBefore)} is being{" "}
         <Term def="New rounds create new shares, so everyone who doesn't buy in owns a smaller slice: your stake × (post-money − raised) ÷ post-money.">
           diluted
@@ -247,7 +247,7 @@ function ProRataCard({ d }: { d: Extract<DecisionView, { type: "pro_rata" }> }) 
           e.preventDefault();
           writeCheck();
         }}
-        className="flex flex-wrap items-center gap-2 border-t border-amber-300/70 pt-3 dark:border-amber-700/40"
+        className="flex flex-wrap items-center gap-2 border-t-2 border-white/15 pt-3"
       >
         {/* Boxed so the field stays compact beside the buttons — the shared
             input style is w-full and would otherwise take the whole row. */}
@@ -277,13 +277,13 @@ function ProRataCard({ d }: { d: Extract<DecisionView, { type: "pro_rata" }> }) 
         </button>
       </form>
       {bought > 0 && (
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-white/60">
           {formatDollars(checkNumber)} buys back {bought.toFixed(2)} points →{" "}
           {formatPercent(d.ownedNow + bought)} after the round.
         </p>
       )}
       {error && (
-        <p className="text-xs text-rose-600 dark:text-rose-400" role="alert">
+        <p className="text-xs text-[color:var(--max-orange)]" role="alert">
           {error}
         </p>
       )}
@@ -301,33 +301,33 @@ function AcquisitionCard({
 
   return (
     <DecisionShell stamp="Exit offer">
-      <p className="text-sm text-slate-700 dark:text-slate-300">
+      <p className="text-sm text-white/85">
         🤝 An acquirer is offering {formatDollars(d.offerValue)} for{" "}
         <CompanyName id={d.companyId} name={d.companyName} />.
       </p>
 
       <PitchNotes signals={d.signals} />
 
-      <div className="rounded-lg bg-white/70 px-3 py-2 dark:bg-black/20">
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+      <div className="max-chip-box rounded-lg px-3 py-2">
+        <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
           Your stake returns
         </p>
-        <p className="mt-0.5 text-base font-black text-slate-900 dark:text-slate-100">
+        <p className="mt-0.5 text-base font-black text-white">
           {formatDollars(d.yourShare)}
           {d.invested > 0 && (
-            <span className="ml-2 text-sm font-bold text-emerald-600 dark:text-emerald-400">
+            <span className="ml-2 text-sm font-bold text-[color:var(--max-cyan)]">
               {multiple.toFixed(1)}×
             </span>
           )}
         </p>
         {d.invested > 0 && (
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-white/60">
             on {formatDollars(d.invested)} invested
           </p>
         )}
       </div>
 
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <p className="text-sm text-white/70">
         Cash now, or hold for{" "}
         <Term def="In venture, a handful of huge winners return more than everything else combined. Selling a potential winner early caps the outcome that pays for the whole fund.">
           the power law
@@ -373,7 +373,7 @@ function BridgeCard({ d }: { d: Extract<DecisionView, { type: "bridge" }> }) {
 
   return (
     <DecisionShell stamp="SOS">
-      <p className="text-sm text-slate-700 dark:text-slate-300">
+      <p className="text-sm text-white/85">
         🆘 <CompanyName id={d.companyId} name={d.companyName} /> is nearly out of
         cash and asking you for a {formatDollars(d.amount)}{" "}
         <Term def="A small round at flat-to-down pricing meant to keep a struggling company alive until it can raise properly. Insiders fund it — or nobody does.">
@@ -388,19 +388,19 @@ function BridgeCard({ d }: { d: Extract<DecisionView, { type: "bridge" }> }) {
 
       <PitchNotes signals={d.signals} />
 
-      <div className="rounded-lg bg-white/70 px-3 py-2 dark:bg-black/20">
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+      <div className="max-chip-box rounded-lg px-3 py-2">
+        <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
           If you fund it
         </p>
-        <p className="mt-0.5 text-sm font-bold text-slate-900 dark:text-slate-100">
+        <p className="mt-0.5 text-sm font-bold text-white">
           {formatPercent(d.ownedNow)} → {formatPercent(d.ownedAfter)}
         </p>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-white/60">
           worth {formatDollars((d.ownedAfter / 100) * d.postMoney)} at this price
         </p>
       </div>
 
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <p className="text-sm text-white/70">
         Fund it and they get runway to recover. Refuse and they probably
         don&apos;t make it — but bridges to nowhere are how funds bleed out.
       </p>
@@ -435,7 +435,7 @@ function BridgeCard({ d }: { d: Extract<DecisionView, { type: "bridge" }> }) {
         </button>
       </DecisionActions>
       {error && (
-        <p className="text-xs text-rose-600 dark:text-rose-400" role="alert">
+        <p className="text-xs text-[color:var(--max-orange)]" role="alert">
           {error}
         </p>
       )}
@@ -448,7 +448,7 @@ function TermSheetCard({ d }: { d: Extract<DecisionView, { type: "term_sheet" }>
 
   return (
     <DecisionShell stamp="Term sheets">
-      <p className="text-sm text-slate-700 dark:text-slate-300">
+      <p className="text-sm text-white/85">
         🖊️ <CompanyName id={d.companyId} name={d.companyName} /> has two term sheets
         for its <StageBadge stage={d.stage} />, both raising{" "}
         {formatDollars(d.raised)} — and the founder is asking you which to sign.
@@ -458,34 +458,34 @@ function TermSheetCard({ d }: { d: Extract<DecisionView, { type: "term_sheet" }>
 
       {/* Side by side, since the whole decision is a comparison. */}
       <div className="grid grid-cols-2 gap-2 text-sm">
-        <div className="rounded-lg bg-white/70 px-3 py-2 dark:bg-black/20">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+        <div className="max-chip-box rounded-lg px-3 py-2">
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
             🏦 Top-tier lead
           </p>
-          <p className="mt-0.5 font-bold text-slate-900 dark:text-slate-100">
+          <p className="mt-0.5 font-bold text-white">
             {formatDollars(d.topTierPost)}{" "}
             <Term def="The company's valuation with the new money already counted in. A lower post-money means the same check buys more of the company — everyone gets diluted more.">
               post
             </Term>
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-white/60">
             you&apos;d hold {formatPercent(d.ownedTopTier)}
           </p>
         </div>
-        <div className="rounded-lg bg-white/70 px-3 py-2 dark:bg-black/20">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+        <div className="max-chip-box rounded-lg px-3 py-2">
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
             🎈 Hype fund
           </p>
-          <p className="mt-0.5 font-bold text-slate-900 dark:text-slate-100">
+          <p className="mt-0.5 font-bold text-white">
             {formatDollars(d.highPricePost)} post
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-white/60">
             you&apos;d hold {formatPercent(d.ownedHighPrice)}
           </p>
         </div>
       </div>
 
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <p className="text-sm text-white/70">
         Price is one round&apos;s vanity;{" "}
         <Term def="A strong lead investor helps recruit, opens doors, and anchors the next round. That support shifts the company's odds every year after — worth more than a flattering valuation.">
           the partner compounds
@@ -530,7 +530,7 @@ function PivotCard({ d }: { d: Extract<DecisionView, { type: "pivot" }> }) {
 
   return (
     <DecisionShell stamp="Crossroads">
-      <p className="text-sm text-slate-700 dark:text-slate-300">
+      <p className="text-sm text-white/85">
         🧭 Growth has stalled at{" "}
         <CompanyName id={d.companyId} name={d.companyName} />. The founder wants to{" "}
         <Term def="Change the product or market while keeping the team and the money already raised. Most pivots fizzle; a famous few (Slack, Instagram) found the real business.">
@@ -542,7 +542,7 @@ function PivotCard({ d }: { d: Extract<DecisionView, { type: "pivot" }> }) {
 
       <PitchNotes signals={d.signals} />
 
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <p className="text-sm text-white/70">
         Backing the pivot is a high-variance reroll of the company&apos;s odds.
         Urging focus is the safe, small win. Either answer beats silence — an
         unsupported founder pivots anyway, half-hearted.
@@ -596,7 +596,7 @@ function ExitRouteCard({ d }: { d: Extract<DecisionView, { type: "exit_route" }>
 
   return (
     <DecisionShell stamp="Exit strategy">
-      <p className="text-sm text-slate-700 dark:text-slate-300">
+      <p className="text-sm text-white/85">
         🚪 <CompanyName id={d.companyId} name={d.companyName} /> has grown into real
         options and the board wants your vote on how to get liquid. It last priced
         at {formatDollars(d.postMoney)}.
@@ -605,40 +605,40 @@ function ExitRouteCard({ d }: { d: Extract<DecisionView, { type: "exit_route" }>
       <PitchNotes signals={d.signals} />
 
       <div className="grid gap-2 text-sm sm:grid-cols-3">
-        <div className="rounded-lg bg-white/70 px-3 py-2 dark:bg-black/20">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+        <div className="max-chip-box rounded-lg px-3 py-2">
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
             🔔 IPO
           </p>
-          <p className="mt-0.5 font-bold text-slate-900 dark:text-slate-100">
+          <p className="mt-0.5 font-bold text-white">
             {formatDollars(share(d.ipoLow))}–{formatDollars(share(d.ipoHigh))}
           </p>
-          <p className="text-xs text-rose-600 dark:text-rose-400">
+          <p className="text-xs text-[color:var(--max-orange)]">
             {Math.round(d.ipoPullChance * 100)}% chance it&apos;s pulled
           </p>
         </div>
-        <div className="rounded-lg bg-white/70 px-3 py-2 dark:bg-black/20">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+        <div className="max-chip-box rounded-lg px-3 py-2">
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
             🤝 Sell the company
           </p>
-          <p className="mt-0.5 font-bold text-slate-900 dark:text-slate-100">
+          <p className="mt-0.5 font-bold text-white">
             {formatDollars(share(d.acquisitionOffer))}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">certain, today</p>
+          <p className="text-xs text-white/60">certain, today</p>
         </div>
-        <div className="rounded-lg bg-white/70 px-3 py-2 dark:bg-black/20">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+        <div className="max-chip-box rounded-lg px-3 py-2">
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
             💵 Sell your stake
           </p>
-          <p className="mt-0.5 font-bold text-slate-900 dark:text-slate-100">
+          <p className="mt-0.5 font-bold text-white">
             {formatDollars(share(d.secondaryValuation))}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-white/60">
             at a discount
           </p>
         </div>
       </div>
 
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <p className="text-sm text-white/70">
         The IPO has the highest ceiling and can still be shelved.{" "}
         <Term def="Selling your position to another investor rather than waiting for the company to exit. You get cash now; the company carries on without you — and buyers of a private stake expect a discount for the trouble.">
           A secondary
@@ -673,7 +673,7 @@ function ExitRouteCard({ d }: { d: Extract<DecisionView, { type: "exit_route" }>
         </button>
       </DecisionActions>
       {error && (
-        <p className="text-xs text-rose-600 dark:text-rose-400" role="alert">
+        <p className="text-xs text-[color:var(--max-orange)]" role="alert">
           {error}
         </p>
       )}
@@ -690,7 +690,7 @@ function CeoReplacementCard({
 
   return (
     <DecisionShell stamp="Board vote">
-      <p className="text-sm text-slate-700 dark:text-slate-300">
+      <p className="text-sm text-white/85">
         🪑 The board at <CompanyName id={d.companyId} name={d.companyName} /> wants
         to replace the founder-CEO with a professional operator, and your vote
         decides it.
@@ -698,7 +698,7 @@ function CeoReplacementCard({
 
       <PitchNotes signals={d.signals} />
 
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <p className="text-sm text-white/70">
         An experienced operator usually steadies a company — and founders talk.
         Ousting one costs you more standing than any single no, and the reputation
         you spend here is the deal flow you see later.
@@ -751,7 +751,7 @@ function PayToPlayCard({ d }: { d: Extract<DecisionView, { type: "pay_to_play" }
 
   return (
     <DecisionShell stamp="Pay-to-play">
-      <p className="text-sm text-slate-700 dark:text-slate-300">
+      <p className="text-sm text-white/85">
         ⚖️ <CompanyName id={d.companyId} name={d.companyName} /> is raising a down
         round — <StageBadge stage={d.stage} /> {formatDollars(d.raised)} at{" "}
         {formatDollars(d.postMoney)} — and the insiders have imposed{" "}
@@ -764,31 +764,31 @@ function PayToPlayCard({ d }: { d: Extract<DecisionView, { type: "pay_to_play" }
       <PitchNotes signals={d.signals} />
 
       <div className="grid grid-cols-2 gap-2 text-sm">
-        <div className="rounded-lg bg-white/70 px-3 py-2 dark:bg-black/20">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+        <div className="max-chip-box rounded-lg px-3 py-2">
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
             Pay your share
           </p>
-          <p className="mt-0.5 font-bold text-slate-900 dark:text-slate-100">
+          <p className="mt-0.5 font-bold text-white">
             {formatPercent(d.ownedIfPay)}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-white/60">
             costs {formatDollars(d.requiredCheck)}
           </p>
         </div>
-        <div className="rounded-lg bg-white/70 px-3 py-2 dark:bg-black/20">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+        <div className="max-chip-box rounded-lg px-3 py-2">
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
             Sit it out
           </p>
-          <p className="mt-0.5 font-bold text-rose-600 dark:text-rose-400">
+          <p className="mt-0.5 font-bold text-[color:var(--max-orange)]">
             {formatPercent(d.ownedIfDecline)}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-white/60">
             converted, costs nothing
           </p>
         </div>
       </div>
 
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <p className="text-sm text-white/70">
         You hold {formatPercent(d.ownedNow)} today. Good money after bad is a real
         risk — but this is the rule that wipes out investors who stop showing up.
       </p>
@@ -812,7 +812,7 @@ function PayToPlayCard({ d }: { d: Extract<DecisionView, { type: "pay_to_play" }
         </button>
       </DecisionActions>
       {error && (
-        <p className="text-xs text-rose-600 dark:text-rose-400" role="alert">
+        <p className="text-xs text-[color:var(--max-orange)]" role="alert">
           {error}
         </p>
       )}

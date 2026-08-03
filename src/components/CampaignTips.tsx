@@ -95,7 +95,7 @@ export function CampaignTips() {
     // Collapsed, this is just a small pill — a full-width bar left a long
     // empty band across the top of the page.
     <details className="group">
-      <summary className="inline-flex w-fit cursor-pointer select-none list-none items-center gap-2 rounded-xl border-2 border-amber-300 bg-amber-50 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-amber-900 shadow-[3px_3px_0_rgba(245,158,11,0.35)] outline-none transition-transform focus-visible:ring-2 focus-visible:ring-amber-500 motion-safe:hover:-translate-y-0.5 dark:border-amber-600/70 dark:bg-amber-950/40 dark:text-amber-200 [&::-webkit-details-marker]:hidden">
+      <summary className="max-btn-outline inline-flex w-fit cursor-pointer select-none list-none items-center gap-2 rounded-full border-4 border-[color:var(--max-yellow)] bg-[#2d1b4e]/60 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white outline-none transition-transform focus-visible:ring-2 focus-visible:ring-[color:var(--max-yellow)] [&::-webkit-details-marker]:hidden">
         <span aria-hidden className="text-sm">
           💡
         </span>
@@ -110,22 +110,35 @@ export function CampaignTips() {
 
       {/* Each group gets its own box: uneven tip counts would otherwise leave
           ragged gaps where a short section meets a tall one in the grid. */}
-      <div className="mt-3 grid gap-4 rounded-2xl border-2 border-slate-900/10 bg-white p-5 pop dark:border-white/10 dark:bg-slate-900 sm:grid-cols-2">
-        {GROUPS.map((g) => (
+      <div
+        className="max-card mt-3 grid gap-4 rounded-2xl p-5 sm:grid-cols-2"
+        style={{ "--max-card-border": "var(--max-yellow)" } as React.CSSProperties}
+      >
+        {GROUPS.map((g, i) => (
           <section
             key={g.heading}
-            className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700/60 dark:bg-slate-800/40"
+            className="max-chip-box rounded-xl p-4"
+            style={
+              {
+                borderColor: [
+                  "var(--max-magenta)",
+                  "var(--max-cyan)",
+                  "var(--max-orange)",
+                  "var(--max-purple)",
+                ][i % 4],
+              } as React.CSSProperties
+            }
           >
-            <h3 className="text-xs font-black uppercase tracking-widest text-slate-900 dark:text-slate-100">
+            <h3 className="text-xs font-black uppercase tracking-widest text-white">
               {g.heading}
             </h3>
             <ul className="mt-3 space-y-2.5">
               {g.tips.map((t) => (
                 <li key={t.lead} className="text-sm leading-relaxed">
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  <span className="font-semibold text-white/90">
                     {t.lead}
                   </span>
-                  <span className="text-slate-600 dark:text-slate-400">
+                  <span className="text-white/65">
                     {" "}
                     — {t.body}
                   </span>
