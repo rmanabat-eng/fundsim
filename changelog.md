@@ -8,8 +8,13 @@ remaining consumer (/scenarios) is now maximalist too.
 
 No page in the app still uses the old light `.app-bg` background.
 
+Before → after:
+
+![settings before](screenshots/old-settings.png)
 ![settings](screenshots/7c230c8-settings.png)
+![guide before](screenshots/old-guide.png)
 ![guide](screenshots/7c230c8-guide.png)
+![scenarios before](screenshots/old-scenarios.png)
 ![scenarios](screenshots/7c230c8-scenarios.png)
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
@@ -25,6 +30,9 @@ light in an earlier pass. StatCard, StakeSparkline, and the round/
 exit delete-undo buttons are fully dark since they're now only ever
 rendered from maximalist pages.
 
+Before → after:
+
+![companies before](screenshots/old-companies.png)
 ![companies](screenshots/f18e2fc-companies.png)
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
@@ -41,6 +49,9 @@ CompanyTable and DeleteCompanyButton are now fully dark themselves
 (not just framed) since they're only ever rendered from the
 already-maximalist dashboard and campaign screens.
 
+Before → after:
+
+![dashboard before](screenshots/old-dashboard.png)
 ![dashboard](screenshots/685496b-dashboard.png)
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
@@ -59,6 +70,9 @@ Left CompanyTable, FundChart, and sector chip styling untouched since
 they're still shared with the light-themed dashboard/company pages —
 they now sit inside a dark frame instead.
 
+Before → after:
+
+![play before](screenshots/old-play.png)
 ![play](screenshots/e010452-play.png)
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
@@ -81,6 +95,9 @@ five clashing accent colors, stacked hard shadows, cascading concept
 cards, layered dot/grid/stripe backgrounds, and full-bleed section
 dividers, replacing the previous plain white cards and light app-bg.
 
+Before → after:
+
+![homepage before](screenshots/old-homepage.png)
 ![homepage](screenshots/fe8ad91-homepage.png)
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
