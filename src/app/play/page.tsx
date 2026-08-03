@@ -544,13 +544,13 @@ export default async function PlayPage() {
           </div>
         </section>
 
-        <div className="mt-8 flex flex-col items-center gap-2">
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <StartCampaignButton label="🔁 Start a new fund" hasPortfolio />
           <Link
             href="/settings"
-            className="text-xs font-bold text-white/60 hover:text-white hover:underline"
+            className="max-btn-outline rounded-full border-4 border-white/25 bg-[#2d1b4e]/60 px-4 py-2 text-sm font-bold text-white/85"
           >
-            ⚙️ Adjust fund settings for next run
+            ⚙️ Adjust fund settings
           </Link>
         </div>
       </Shell>
