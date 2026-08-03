@@ -48,3 +48,7 @@ next-env.d.ts
 
 # riana's personal working notes, not project docs
 /updates.txt
+
+# drawio exports — render on demand:
+#   "/c/Program Files/draw.io/draw.io.exe" -x -f png -o <name>.drawio.png <name>.drawio
+*.drawio.png

@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="drawio" version="26.0.0">
+  <diagram name="Fund Math Scoring Logic">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="820" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Column headers -->
+        <mxCell id="h1" value="Per-Company Calculations" style="text;html=1;fontStyle=1;fontSize=14;align=left;" vertex="1" parent="1">
+          <mxGeometry x="60" y="0" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="h2" value="Fund-Level Aggregation" style="text;html=1;fontStyle=1;fontSize=14;align=left;" vertex="1" parent="1">
+          <mxGeometry x="560" y="0" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="h3" value="Time Series" style="text;html=1;fontStyle=1;fontSize=14;align=left;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="0" width="300" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- A: input data -->
+        <mxCell id="2" value="RoundInput[] per company&#xa;(date, raised, postMoney, yourCheck)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="60" y="40" width="380" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- B: ownershipAfterRounds -->
+        <mxCell id="3" value="ownershipAfterRounds()&#xa;Each round: dilute existing stake by&#xa;(post − raised) / post, then add yourCheck / post" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="60" y="160" width="380" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- C & D -->
+        <mxCell id="4" value="currentValue()&#xa;ownership × latest postMoney&#xa;→ unrealized paper value" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="60" y="300" width="180" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="5" value="exitProceeds()&#xa;ownership × exitValue&#xa;→ realized cash (write-off = exit@0)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="260" y="300" width="180" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- E: companyCashFlows -->
+        <mxCell id="6" value="companyCashFlows()&#xa;−check on each round date;&#xa;+exit proceeds (exited) or +current value &quot;as of&quot; (active)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="60" y="440" width="380" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- F: xirr -->
+        <mxCell id="7" value="xirr()&#xa;Bisection search for the rate where&#xa;NPV(rate) = 0 over dated cash flows" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="60" y="580" width="380" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- G: companyIrr end -->
+        <mxCell id="8" value="companyIrr()&#xa;Per-company IRR shown on the&#xa;company detail page" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="60" y="710" width="380" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- H: fundMetrics -->
+        <mxCell id="9" value="fundMetrics(companies[])&#xa;Σ deployed, Σ portfolioValue, Σ distributions;&#xa;combine every company's cash flows → fund IRR" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="560" y="300" width="380" height="110" as="geometry" />
+        </mxCell>
+
+        <!-- I, J, K metrics -->
+        <mxCell id="10" value="DPI&#xa;distributions&#xa;/ deployed" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="560" y="470" width="115" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="11" value="TVPI&#xa;(portfolioValue + distributions)&#xa;/ deployed" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="695" y="470" width="115" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="12" value="Fund IRR&#xa;xirr() on the&#xa;combined flows" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="830" y="470" width="115" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- L: fundTimeline -->
+        <mxCell id="13" value="fundTimeline(companies[])&#xa;Replay every dated round/exit event&#xa;chronologically, step-wise" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="300" width="300" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- M: chart data end -->
+        <mxCell id="14" value="Dashboard chart data&#xa;{date, deployed, value, distributions}[]" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="470" width="300" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Per-company spine edges -->
+        <mxCell id="20" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="2" target="3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="21" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.3;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="3" target="4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="22" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.7;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="3" target="5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="23" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.3;exitY=1;entryX=0.3;entryY=0;" edge="1" parent="1" source="4" target="6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="24" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.7;exitY=1;entryX=0.7;entryY=0;" edge="1" parent="1" source="5" target="6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="25" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="6" target="7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="26" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="7" target="8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Cross edges into fundMetrics -->
+        <mxCell id="30" value="Σ yourCheck = deployed" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#ffffff;fontSize=11;exitX=1;exitY=0.3;entryX=0;entryY=0.2;" edge="1" parent="1" source="2" target="9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="31" value="Σ = portfolioValue" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#ffffff;fontSize=11;exitX=0.5;exitY=1;entryX=0;entryY=0.2;" edge="1" parent="1" source="4" target="9">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="150" y="420" />
+              <mxPoint x="520" y="420" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="32" value="Σ = distributions" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#ffffff;fontSize=11;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="5" target="9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="33" value="combined flows, all companies" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#ffffff;fontSize=11;exitX=1;exitY=0.5;entryX=0;entryY=0.8;" edge="1" parent="1" source="6" target="9">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="530" y="480" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- fundMetrics -> outputs -->
+        <mxCell id="34" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.2;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="9" target="10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="35" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="9" target="11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="36" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.8;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="9" target="12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- fundTimeline inputs -->
+        <mxCell id="37" value="round/exit dates" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#ffffff;fontSize=11;exitX=1;exitY=0.2;entryX=0;entryY=0.2;" edge="1" parent="1" source="2" target="13">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="980" y="80" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="38" value="currentValue() / exitProceeds() at each step" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#ffffff;fontSize=11;exitX=0.5;exitY=0;entryX=0;entryY=0.3;" edge="1" parent="1" source="4" target="13">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="150" y="260" />
+              <mxPoint x="1000" y="260" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="39" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="13" target="14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
