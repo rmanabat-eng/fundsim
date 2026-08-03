@@ -21,7 +21,7 @@ export default function NewCompanyPage() {
               Back a company
             </h1>
             <p className="text-sm text-white/80 mt-2">
-              Invest in a real startup&apos;s early round, or invent your own deal
+              Invent your own deal, or roll a randomized one
             </p>
           </div>
         </div>
