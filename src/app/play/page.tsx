@@ -990,7 +990,7 @@ function Shell({
             />
           ))}
           <span
-            className="game-float absolute right-[14%] top-6 text-4xl opacity-90"
+            className="game-float absolute right-[14%] top-16 text-4xl opacity-90"
             style={{ animationDelay: "0.4s" }}
           >
             🚀
