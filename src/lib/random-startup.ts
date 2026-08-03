@@ -221,12 +221,17 @@ export function randomDescription(sector: string): string {
 const NAME_PREFIXES = [
   "Nimbus", "Quanta", "Hyper", "Loop", "Verdant", "Pulse", "Atlas", "Ember",
   "Drift", "Nova", "Zephyr", "Mint", "Forge", "Cobalt", "Lumen", "Solstice",
-  "Vector", "Halo", "Onyx", "Aurora",
+  "Vector", "Halo", "Onyx", "Aurora", "Cinder", "Basalt", "Wren", "Fathom",
+  "Amber", "Kestrel", "Tundra", "Slate", "Ridge", "Marrow", "Quill", "Echo",
+  "Copper", "Thistle", "Granite", "Falcon", "Delta", "Ion", "Prism", "Rove",
+  "Meadow", "Harbor", "Summit", "Cascade", "Orbit", "Frostline",
 ];
 
 const NAME_SUFFIXES = [
   "Labs", "AI", "Flow", "Stack", "Works", "Grid", "Metrics", "Base",
-  "Sense", "Hub", "Pilot", "Layer", "Signal", "Path", "Forge",
+  "Sense", "Hub", "Pilot", "Layer", "Signal", "Path", "Forge", "Bridge",
+  "Field", "Loop", "Node", "Systems", "Robotics", "Dynamics", "Wave",
+  "Point", "Vault", "Chain", "Depot", "Circuit", "Beacon", "Anchor",
 ];
 
 // Only generate stages a fund would enter at.

@@ -198,9 +198,23 @@ async function createDealRow(year: number, deal: GeneratedDeal, referredBy: stri
   });
 }
 
+// generateDeal() names are random and drawn independently, so two pitches
+// in the same year's deck can collide. Retry until the name is new to this
+// batch — cheap given how large the name pool is, and the only place a
+// same-year duplicate could actually show up (prior years' open deals are
+// already expired by the time dealFlow runs for a new one).
+function generateUniqueDeal(usedNames: Set<string>, opts?: { noiseAmplitude?: number }) {
+  let deal = generateDeal(opts);
+  while (usedNames.has(deal.name)) deal = generateDeal(opts);
+  usedNames.add(deal.name);
+  return deal;
+}
+
 async function dealFlow(year: number) {
+  const usedNames = new Set<string>();
+
   for (let i = 0; i < DEALS_PER_YEAR; i++) {
-    await createDealRow(year, generateDeal(), null);
+    await createDealRow(year, generateUniqueDeal(usedNames), null);
   }
 
   // Founders who've earned real trust (CompanyDynState.trackRecord — see
@@ -211,7 +225,7 @@ async function dealFlow(year: number) {
   for (const company of companies) {
     const dynState = parseDynState(company.scenarioState);
     if (!rollsReferral(dynState.trackRecord)) continue;
-    const referred = generateDeal({ noiseAmplitude: REFERRAL_QUALITY_NOISE });
+    const referred = generateUniqueDeal(usedNames, { noiseAmplitude: REFERRAL_QUALITY_NOISE });
     await createDealRow(year, referred, company.name);
   }
 }

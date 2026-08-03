@@ -1,3 +1,15 @@
+## 2026-08-03 — Prevent duplicate company names within the same year's deal flow
+
+dealFlow() now tracks the names used in a year's batch and retries
+generateDeal() on a collision, so two pitches (including a founder
+referral) can never share a name in the same deck — the case a
+playthrough actually hit. Also widened the name-generator's word
+pools (20→46 prefixes, 15→30 suffixes) to cut collision odds further
+before the retry even matters.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+
+
 ## 2026-08-03 — Scale reputation cost by founder track record, and add founder referrals
 
 Reputation was trivially maxable: always respond, never ghost, no real
