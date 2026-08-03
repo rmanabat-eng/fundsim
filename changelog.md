@@ -1,3 +1,31 @@
+## 2026-08-03 — Add weighted scenario pools and split card shadows from flat boxes
+
+Reworks campaign event selection: portfolio-company scenarios (bridge,
+pivot, ceo replacement, exit route, acquisition) now draw from a
+weighted pool gated by stage/postMoney/performance instead of a
+hardcoded if/else chain. A per-company CompanyDynState (variance
+multiplier, bridge history, removed-from-pool flag) is written by past
+decisions and read by future weighting, so funding a bridge, declining
+one, or backing/urging-focus-on a pivot changes the odds of what
+happens to that company next. Adds fund_secondary as a new
+pool-eligible scenario (mirrors an acquisition offer but for the
+fund's own stake in a winner), plus macro_shock (a portfolio-wide
+reweight for the year) and reserves_scarcity (a summary flag when
+fresh asks outrun remaining capital).
+
+Also splits the maximalist `.max-card` box treatment in two: a
+shadowed variant kept for buttons and one-off high-stakes moments
+(the campaign start screen), and a new `.max-card-flat` for
+everything that repeats many-at-once — HUD tiles, deal grids, forms,
+tooltips, data panels, and now the active decision card and the
+game-over grade/reputation cards too. Fixes a bug where a hovered
+tooltip could render behind a sibling card: `backdrop-filter` gives
+each card its own stacking context, so cards hosting a Term/hint
+tooltip now raise that context on hover/focus-within.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+
+
 ## 2026-08-02 — Restyle settings, guide, and scenarios with the maximalist design system
 
 Completes the app-wide rollout: fund settings form, the learning
