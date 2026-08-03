@@ -27,6 +27,13 @@ The fund math has a unit test suite (Vitest) covering ownership, dilution, TVPI/
 npm test
 ```
 
+To preview the due-diligence fact pool that generates deal signals (see [below](#due-diligence-fact-pool--card-generator-v3)) without starting the app:
+
+```bash
+npm run cards          # prints one generated startup card
+npm run cards 5        # prints 5
+```
+
 ## The fund math
 
 ### Post-money valuation
@@ -186,26 +193,34 @@ Free-play mode is a ledger: you invent the companies and the numbers.
 uncertainty — the thing real investing actually is:
 
 - **Deal flow, during the investment period.** Years 1–5 each deal you
-  four generated pitches; after year 5 the checkbook closes for new names
-  — like a real fund's investment period — and years 6–10 are pure
-  portfolio management. Every card shows soft signals ("revenue tripled",
-  "under 8 months of runway") that noisily encode a hidden quality score.
-  Quality tilts every later die roll — better companies die less, raise
-  more, and price higher — so over several runs you learn to read a
-  pitch. Noisily is the key word: a great-looking deal can still be a
-  dud, just less often.
+  four generated pitches (a randomized name, sector, stage, and
+  cosmetic one-line description — see [company
+  descriptions](#company-descriptions) below); after year 5 the
+  checkbook closes for new names — like a real fund's investment
+  period — and years 6–10 are pure portfolio management. Every card
+  shows 3-5 due-diligence facts ("revenue tripled", "under 8 months of
+  runway") drawn from a [fact pool](#due-diligence-fact-pool--card-generator-v3)
+  that noisily encodes a hidden quality score. Quality tilts every
+  later die roll — better companies die less, raise more, and price
+  higher — so over several runs you learn to read a pitch. Noisily is
+  the key word: a great-looking deal can still be a dud, just less
+  often.
 - **A 10-year clock.** Advancing the year expires whatever you left on the
   table, rolls quality- and market-weighted events across the portfolio
   (bull and bear years scale valuations and death rates for everyone at
   once), and deals the next year's pitches while the investment period
   lasts. After year 10 the fund closes and your TVPI is graded against
   real venture quartiles.
-- **Forced decisions.** Portfolio companies raising new rounds put a
-  pro-rata on your desk (fund it or eat the dilution — the diluted
-  percentage is computed for you). Acquirers show up offering cash now
-  versus the power law. Struggling companies ask for bridges — refuse and
-  they usually don't recover; funding them is how funds bleed out. All of
-  it expires against you at year end.
+- **Forced decisions, drawn from a [weighted scenario
+  pool](#weighted-scenario-pools--chaining-state-v3).** Portfolio
+  companies raising new rounds put a pro-rata on your desk (fund it or
+  eat the dilution — the diluted percentage is computed for you).
+  Acquirers show up offering cash now versus the power law; a winner
+  can instead draw a secondary offer on just your stake, capping
+  return now for less upside later. Struggling companies ask for
+  bridges — refuse and they usually don't recover (and stop asking);
+  funding them is how funds bleed out. All of it expires against you
+  at year end.
 - **Founder calls.** Sometimes a round arrives as two competing term
   sheets — a top-tier lead at a lower price versus a hype fund at a
   flattering one — and the founder asks which to sign (partner quality
@@ -220,6 +235,68 @@ grades your **VC reputation** (0–100): funding bridges and answering
 follow-ons builds it, a deliberate "no" costs almost nothing, and letting
 pitches or decisions expire unanswered — ghosting founders — costs the
 most, independent of whether the fund made money.
+
+### Weighted scenario pools & chaining state (V3)
+
+Per-company events used to be a hardcoded if/else chain; they now draw
+from a **weighted pool** (`src/lib/scenario-pool.ts`), gated by static
+attributes so a scenario can only fire where it makes sense:
+
+- **Eligibility** — stage, latest post-money, and derived round
+  performance (up/flat/down from the last two rounds) decide which
+  scenarios are even in the running for a company this year. A
+  pre-seed company can't draw a fund-secondary offer; only a company
+  above the exit-route threshold can be asked to pick an exit route.
+- **Weight** — among the eligible scenarios (plus an implicit "nothing
+  happens" slice), the market, performance, and the company's own
+  dynamic state set the relative odds. A down round makes a bridge
+  request more likely than an acquisition offer; a macro shock (a rare
+  fund-wide event) temporarily leans every company's weights toward
+  distress for the year.
+- **Chaining state (`CompanyDynState`)** — separate from the hidden
+  `quality` score, each company carries its own decision memory: how
+  many bridges it's been funded or refused, a variance multiplier, and
+  whether it's been dropped from future pools entirely. Funding a
+  bridge nudges its odds toward recovery; refusing one — if the
+  company doesn't bounce back — removes it from the pool for good.
+  Backing a founder's pivot widens the spread of that company's future
+  outcomes (bigger wins, bigger losses); urging focus narrows it.
+
+Two fund-level signals ride alongside the per-company pool:
+**reserves scarcity** flags when this year's fixed-amount asks (bridges,
+pay-to-play checks) outrun what's left to deploy, and a **macro shock**
+temporarily reweights the whole portfolio for the year rather than
+firing as its own card.
+
+### Due-diligence fact pool & card generator (V3)
+
+Deal signals come from a structured **fact pool** (`src/lib/facts.json`,
+36 facts across 6 categories — Team & Founders, Market & Competition,
+Product & Tech, Financials & Traction, Legal & Governance, Culture &
+Ops) instead of a flat list of canned strings. Each fact carries:
+
+- a **template** with optional number substitution (a random value in
+  a range, or a weighted pick from a tiered list) so the same fact
+  reads differently card to card,
+- a **sentiment tag** (positive/negative/neutral) that drives the
+  hidden quality score, and
+- an **exclusion list** so contradictory facts (e.g. "no revenue yet"
+  and "unit economics improve at scale") never land on the same card.
+
+`generateDeal()` draws 3–5 non-contradictory facts per pitch (weighted
+toward 4), fills their templates, and sums their sentiment into quality
+plus noise — same mechanism as before, richer and less repetitive pool.
+Preview the generator on its own with `npm run cards [count]` (see
+[Running it locally](#running-it-locally)).
+
+### Company descriptions
+
+Every generated or randomized startup also gets a cosmetic, one-line
+**description** (`src/lib/random-startup.ts`) — 60% a plausible
+"what it does, for whom" sentence per sector, 40% an absurd one-liner
+for flavor. It's stored on the `Company`/`Deal` rows and shown
+wherever the pitch appears (deal cards, the company detail page), but
+it never touches `quality` or any game math — pure flavor text.
 
 ### Fund settings and scenarios (V2)
 
@@ -249,27 +326,33 @@ Not yet modeled:
 prisma/
   schema.prisma      # Company, Round, FundSettings, Scenario, Game, Deal, Decision
   seed.ts            # sample portfolio incl. a company with follow-on rounds
+scripts/
+  generate-card.ts   # CLI preview of the fact pool: `npm run cards [count]`
 src/
   app/
     page.tsx                                  # dashboard: summary bar, chart, company table
     play/page.tsx                             # campaign mode: deal flow, decisions, scorecard
-    play/actions.ts                           # campaign server actions + the year crank
+    play/actions.ts                           # campaign server actions, the year crank, scenario-pool wiring
     guide/page.tsx                            # learning guide: what the simulator teaches
     settings/page.tsx                         # edit fund size and company cap
     scenarios/page.tsx                        # save/load/compare portfolio snapshots
-    companies/new/page.tsx                    # back a new company (presets/random/blank)
+    companies/new/page.tsx                    # back a new company (random/blank)
     companies/[id]/page.tsx                   # company detail: round history + dilution
     companies/[id]/rounds/new/page.tsx        # add a follow-on round
     companies/[id]/exit/page.tsx              # record an exit or write-off
     companies/[id]/rounds/[roundId]/edit/...  # edit a round
     actions.ts                                # server actions + fund validation
-  components/          # tables, forms, chart, pickers, theme toggle
+  components/          # tables, forms, chart, pickers, deal/decision cards
   lib/
     constants.ts       # sector list, stage list, default fund size
     fund-math.ts       # ownership, dilution, mark-to-market, TVPI/DPI/IRR helpers
     fund-math.test.ts  # unit tests for the fund math
     simulate.ts        # the "simulate a year" engine (+ simulate.test.ts)
-    campaign.ts        # campaign mode: signals, hidden quality, market odds (+ tests)
+    campaign.ts        # campaign mode: deal generation, hidden quality, market odds (+ tests)
+    scenario-pool.ts   # weighted event pools, eligibility/weight, CompanyDynState
+    fact-card.ts       # draws/fills due-diligence facts, sentiment → quality (+ tests)
+    facts.json         # the fact pool data
+    random-startup.ts  # random name/pricing generator + company descriptions
     settings.ts        # fund settings read/write
     prisma.ts          # Prisma client singleton
 ```

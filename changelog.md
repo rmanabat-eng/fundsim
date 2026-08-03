@@ -1,3 +1,14 @@
+## 2026-08-03 — Document scenario pools, the fact-card generator, and company descriptions in README
+
+Adds "Weighted scenario pools & chaining state," "Due-diligence fact
+pool & card generator," and "Company descriptions" sections to the
+README, updates the campaign-mode bullets to reference them, and
+brings the project-structure tree up to date with scenario-pool.ts,
+fact-card.ts, facts.json, random-startup.ts, and scripts/generate-card.ts.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+
+
 ## 2026-08-03 — Replace fund settings number spinners with one-click presets
 
 step=1 arrows were useless for values in the millions. Preset chips
