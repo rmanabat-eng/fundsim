@@ -544,8 +544,14 @@ export default async function PlayPage() {
           </div>
         </section>
 
-        <div className="mt-8 flex justify-center">
+        <div className="mt-8 flex flex-col items-center gap-2">
           <StartCampaignButton label="🔁 Start a new fund" hasPortfolio />
+          <Link
+            href="/settings"
+            className="text-xs font-bold text-white/60 hover:text-white hover:underline"
+          >
+            ⚙️ Adjust fund settings for next run
+          </Link>
         </div>
       </Shell>
     );
