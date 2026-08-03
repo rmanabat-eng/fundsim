@@ -1,3 +1,111 @@
+## 2026-08-03 — Replace fund settings number spinners with one-click presets
+
+step=1 arrows were useless for values in the millions. Preset chips
+(fund size: 5M/10M/25M/50M/100M, max companies: 5/10/15/20/30) cover
+common values in one click, with a "Custom..." toggle that swaps in
+the plain number input for anything else.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+
+
+## 2026-08-03 — Move fund settings link beside Start a new fund as an outlined button
+
+Stacked plain text under a bold gradient CTA read as a footnote and
+implied sequence (do this, then that). Side-by-side outlined buttons
+present both as equal, independent next steps.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+
+
+## 2026-08-03 — Add fund settings link to the scorecard's start-again row
+
+Placed next to "Start a new fund" so adjusting fund size or max
+companies reads as part of the same decision as starting the next run.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+
+
+## 2026-08-03 — Nudge header rocket emoji down to clear Quit campaign confirm text
+
+The rocket sat at the same height as the Quit campaign confirm row,
+overlapping "End this run for good?" when the button was clicked.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+
+
+## 2026-08-03 — Add Quit campaign button to the active-play header
+
+Sits next to Home, matching the header's existing chrome, with the
+same inline confirm pattern used by the other destructive buttons
+(Start a new fund, Delete company). Wipes the portfolio and deals
+without dealing a fresh fund, so /play falls back to the title screen.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+
+
+## 2026-08-03 — Stack campaign deal cards vertically, unify description text size
+
+2x2 grid squeezed cards with more signals against ones with fewer;
+a vertical stack lets each card size to its own content. Also bumped
+the description line from text-xs to text-sm to match the rest of
+the card's copy.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+
+
+## 2026-08-03 — Update Back a Company subheader to drop real-startup mention
+
+Follows up the preset removal — the subheader still referenced
+investing in a real startup's early round.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+
+
+## 2026-08-03 — Remove real-startup presets from the investment picker
+
+Drops the "pick a real startup" section (Stripe, Figma, Airbnb, etc.)
+to avoid using real companies' names and figures indefinitely.
+Free-play now only offers a blank form or a randomized fake startup.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+
+
+## 2026-08-03 — Persist description onto Company and show it on the company page
+
+Description now survives past the picker: free-play form carries it
+through a hidden field, campaign investments copy it from the deal,
+and the company detail page displays it under the name.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+
+
+## 2026-08-03 — Add randomized per-sector company descriptions
+
+Random and dealt startups now roll a cosmetic one-line description
+(60% realistic, 40% fun) per sector, shown wherever preset blurbs
+already appear. Purely flavor text — never touches hidden quality.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+
+
+## 2026-08-03 — Wire the due-diligence fact pool into campaign deal generation
+
+generateDeal() now draws 3-5 facts from fact-card.ts instead of the
+old flat 15-item SIGNALS list, deriving hidden quality from each
+fact's sentiment_tag. Deal/decision cards needed no changes since
+they just render signals: string[].
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+
+
+## 2026-08-03 — Add fact pool and card generator for due-diligence playtesting
+
+Structured fact data (facts.json) with range/tiered_list number
+substitution and an exclusion list to prevent contradictory facts
+from co-occurring. Run via `npm run cards`.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+
 ## 2026-08-03 — Add weighted scenario pools and split card shadows from flat boxes
 
 Reworks campaign event selection: portfolio-company scenarios (bridge,
