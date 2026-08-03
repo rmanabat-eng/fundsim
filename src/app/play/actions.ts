@@ -202,6 +202,17 @@ export async function startCampaign() {
   revalidatePath("/");
 }
 
+// Abandons the run: wipes the portfolio and deals, and leaves no game row —
+// /play falls back to the title screen instead of dealing a new fund.
+export async function quitCampaign() {
+  await prisma.company.deleteMany(); // cascades rounds and decisions
+  await prisma.deal.deleteMany();
+  await prisma.game.deleteMany();
+
+  revalidatePath("/play");
+  revalidatePath("/");
+}
+
 export async function investInDeal(
   dealId: string,
   _prevState: FormState,

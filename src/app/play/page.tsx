@@ -22,6 +22,7 @@ import {
 import { DealCard, type DealView } from "@/components/DealCard";
 import { DecisionCard, type DecisionView } from "@/components/DecisionCard";
 import { StartCampaignButton } from "@/components/StartCampaignButton";
+import { QuitCampaignButton } from "@/components/QuitCampaignButton";
 import { AdvanceYearButton } from "@/components/AdvanceYearButton";
 import { Toaster } from "@/components/toast";
 import { UndoInvestmentButton } from "@/components/UndoInvestmentButton";
@@ -1035,6 +1036,7 @@ function Shell({
                 )}
               </p>
             </div>
+            {year !== null && <QuitCampaignButton />}
           </div>
           {year !== null && (
             <div className="mt-4">
