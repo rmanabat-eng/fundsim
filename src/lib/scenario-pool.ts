@@ -21,6 +21,14 @@ export type CompanyDynState = {
   bridgesFunded: number;
   bridgesRefused: number;
   removed: boolean; // dropped a bridge and never recovered — out of every future pool
+  // How many of this company's asks you've come through on: bridges funded,
+  // follow-ons defended, a pivot backed, a top-tier lead signed, a founder
+  // kept on as CEO. A reusable "has this relationship earned trust" signal —
+  // read by campaign.ts to scale the reputation cost of refusing this
+  // company (isEstablishedFounder) and to gate founder referrals
+  // (rollsReferral). Only ever incremented; refusing an ask doesn't erase a
+  // founder's own history.
+  trackRecord: number;
 };
 
 export const DEFAULT_DYN_STATE: CompanyDynState = {
@@ -28,6 +36,7 @@ export const DEFAULT_DYN_STATE: CompanyDynState = {
   bridgesFunded: 0,
   bridgesRefused: 0,
   removed: false,
+  trackRecord: 0,
 };
 
 export function parseDynState(raw: string): CompanyDynState {

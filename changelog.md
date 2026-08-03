@@ -1,3 +1,39 @@
+## 2026-08-03 — Scale reputation cost by founder track record, and add founder referrals
+
+Reputation was trivially maxable: always respond, never ghost, no real
+tradeoff. Three changes against the existing scenario-pool architecture:
+
+CompanyDynState.trackRecord counts asks a company has had honored
+(bridge funded, follow-on funded, pivot backed, top-tier lead signed,
+CEO kept). Refusing a bridge or sitting out a follow-on now costs more
+reputation once a founder crosses GOOD_TRACK_RECORD_THRESHOLD
+(isEstablishedFounder) — "declined_costly" prices the refusal apart
+from a plain "declined" the same way "ousted" already prices apart
+from "resolved". Previously, sitting out a follow-on wasn't tracked
+for reputation at all.
+
+The competing-term-sheet decision now splits reputation from
+financial outcome: backing the founder's flattering price is
+reputation-positive (its own "resolved_flattering" status) but stays
+the financially worse choice; the disciplined top-tier lead is
+reputation-neutral instead of earning the same flat credit as any
+other founder call.
+
+Once a company's track record clears a much higher
+REFERRAL_TRACK_RECORD_THRESHOLD, it can refer a new deal into your
+flow during the investment period — generated through the same
+generateDeal()/fact-pool path with reduced (never zero) noise, so a
+referral reads clearer without ever guaranteeing quality. Deal/Company
+gain a nullable referredBy, shown as a small badge on the deal card.
+
+All thresholds and reputation deltas are named, tunable constants.
+Added 9 tests to campaign.test.ts covering the track-record refusal
+scaling, the term-sheet reputation/finance split, and referral
+eligibility/noise/quality guarantees.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+
+
 ## 2026-08-03 — Document scenario pools, the fact-card generator, and company descriptions in README
 
 Adds "Weighted scenario pools & chaining state," "Due-diligence fact

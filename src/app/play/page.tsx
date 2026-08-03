@@ -142,18 +142,26 @@ async function currentReputation() {
   const [
     bridgesFunded,
     bridgesRefused,
+    costlyRefusals,
     proRataBacked,
+    flatteringTermSheetsBacked,
     adviceGiven,
     decisionsExpired,
     dealsExpired,
     foundersOusted,
   ] = await Promise.all([
     prisma.decision.count({ where: { type: "bridge", status: "resolved" } }),
-    prisma.decision.count({ where: { type: "bridge", status: "declined" } }),
+    prisma.decision.count({
+      where: { type: { in: ["bridge", "pro_rata"] }, status: "declined" },
+    }),
+    prisma.decision.count({
+      where: { type: { in: ["bridge", "pro_rata"] }, status: "declined_costly" },
+    }),
     prisma.decision.count({ where: { type: "pro_rata", status: "resolved" } }),
+    prisma.decision.count({ where: { type: "term_sheet", status: "resolved_flattering" } }),
     prisma.decision.count({
       where: {
-        type: { in: ["term_sheet", "pivot", "ceo_replacement"] },
+        type: { in: ["pivot", "ceo_replacement"] },
         status: "resolved",
       },
     }),
@@ -164,7 +172,9 @@ async function currentReputation() {
   const rep = reputation({
     bridgesFunded,
     bridgesRefused,
+    costlyRefusals,
     proRataBacked,
+    flatteringTermSheetsBacked,
     adviceGiven,
     decisionsExpired,
     dealsExpired,
@@ -177,8 +187,12 @@ async function currentReputation() {
       `${proRataBacked} follow-on ${proRataBacked === 1 ? "round" : "rounds"} answered`,
     adviceGiven > 0 &&
       `${adviceGiven} founder ${adviceGiven === 1 ? "call" : "calls"} advised`,
+    flatteringTermSheetsBacked > 0 &&
+      `${flatteringTermSheetsBacked} flattering ${flatteringTermSheetsBacked === 1 ? "price" : "prices"} backed`,
     bridgesRefused > 0 &&
-      `${bridgesRefused} ${bridgesRefused === 1 ? "bridge" : "bridges"} refused`,
+      `${bridgesRefused} ${bridgesRefused === 1 ? "ask" : "asks"} refused`,
+    costlyRefusals > 0 &&
+      `${costlyRefusals} trusted ${costlyRefusals === 1 ? "founder" : "founders"} turned down`,
     decisionsExpired > 0 &&
       `${decisionsExpired} ${decisionsExpired === 1 ? "founder" : "founders"} ghosted`,
     dealsExpired > 0 &&
@@ -597,6 +611,7 @@ export default async function PlayPage() {
     raised: d.raised,
     postMoney: d.postMoney,
     description: d.description,
+    referredBy: d.referredBy,
     signals: JSON.parse(d.signals) as string[],
   }));
 

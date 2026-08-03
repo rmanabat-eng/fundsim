@@ -18,6 +18,7 @@ export type DealView = {
   raised: number;
   postMoney: number;
   description: string;
+  referredBy: string | null; // set when a founder with an earned track record referred this deal in
   signals: string[];
 };
 
@@ -80,6 +81,11 @@ export function DealCard({ deal }: { deal: DealView }) {
       </div>
 
       <div className="flex flex-1 flex-col p-5">
+        {deal.referredBy && (
+          <p className="mb-2 inline-flex w-fit items-center gap-1 rounded-full border border-[color:var(--max-yellow)]/50 bg-[color:var(--max-yellow)]/10 px-2 py-0.5 text-xs font-bold text-[color:var(--max-yellow)]">
+            🤝 Referred by {deal.referredBy}
+          </p>
+        )}
         <p className="text-sm text-white/60">{deal.description}</p>
 
         <p className="mt-2 text-sm text-white/70">

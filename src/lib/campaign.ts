@@ -36,16 +36,31 @@ export type GeneratedDeal = {
   quality: number; // hidden -1..1
 };
 
+// ± noise added on top of the fact sentiment sum — a cold pitch's signals
+// don't fully predict its quality. Referrals (see REFERRAL_QUALITY_NOISE
+// below) tighten this, never eliminate it.
+const DEAL_QUALITY_NOISE = 0.35;
+
+// The random slop on top of a deal's fact-sentiment sum. Exported (not
+// inlined in generateDeal) so the noise itself — not just the resulting
+// quality — is directly testable and independently tunable per amplitude.
+export function dealQualityNoise(amplitude: number = DEAL_QUALITY_NOISE): number {
+  return (Math.random() * 2 - 1) * amplitude;
+}
+
 // Deal a pitch: plausible pricing from the free-play generator, plus 3-5
 // due-diligence facts (src/lib/fact-card.ts) whose sentiment_tag (noisily)
 // sets the hidden quality. The noise matters — a great-looking pitch can
-// still be a dud, just less often.
-export function generateDeal(): GeneratedDeal {
+// still be a dud, just less often. `noiseAmplitude` lets a referred deal
+// (see rollsReferral below) read clearer than a cold pitch without ever
+// guaranteeing its quality — the noise shrinks, the underlying draw doesn't
+// change.
+export function generateDeal(opts?: { noiseAmplitude?: number }): GeneratedDeal {
   const base = generateRandomStartup();
 
   const drawn = drawFacts();
   const signalSum = drawn.reduce((sum, f) => sum + SENTIMENT_WEIGHT[f.sentiment_tag], 0);
-  const noise = (Math.random() * 2 - 1) * 0.35;
+  const noise = dealQualityNoise(opts?.noiseAmplitude);
   const quality = clamp(signalSum + noise, -1, 1);
 
   return {
@@ -58,6 +73,33 @@ export function generateDeal(): GeneratedDeal {
     signals: drawn.map(fillTemplate),
     quality,
   };
+}
+
+// ---- Founder referrals ----
+// A founder whose asks you've consistently come through on (CompanyDynState
+// .trackRecord — bridges funded, follow-ons defended, a pivot backed, a
+// top-tier lead signed, kept on as CEO) can refer a new deal into your flow.
+// Deliberately rare: the threshold is high enough that it takes sustained
+// history with one company, not a single funded bridge, to cross it — see
+// the test suite for what does and doesn't qualify.
+export const REFERRAL_TRACK_RECORD_THRESHOLD = 10;
+// Once eligible, rolled once per company per investment-period year (the
+// caller — dealFlow in play/actions.ts — only ever runs during years 1-5,
+// so there's no separate year check here).
+export const REFERRAL_CHANCE = 0.25;
+// Noise cut from the base 0.35 amplitude — a referred deal's facts read
+// clearer because the founder is vouching for them, not because the deal
+// is any more likely to be good. Still wide enough that an occasional
+// referral reads clean and turns out to be a dud, same as any cold pitch.
+export const REFERRAL_QUALITY_NOISE = 0.18;
+
+// Whether a company with this track record refers a deal this year. Pure
+// gate-then-roll, the same shape as the eligibility checks in
+// src/lib/scenario-pool.ts: a hard cutoff first, a probability roll only if
+// it's cleared.
+export function rollsReferral(trackRecord: number): boolean {
+  if (trackRecord < REFERRAL_TRACK_RECORD_THRESHOLD) return false;
+  return Math.random() < REFERRAL_CHANCE;
 }
 
 // 25% bull, 50% normal, 25% bear.
@@ -390,11 +432,26 @@ export function maybePayToPlay(
   };
 }
 
+// A company's track record (CompanyDynState.trackRecord — see
+// scenario-pool.ts) below this bar is still unproven: turning them down
+// costs the normal, cheap amount. At or above it, they've earned trust —
+// refusing them costs REFUSAL_REPUTATION_HIT more (see below). Deliberately
+// lower than REFERRAL_TRACK_RECORD_THRESHOLD: a founder should be worth
+// disappointing you feel bad about well before they're worth referring you
+// a deal.
+export const GOOD_TRACK_RECORD_THRESHOLD = 4;
+
+export function isEstablishedFounder(trackRecord: number): boolean {
+  return trackRecord >= GOOD_TRACK_RECORD_THRESHOLD;
+}
+
 export type ReputationCounts = {
   bridgesFunded: number; // showed up when a founder was drowning
-  bridgesRefused: number; // said no — a real answer, founders can live with it
-  proRataBacked: number; // answered a follow-on round (a deliberate 0 counts)
-  adviceGiven: number; // term sheets and pivots you weighed in on
+  proRataBacked: number; // funded a follow-on round (check > 0)
+  adviceGiven: number; // pivots and CEO votes you weighed in on
+  flatteringTermSheetsBacked: number; // backed the founder's flattering price — costs you financially instead, see TERM_SHEET_HIGH_PRICE_QUALITY_HIT
+  bridgesRefused: number; // said no to a bridge or follow-on from an unproven founder — a real answer, founders can live with it
+  costlyRefusals: number; // said no to one with an established track record (isEstablishedFounder) — costs more
   decisionsExpired: number; // ghosted a founder waiting on you
   dealsExpired: number; // pitches that never got a yes or a no
   foundersOusted: number; // voted a founder out of their own company
@@ -407,16 +464,32 @@ export type Reputation = {
   tone: "great" | "good" | "ok" | "bad";
 };
 
+// A deliberate no costs more reputation the more that founder had earned
+// your trust — see GOOD_TRACK_RECORD_THRESHOLD / isEstablishedFounder above.
+export const REFUSAL_REPUTATION_HIT = 2;
+export const COSTLY_REFUSAL_REPUTATION_HIT = 6;
+// Backing the founder's flattering term sheet is the reputation-positive,
+// financially-worse-in-expectation choice; the disciplined top-tier lead
+// stays reputation-neutral. See resolveTermSheet in play/actions.ts.
+export const FLATTERING_TERM_SHEET_REPUTATION_BOOST = 3;
+
 // Founders talk. What moves your reputation isn't which bets paid off — it's
 // how you treated the people asking: wiring when it mattered helps a lot, a
-// timely "no" costs almost nothing, and silence costs the most.
+// timely "no" costs almost nothing (more if you'd already earned their
+// trust), and silence costs the most.
+//
+// A future iteration may split this single number into independent
+// founder-trust and LP-trust axes. Keep reputation math centralized here
+// rather than duplicating it elsewhere so that split stays easy to make.
 export function reputation(c: ReputationCounts): Reputation {
   const score = clamp(
     70 +
       8 * c.bridgesFunded +
       4 * c.proRataBacked +
-      3 * c.adviceGiven -
-      2 * c.bridgesRefused -
+      3 * c.adviceGiven +
+      FLATTERING_TERM_SHEET_REPUTATION_BOOST * c.flatteringTermSheetsBacked -
+      REFUSAL_REPUTATION_HIT * c.bridgesRefused -
+      COSTLY_REFUSAL_REPUTATION_HIT * c.costlyRefusals -
       10 * c.decisionsExpired -
       4 * c.dealsExpired -
       // Ousting a founder is the efficient call and the expensive one: it

@@ -3,17 +3,28 @@ import { FACT_POOL, SENTIMENT_WEIGHT } from "@/lib/fact-card";
 import {
   campaignOdds,
   dateInWindow,
+  dealQualityNoise,
   generateDeal,
   gradeFund,
   buildAcquisitionOffer,
   buildBridgeRequest,
+  isEstablishedFounder,
   maybeTermSheet,
   pivotOutcome,
   PIVOT_BACKED_MAX,
   campaignLog,
   PIVOT_BACKED_MIN,
   reputation,
+  REFERRAL_QUALITY_NOISE,
+  REFERRAL_TRACK_RECORD_THRESHOLD,
+  GOOD_TRACK_RECORD_THRESHOLD,
+  REFUSAL_REPUTATION_HIT,
+  COSTLY_REFUSAL_REPUTATION_HIT,
+  FLATTERING_TERM_SHEET_REPUTATION_BOOST,
+  TERM_SHEET_TOP_TIER_QUALITY_BOOST,
+  TERM_SHEET_HIGH_PRICE_QUALITY_HIT,
   rollMarket,
+  rollsReferral,
   yearWindow,
   CEO_KEPT_MAX,
   CEO_KEPT_MIN,
@@ -169,7 +180,9 @@ describe("reputation", () => {
   const nobody = {
     bridgesFunded: 0,
     bridgesRefused: 0,
+    costlyRefusals: 0,
     proRataBacked: 0,
+    flatteringTermSheetsBacked: 0,
     adviceGiven: 0,
     decisionsExpired: 0,
     dealsExpired: 0,
@@ -203,8 +216,97 @@ describe("reputation", () => {
     expect(reputation({ ...nobody, bridgesFunded: 40 }).score).toBe(100);
   });
 
-  it("credits founder calls answered — term sheets and pivots", () => {
+  it("credits founder calls answered — pivots and CEO votes", () => {
     expect(reputation({ ...nobody, adviceGiven: 5 }).score).toBe(85);
+  });
+
+  it("charges refusing an established founder more than refusing an unproven one", () => {
+    const shakyRefusal = reputation({ ...nobody, bridgesRefused: 1 });
+    const establishedRefusal = reputation({ ...nobody, costlyRefusals: 1 });
+    expect(establishedRefusal.score).toBeLessThan(shakyRefusal.score);
+    expect(shakyRefusal.score).toBe(70 - REFUSAL_REPUTATION_HIT);
+    expect(establishedRefusal.score).toBe(70 - COSTLY_REFUSAL_REPUTATION_HIT);
+  });
+
+  it("credits backing the flattering term sheet; the disciplined lead earns nothing extra", () => {
+    const backedFlattering = reputation({ ...nobody, flatteringTermSheetsBacked: 1 });
+    const backedTopTier = reputation(nobody); // top-tier resolutions aren't counted anywhere
+    expect(backedFlattering.score).toBeGreaterThan(backedTopTier.score);
+    expect(backedFlattering.score).toBe(70 + FLATTERING_TERM_SHEET_REPUTATION_BOOST);
+  });
+});
+
+describe("isEstablishedFounder", () => {
+  it("is false below the threshold and true at or above it", () => {
+    expect(isEstablishedFounder(GOOD_TRACK_RECORD_THRESHOLD - 1)).toBe(false);
+    expect(isEstablishedFounder(GOOD_TRACK_RECORD_THRESHOLD)).toBe(true);
+    expect(isEstablishedFounder(GOOD_TRACK_RECORD_THRESHOLD + 10)).toBe(true);
+  });
+});
+
+describe("backing the flattering term sheet vs. the disciplined lead", () => {
+  it("is reputation-positive but financially worse in expectation", () => {
+    // Financially: the top-tier lead's quality boost beats the flattering
+    // price's hit — backing the founder's preferred option costs you.
+    expect(TERM_SHEET_TOP_TIER_QUALITY_BOOST).toBeGreaterThan(
+      TERM_SHEET_HIGH_PRICE_QUALITY_HIT
+    );
+    // Reputation-wise it's the reverse: only the flattering choice earns
+    // anything, and it's strictly positive.
+    expect(FLATTERING_TERM_SHEET_REPUTATION_BOOST).toBeGreaterThan(0);
+  });
+});
+
+describe("rollsReferral", () => {
+  it("never fires below the track-record threshold, no matter how many times you roll", () => {
+    // A company that's had one or two bridges funded — nowhere near the
+    // sustained history the threshold demands — should never cross it.
+    for (let i = 0; i < 200; i++) {
+      expect(rollsReferral(1)).toBe(false);
+      expect(rollsReferral(2)).toBe(false);
+      expect(rollsReferral(REFERRAL_TRACK_RECORD_THRESHOLD - 1)).toBe(false);
+    }
+  });
+
+  it("is markedly harder to reach than the refusal-cost threshold", () => {
+    // A founder should be worth feeling bad about disappointing well before
+    // they're worth referring you a deal.
+    expect(REFERRAL_TRACK_RECORD_THRESHOLD).toBeGreaterThan(GOOD_TRACK_RECORD_THRESHOLD);
+  });
+
+  it("can fire once the threshold is met", () => {
+    let fired = false;
+    for (let i = 0; i < 500 && !fired; i++) {
+      fired = rollsReferral(REFERRAL_TRACK_RECORD_THRESHOLD);
+    }
+    expect(fired).toBe(true);
+  });
+});
+
+describe("referred deals", () => {
+  it("read with measurably lower noise than a cold pitch", () => {
+    const cold = Array.from({ length: 500 }, () => Math.abs(dealQualityNoise()));
+    const referred = Array.from({ length: 500 }, () =>
+      Math.abs(dealQualityNoise(REFERRAL_QUALITY_NOISE))
+    );
+    const avg = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
+    expect(avg(referred)).toBeLessThan(avg(cold));
+    // And every referred sample stays within the tighter amplitude — the
+    // noise shrinks, it isn't just "usually" smaller.
+    for (const n of referred) expect(n).toBeLessThanOrEqual(REFERRAL_QUALITY_NOISE);
+  });
+
+  it("are not guaranteed to be good — low quality is still reachable with the referral's tighter noise", () => {
+    // Referral eligibility (rollsReferral) only reads trackRecord, never the
+    // referring company's own quality, and generateDeal draws a brand-new
+    // company from scratch either way — so a referred deal can read clean
+    // and still turn out to be a dud, same as any cold pitch.
+    let sawLowQuality = false;
+    for (let i = 0; i < 500 && !sawLowQuality; i++) {
+      const deal = generateDeal({ noiseAmplitude: REFERRAL_QUALITY_NOISE });
+      if (deal.quality < -0.2) sawLowQuality = true;
+    }
+    expect(sawLowQuality).toBe(true);
   });
 });
 
@@ -445,7 +547,9 @@ describe("reputation — ousting founders", () => {
   const nobody = {
     bridgesFunded: 0,
     bridgesRefused: 0,
+    costlyRefusals: 0,
     proRataBacked: 0,
+    flatteringTermSheetsBacked: 0,
     adviceGiven: 0,
     decisionsExpired: 0,
     dealsExpired: 0,

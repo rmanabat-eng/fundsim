@@ -41,6 +41,7 @@ model Company {
   name      String
   sector    String
   description String  @default("") // cosmetic flavor text, never affects quality
+  referredBy String? // set when a founder with an earned track record referred this deal in
   createdAt DateTime  @default(now())
   exitValue Float? // company valuation at exit; 0 means written off; null = still active
   exitDate  DateTime?
@@ -74,6 +75,7 @@ model Deal {
   raised      Float
   postMoney   Float
   description String @default("") // cosmetic flavor text, never affects quality
+  referredBy  String? // set when a founder with an earned track record referred this deal in
   signals     String // JSON array of signal texts shown on the pitch card
   quality   Float
   status    String @default("open") // "open" | "invested" | "passed" | "expired"
@@ -91,7 +93,12 @@ model Decision {
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   payload   String // JSON, shape depends on type
-  status    String  @default("pending") // "pending" | "resolved" | "declined" | "expired" | "moot" | "ousted"
+  // "pending" | "resolved" | "resolved_flattering" | "declined" |
+  // "declined_costly" | "expired" | "moot" | "ousted" — "resolved_flattering"
+  // and "declined_costly" exist purely to price reputation apart from their
+  // plain counterparts (see reputation() in src/lib/campaign.ts), the same
+  // way "ousted" already prices apart from "resolved".
+  status    String  @default("pending")
 }
 
 model Round {

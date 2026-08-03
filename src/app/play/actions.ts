@@ -25,13 +25,16 @@ import {
   PIVOT_FOCUS_QUALITY_BOOST,
   PIVOT_FOCUS_VARIANCE_MULT,
   PIVOT_UNSUPPORTED_QUALITY_HIT,
+  REFERRAL_QUALITY_NOISE,
   TERM_SHEET_HIGH_PRICE_QUALITY_HIT,
   TERM_SHEET_TOP_TIER_QUALITY_BOOST,
   campaignOdds,
   dateInWindow,
   generateDeal,
+  type GeneratedDeal,
   founderKeptOutcome,
   ipoResult,
+  isEstablishedFounder,
   buildAcquisitionOffer,
   buildBridgeRequest,
   buildExitRoute,
@@ -40,6 +43,7 @@ import {
   maybeTermSheet,
   pivotOutcome,
   rollMarket,
+  rollsReferral,
   yearWindow,
   type ExitRoutePayload,
   type FundSecondaryOffer,
@@ -170,22 +174,45 @@ async function updateDynState(
   });
 }
 
+// "declined_costly" prices a refusal apart from a plain "declined" the same
+// way "ousted" already prices apart from "resolved" — reputation reads the
+// status, not a separate ledger. See isEstablishedFounder in campaign.ts.
+function refusalStatus(dynState: CompanyDynState): string {
+  return isEstablishedFounder(dynState.trackRecord) ? "declined_costly" : "declined";
+}
+
+async function createDealRow(year: number, deal: GeneratedDeal, referredBy: string | null) {
+  await prisma.deal.create({
+    data: {
+      year,
+      name: deal.name,
+      sector: deal.sector,
+      stage: deal.stage as (typeof STAGES)[number],
+      raised: deal.raised,
+      postMoney: deal.postMoney,
+      description: deal.description,
+      signals: JSON.stringify(deal.signals),
+      quality: deal.quality,
+      referredBy,
+    },
+  });
+}
+
 async function dealFlow(year: number) {
   for (let i = 0; i < DEALS_PER_YEAR; i++) {
-    const deal = generateDeal();
-    await prisma.deal.create({
-      data: {
-        year,
-        name: deal.name,
-        sector: deal.sector,
-        stage: deal.stage as (typeof STAGES)[number],
-        raised: deal.raised,
-        postMoney: deal.postMoney,
-        description: deal.description,
-        signals: JSON.stringify(deal.signals),
-        quality: deal.quality,
-      },
-    });
+    await createDealRow(year, generateDeal(), null);
+  }
+
+  // Founders who've earned real trust (CompanyDynState.trackRecord — see
+  // isEstablishedFounder/rollsReferral in campaign.ts) can refer a deal into
+  // your flow on top of the usual DEALS_PER_YEAR. Deliberately rare — most
+  // companies never get anywhere near the threshold.
+  const companies = await prisma.company.findMany({ where: { exitValue: null } });
+  for (const company of companies) {
+    const dynState = parseDynState(company.scenarioState);
+    if (!rollsReferral(dynState.trackRecord)) continue;
+    const referred = generateDeal({ noiseAmplitude: REFERRAL_QUALITY_NOISE });
+    await createDealRow(year, referred, company.name);
   }
 }
 
@@ -247,6 +274,7 @@ export async function investInDeal(
       name: deal.name,
       sector: deal.sector,
       description: deal.description,
+      referredBy: deal.referredBy,
       quality: deal.quality,
       dealId, // link back to the pitch so this first check can be undone
       rounds: {
@@ -296,7 +324,8 @@ export async function passDeal(dealId: string) {
 }
 
 // Sets your check on the already-created round. check = 0 means sitting the
-// round out on purpose (still resolves the decision).
+// round out on purpose — the same deliberate no as "Sit out" (declineDecision),
+// tiered the same way by the company's track record.
 export async function fundProRata(
   decisionId: string,
   _prevState: FormState,
@@ -326,11 +355,20 @@ export async function fundProRata(
       where: { id: payload.roundId },
       data: { yourCheck: check },
     });
+    const dynState = parseDynState(decision.company.scenarioState);
+    await updateDynState(decision.companyId, decision.company.scenarioState, {
+      trackRecord: dynState.trackRecord + 1,
+    });
+    await prisma.decision.update({
+      where: { id: decisionId },
+      data: { status: "resolved" },
+    });
+  } else {
+    await prisma.decision.update({
+      where: { id: decisionId },
+      data: { status: refusalStatus(parseDynState(decision.company.scenarioState)) },
+    });
   }
-  await prisma.decision.update({
-    where: { id: decisionId },
-    data: { status: "resolved" },
-  });
 
   revalidatePath("/play");
   revalidatePath("/");
@@ -422,6 +460,7 @@ export async function fundBridge(decisionId: string): Promise<FormState> {
   const dynState = parseDynState(decision.company.scenarioState);
   await updateDynState(decision.companyId, decision.company.scenarioState, {
     bridgesFunded: dynState.bridgesFunded + 1,
+    trackRecord: dynState.trackRecord + 1,
   });
   await prisma.decision.update({
     where: { id: decisionId },
@@ -445,6 +484,7 @@ export async function declineDecision(decisionId: string) {
   });
   if (!decision || decision.status !== "pending") return;
 
+  let status: string = "declined";
   if (decision.type === "bridge") {
     const nextQuality = clampQuality(
       decision.company.quality + BRIDGE_REFUSED_QUALITY_HIT
@@ -458,10 +498,18 @@ export async function declineDecision(decisionId: string) {
       bridgesRefused: dynState.bridgesRefused + 1,
       removed: dynState.removed || nextQuality < -0.5,
     });
+    status = refusalStatus(dynState);
+  } else if (decision.type === "pro_rata") {
+    // Sitting out a follow-on is a deliberate no too — cheap against an
+    // unproven founder, pricier against one with an established track
+    // record. Unlike a bridge, sitting out doesn't hurt the company
+    // itself (the round already books with yourCheck: 0); it only costs
+    // your standing with them.
+    status = refusalStatus(parseDynState(decision.company.scenarioState));
   }
   await prisma.decision.update({
     where: { id: decisionId },
-    data: { status: "declined" },
+    data: { status },
   });
   revalidatePath("/play");
 }
@@ -503,9 +551,20 @@ export async function resolveTermSheet(
       ),
     },
   });
+  if (choice === "top_tier") {
+    // The disciplined call, and reputation-neutral — see
+    // FLATTERING_TERM_SHEET_REPUTATION_BOOST in campaign.ts for why the
+    // other option isn't.
+    const dynState = parseDynState(decision.company.scenarioState);
+    await updateDynState(decision.companyId, decision.company.scenarioState, {
+      trackRecord: dynState.trackRecord + 1,
+    });
+  }
   await prisma.decision.update({
     where: { id: decisionId },
-    data: { status: "resolved" },
+    // "resolved_flattering" is its own status so reputation can credit it
+    // apart from the (reputation-neutral) top-tier pick.
+    data: { status: choice === "top_tier" ? "resolved" : "resolved_flattering" },
   });
   revalidatePath("/play");
   revalidatePath("/");
@@ -535,6 +594,7 @@ export async function resolvePivot(decisionId: string, choice: "back" | "focus")
     varianceMultiplier:
       dynState.varianceMultiplier *
       (choice === "back" ? PIVOT_BACKED_VARIANCE_MULT : PIVOT_FOCUS_VARIANCE_MULT),
+    trackRecord: choice === "back" ? dynState.trackRecord + 1 : dynState.trackRecord,
   });
   await prisma.decision.update({
     where: { id: decisionId },
@@ -632,6 +692,12 @@ export async function resolveCeoReplacement(
       ),
     },
   });
+  if (choice === "keep") {
+    const dynState = parseDynState(decision.company.scenarioState);
+    await updateDynState(decision.companyId, decision.company.scenarioState, {
+      trackRecord: dynState.trackRecord + 1,
+    });
+  }
   // "ousted" is its own status so reputation can price it apart from simply
   // having answered the founder.
   await prisma.decision.update({
