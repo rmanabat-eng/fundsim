@@ -64,31 +64,72 @@ export default async function DashboardPage() {
     distributions: p.distributions,
   }));
 
+  const HOW_IT_WORKS = [
+    {
+      accent: "var(--max-magenta)",
+      title: "Back a company",
+      body: "with its name, sector, and the details of the first round you invest in: stage, total raised, post-money valuation, and your check.",
+    },
+    {
+      accent: "var(--max-cyan)",
+      title: "Ownership is calculated for you",
+      body: "your check ÷ post-money valuation. A $250,000 check at an $8M post-money buys 3.13% of the company.",
+    },
+    {
+      accent: "var(--max-yellow)",
+      title: "Add follow-on rounds",
+      body: "from a company's page as it raises again. Each new round dilutes your stake by (post-money − raised) ÷ post-money — unless you write another check to defend your ownership.",
+    },
+    {
+      accent: "var(--max-orange)",
+      title: "Watch your deployment pacing",
+      body: `in the cards above — every check, first or follow-on, comes out of the same ${formatDollars(settings.fundSize)} fund.`,
+    },
+    {
+      accent: "var(--max-purple)",
+      title: "Track your markups and TVPI",
+      body: "each stake is marked at the company's latest post-money valuation, and TVPI — total value ÷ paid-in capital — is the headline multiple LPs judge a fund by. It's all paper gains until companies exit.",
+    },
+  ] as const;
+
   return (
-    <div className="app-bg min-h-screen">
-      <header className="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600">
-        <div className="mx-auto max-w-5xl px-6 py-8 flex items-center justify-between">
+    <div className="max-hero relative min-h-screen bg-[#0d0d1a]">
+      <div aria-hidden className="max-pattern-dots pointer-events-none fixed inset-0" />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 90rem 60rem at 15% 0%, rgba(255,58,242,.16) 0%, transparent 55%), radial-gradient(ellipse 80rem 60rem at 90% 30%, rgba(0,245,212,.13) 0%, transparent 55%), radial-gradient(ellipse 90rem 70rem at 50% 90%, rgba(123,47,255,.16) 0%, transparent 60%)",
+        }}
+      />
+      <header className="relative overflow-hidden border-b-8 border-[color:var(--max-magenta)]">
+        <div aria-hidden className="max-pattern-stripes pointer-events-none absolute inset-0" />
+        <div className="relative mx-auto flex max-w-5xl items-center justify-between px-6 py-8">
           <div>
-            <Link href="/" className="text-sm text-white/70 hover:text-white">
+            <Link
+              href="/"
+              className="text-xs font-bold uppercase tracking-widest text-white/60 hover:text-white"
+            >
               ← Home
             </Link>
-            <h1 className="text-3xl font-bold text-white tracking-tight mt-1">
-              Fund dashboard
+            <h1 className="mt-1 font-bungee text-4xl font-normal uppercase tracking-tight text-white [text-shadow:2px_2px_0_var(--max-purple),4px_4px_0_var(--max-magenta),6px_6px_0_var(--max-cyan)]">
+              Fund Dashboard
             </h1>
-            <p className="text-sm text-white/80 mt-1">
+            <p className="mt-2 text-sm text-white/80">
               {game
                 ? "Your campaign portfolio, in detail"
                 : "Free play — the sandbox fund"}{" "}
               ·{" "}
-              <Link href="/guide" className="underline hover:text-white">
+              <Link href="/guide" className="underline decoration-[color:var(--max-cyan)] hover:text-white">
                 Learning guide
               </Link>{" "}
               ·{" "}
-              <Link href="/settings" className="underline hover:text-white">
+              <Link href="/settings" className="underline decoration-[color:var(--max-cyan)] hover:text-white">
                 Settings
               </Link>{" "}
               ·{" "}
-              <Link href="/scenarios" className="underline hover:text-white">
+              <Link href="/scenarios" className="underline decoration-[color:var(--max-cyan)] hover:text-white">
                 Scenarios
               </Link>
             </p>
@@ -96,7 +137,7 @@ export default async function DashboardPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-6 py-8">
+      <main className="relative mx-auto max-w-5xl px-6 py-8">
         <SummaryBar
           deployed={metrics.deployed}
           portfolioValue={metrics.portfolioValue}
@@ -110,14 +151,17 @@ export default async function DashboardPage() {
         {chartPoints.length >= 2 && (
           <section className="mt-8">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <h2 className="text-sm font-black uppercase tracking-widest text-white/60">
                 Fund performance
               </h2>
               <FundChartToggle />
             </div>
-            <div className="mt-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 [.chart-hidden_&]:hidden">
+            <div
+              className="max-card mt-3 rounded-2xl p-5 [.chart-hidden_&]:hidden"
+              style={{ "--max-card-border": "var(--max-cyan)" } as React.CSSProperties}
+            >
               <FundChart points={chartPoints} />
-              <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
+              <p className="mt-3 text-xs text-white/50">
                 Both lines move only when something happens — a check, a round, an
                 exit. Early on, total value hugs deployed capital (everything at
                 cost); write-offs knock it below, markups and exits pull it away.
@@ -127,11 +171,11 @@ export default async function DashboardPage() {
           </section>
         )}
 
-        <div className="mt-8 flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-sm font-black uppercase tracking-widest text-white/60">
             Portfolio
           </h2>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {companies.length > 0 && (
               <SimulateYearButton
                 activeCount={rows.filter((r) => r.status === "active").length}
@@ -141,7 +185,7 @@ export default async function DashboardPage() {
             {companies.length < settings.maxCompanies && (
               <Link
                 href="/companies/new"
-                className="rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-4 py-2 text-sm font-semibold shadow-sm hover:from-indigo-500 hover:to-violet-500 transition-colors"
+                className="max-btn-primary rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-r from-[color:var(--max-magenta)] via-[color:var(--max-purple)] to-[color:var(--max-cyan)] px-4 py-2 text-sm font-black uppercase tracking-wide text-white"
               >
                 + Back a company
               </Link>
@@ -149,76 +193,34 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        <CompanyTable companies={rows} />
+        <div
+          className="max-card mt-3 overflow-hidden rounded-2xl"
+          style={{ "--max-card-border": "var(--max-purple)" } as React.CSSProperties}
+        >
+          <CompanyTable companies={rows} />
+        </div>
 
-        <section className="mt-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+        <section
+          className="max-card mt-8 rounded-2xl p-6"
+          style={{ "--max-card-border": "var(--max-yellow)" } as React.CSSProperties}
+        >
+          <h2 className="font-display text-lg font-bold text-white [text-shadow:2px_2px_0_var(--max-purple)]">
             How it works
           </h2>
-          <ol className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-400">
-            <li className="flex gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-                1
-              </span>
-              <span>
-                <strong className="text-slate-800 dark:text-slate-200">
-                  Back a company
-                </strong>{" "}
-                with its name, sector, and the details of the first round you invest in:
-                stage, total raised, post-money valuation, and your check.
-              </span>
-            </li>
-            <li className="flex gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-700 dark:bg-violet-950 dark:text-violet-300">
-                2
-              </span>
-              <span>
-                <strong className="text-slate-800 dark:text-slate-200">
-                  Ownership is calculated for you
-                </strong>
-                : your check ÷ post-money valuation. A $250,000 check at an $8M
-                post-money buys 3.13% of the company.
-              </span>
-            </li>
-            <li className="flex gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-fuchsia-100 text-xs font-bold text-fuchsia-700 dark:bg-fuchsia-950 dark:text-fuchsia-300">
-                3
-              </span>
-              <span>
-                <strong className="text-slate-800 dark:text-slate-200">
-                  Add follow-on rounds
-                </strong>{" "}
-                from a company&apos;s page as it raises again. Each new round dilutes
-                your stake by (post-money − raised) ÷ post-money — unless you write
-                another check to defend your ownership.
-              </span>
-            </li>
-            <li className="flex gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-                4
-              </span>
-              <span>
-                <strong className="text-slate-800 dark:text-slate-200">
-                  Watch your deployment pacing
-                </strong>{" "}
-                in the cards above — every check, first or follow-on, comes out of the
-                same {formatDollars(settings.fundSize)} fund.
-              </span>
-            </li>
-            <li className="flex gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-100 text-xs font-bold text-sky-700 dark:bg-sky-950 dark:text-sky-300">
-                5
-              </span>
-              <span>
-                <strong className="text-slate-800 dark:text-slate-200">
-                  Track your markups and TVPI
-                </strong>
-                : each stake is marked at the company&apos;s latest post-money
-                valuation, and TVPI — total value ÷ paid-in capital — is the headline
-                multiple LPs judge a fund by. It&apos;s all paper gains until companies
-                exit.
-              </span>
-            </li>
+          <ol className="mt-4 space-y-3 text-sm text-white/75">
+            {HOW_IT_WORKS.map((step, i) => (
+              <li key={step.title} className="flex gap-3">
+                <span
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-black text-[#0d0d1a]"
+                  style={{ backgroundColor: step.accent }}
+                >
+                  {i + 1}
+                </span>
+                <span>
+                  <strong className="text-white">{step.title}</strong> {step.body}
+                </span>
+              </li>
+            ))}
           </ol>
         </section>
       </main>

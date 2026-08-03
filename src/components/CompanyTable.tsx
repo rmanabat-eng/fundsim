@@ -36,10 +36,9 @@ type SortKey =
 type SortDir = "asc" | "desc";
 
 const headerCell = "py-3 px-4 align-top";
-const headerLabel =
-  "text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 font-semibold";
+const headerLabel = "text-xs uppercase tracking-wide text-white/60 font-black";
 const filterControl =
-  "mt-1.5 block w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-normal normal-case tracking-normal text-slate-700 focus:border-violet-400 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200";
+  "mt-1.5 block w-full rounded-md border-2 border-white/15 bg-white/5 px-2 py-1 text-xs font-normal normal-case tracking-normal text-white/85 focus:border-[color:var(--max-cyan)] focus:outline-none";
 
 function SortButton({
   label,
@@ -56,17 +55,11 @@ function SortButton({
     <button
       type="button"
       onClick={onClick}
-      className={`${headerLabel} inline-flex items-center gap-1 hover:text-violet-600 dark:hover:text-violet-400 transition-colors`}
+      className={`${headerLabel} inline-flex items-center gap-1 hover:text-[color:var(--max-cyan)] transition-colors`}
       title={`Sort by ${label.toLowerCase()}`}
     >
       {label}
-      <span
-        className={
-          active
-            ? "text-violet-600 dark:text-violet-400"
-            : "text-slate-300 dark:text-slate-600"
-        }
-      >
+      <span className={active ? "text-[color:var(--max-cyan)]" : "text-white/25"}>
         {active ? (dir === "asc" ? "▲" : "▼") : "↕"}
       </span>
     </button>
@@ -116,10 +109,10 @@ export function CompanyTable({ companies }: { companies: CompanyRow[] }) {
     roundsFilter !== "All";
 
   return (
-    <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200 shadow-sm dark:border-slate-800">
-      <table className="w-full text-sm bg-white dark:bg-slate-900">
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-slate-200 bg-slate-50 text-left dark:border-slate-800 dark:bg-slate-800/50">
+          <tr className="border-b-2 border-white/15 bg-white/5 text-left">
             <th className={headerCell}>
               <span className={headerLabel}>Company</span>
               <input
@@ -216,10 +209,7 @@ export function CompanyTable({ companies }: { companies: CompanyRow[] }) {
         <tbody>
           {rows.length === 0 && (
             <tr>
-              <td
-                colSpan={10}
-                className="py-10 text-center text-slate-500 dark:text-slate-400"
-              >
+              <td colSpan={10} className="py-10 text-center text-white/60">
                 {isFiltering ? (
                   "No companies match your filters."
                 ) : (
@@ -227,7 +217,7 @@ export function CompanyTable({ companies }: { companies: CompanyRow[] }) {
                     No companies yet.{" "}
                     <Link
                       href="/companies/new"
-                      className="text-violet-600 underline dark:text-violet-400"
+                      className="text-[color:var(--max-cyan)] underline"
                     >
                       Back your first one
                     </Link>
@@ -240,21 +230,21 @@ export function CompanyTable({ companies }: { companies: CompanyRow[] }) {
           {rows.map((c) => (
             <tr
               key={c.id}
-              className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/70 transition-colors dark:border-slate-800 dark:hover:bg-slate-800/40"
+              className="border-b border-white/10 last:border-b-0 hover:bg-white/5 transition-colors"
             >
               <td className="py-3 px-4 font-medium">
                 <Link
                   href={`/companies/${c.id}`}
-                  className="text-slate-900 hover:text-violet-700 hover:underline dark:text-slate-100 dark:hover:text-violet-400"
+                  className="text-white hover:text-[color:var(--max-cyan)] hover:underline"
                 >
                   {c.name}
                 </Link>
                 {c.status !== "active" && (
                   <span
-                    className={`ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                    className={`ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
                       c.status === "exited"
-                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-                        : "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
+                        ? "bg-[color:var(--max-cyan)]/20 text-[color:var(--max-cyan)]"
+                        : "bg-[color:var(--max-orange)]/20 text-[color:var(--max-orange)]"
                     }`}
                   >
                     {c.status === "exited" ? "Exited" : "Written off"}
@@ -264,7 +254,7 @@ export function CompanyTable({ companies }: { companies: CompanyRow[] }) {
               <td className="py-3 px-4">
                 <span
                   className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
-                    SECTOR_STYLES[c.sector] ?? "bg-slate-100 text-slate-800"
+                    SECTOR_STYLES[c.sector] ?? "bg-white/10 text-white/80"
                   }`}
                 >
                   {c.sector}
@@ -273,46 +263,41 @@ export function CompanyTable({ companies }: { companies: CompanyRow[] }) {
               <td className="py-3 px-4">
                 <span
                   className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${
-                    STAGE_STYLES[c.latestStage] ??
-                    "bg-slate-100 text-slate-700 ring-slate-300"
+                    STAGE_STYLES[c.latestStage] ?? "bg-white/10 text-white/80 ring-white/25"
                   }`}
                 >
                   {STAGE_LABELS[c.latestStage as keyof typeof STAGE_LABELS] ??
                     c.latestStage}
                 </span>
               </td>
-              <td className="py-3 px-4 text-slate-700 dark:text-slate-300">
-                {formatDollars(c.invested)}
-              </td>
-              <td className="py-3 px-4 text-slate-700 dark:text-slate-300">
+              <td className="py-3 px-4 text-white/75">{formatDollars(c.invested)}</td>
+              <td className="py-3 px-4 text-white/75">
                 {formatDollars(c.latestPostMoney)}
               </td>
-              <td className="py-3 px-4 font-semibold text-violet-700 dark:text-violet-400">
+              <td className="py-3 px-4 font-semibold text-[color:var(--max-magenta)]">
                 {formatPercent(c.ownershipPct)}
               </td>
-              <td className="py-3 px-4 text-slate-700 dark:text-slate-300">
+              <td className="py-3 px-4 text-white/75">
                 {formatDollars(c.value)}
                 <span
                   className={`ml-2 text-xs font-medium ${
                     c.multiple >= 1
-                      ? "text-emerald-600 dark:text-emerald-400"
-                      : "text-rose-600 dark:text-rose-400"
+                      ? "text-[color:var(--max-cyan)]"
+                      : "text-[color:var(--max-orange)]"
                   }`}
                 >
                   {formatMultiple(c.multiple)}
                 </span>
               </td>
-              <td className="py-3 px-4 text-slate-500 dark:text-slate-400">
-                {c.roundCount}
-              </td>
-              <td className="py-3 px-4 text-slate-500 dark:text-slate-400">
+              <td className="py-3 px-4 text-white/60">{c.roundCount}</td>
+              <td className="py-3 px-4 text-white/60">
                 {formatDate(new Date(c.latestDate))}
               </td>
               <td className="py-3 px-4">
                 <div className="flex items-center gap-3 justify-end">
                   <Link
                     href={`/companies/${c.id}`}
-                    className="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                    className="text-xs font-bold text-[color:var(--max-cyan)] hover:underline"
                   >
                     Rounds
                   </Link>

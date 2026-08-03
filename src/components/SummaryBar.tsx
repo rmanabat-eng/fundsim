@@ -83,13 +83,13 @@ export function SummaryBar({
         ))}
       </div>
       <div className="mt-4">
-        <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+        <div className="flex justify-between text-xs text-white/60 mb-1">
           <span>Capital deployed</span>
           <span>{pctDeployed.toFixed(1)}%</span>
         </div>
-        <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+        <div className="h-2 w-full rounded-full border-2 border-white/10 bg-white/5 overflow-hidden">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-600 transition-all"
+            className="h-full rounded-full bg-gradient-to-r from-[color:var(--max-magenta)] to-[color:var(--max-cyan)] transition-all"
             style={{ width: `${Math.min(pctDeployed, 100)}%` }}
           />
         </div>

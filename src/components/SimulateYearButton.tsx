@@ -21,29 +21,29 @@ export function SimulateYearButton({ activeCount }: { activeCount: number }) {
   return (
     <div className="flex items-center gap-3">
       {summary && !pending && (
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          This year: <strong>{summary.raised}</strong> raised,{" "}
-          <strong>{summary.exited}</strong> exited
+        <p className="text-xs text-white/60">
+          This year: <strong className="text-white">{summary.raised}</strong> raised,{" "}
+          <strong className="text-white">{summary.exited}</strong> exited
           {summary.distributions > 0 && (
             <> ({formatDollars(summary.distributions)} back)</>
           )}
-          , <strong>{summary.writtenOff}</strong> shut down,{" "}
-          <strong>{summary.quiet}</strong> quiet.
+          , <strong className="text-white">{summary.writtenOff}</strong> shut down,{" "}
+          <strong className="text-white">{summary.quiet}</strong> quiet.
         </p>
       )}
       {confirming ? (
-        <span className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+        <span className="flex flex-wrap items-center gap-2 text-xs text-white/70">
           Roll a year of events across {activeCount} active{" "}
           {activeCount === 1 ? "company" : "companies"}?
           <button
             onClick={run}
-            className="font-medium text-violet-600 hover:underline dark:text-violet-400"
+            className="font-bold text-[color:var(--max-cyan)] hover:underline"
           >
             Confirm
           </button>
           <button
             onClick={() => setConfirming(false)}
-            className="font-medium text-slate-600 hover:underline dark:text-slate-400"
+            className="font-bold text-white/60 hover:underline"
           >
             Cancel
           </button>
@@ -53,7 +53,7 @@ export function SimulateYearButton({ activeCount }: { activeCount: number }) {
           type="button"
           onClick={() => setConfirming(true)}
           disabled={pending || activeCount === 0}
-          className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          className="max-btn-outline rounded-full border-4 border-white/25 bg-[#2d1b4e]/60 px-4 py-2 text-sm font-bold text-white/85 disabled:opacity-50"
         >
           {pending ? "Simulating..." : "⏩ Simulate a year"}
         </button>

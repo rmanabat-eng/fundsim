@@ -14,7 +14,7 @@ export function FundChartToggle() {
     <button
       type="button"
       onClick={toggle}
-      className="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+      className="text-xs font-bold text-[color:var(--max-cyan)] hover:underline"
     >
       <span className="[.chart-hidden_&]:hidden">Hide chart</span>
       <span className="hidden [.chart-hidden_&]:inline">Show chart</span>
