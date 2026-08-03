@@ -70,9 +70,10 @@ model Deal {
   name      String
   sector    String
   stage     Stage
-  raised    Float
-  postMoney Float
-  signals   String // JSON array of signal texts shown on the pitch card
+  raised      Float
+  postMoney   Float
+  description String @default("") // cosmetic flavor text, never affects quality
+  signals     String // JSON array of signal texts shown on the pitch card
   quality   Float
   status    String @default("open") // "open" | "invested" | "passed" | "expired"
   company   Company? // set when invested; cleared if the investment is undone

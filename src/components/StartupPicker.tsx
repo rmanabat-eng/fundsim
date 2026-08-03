@@ -12,7 +12,12 @@ import type { FormState } from "@/app/actions";
 type Selection =
   | { kind: "blank" }
   | { kind: "preset"; name: string }
-  | { kind: "random"; values: CompanyFormValues & { companyName: string }; nonce: number };
+  | {
+      kind: "random";
+      values: CompanyFormValues & { companyName: string };
+      description: string;
+      nonce: number;
+    };
 
 export function StartupPicker({
   action,
@@ -129,6 +134,7 @@ export function StartupPicker({
                   postMoney: r.postMoneyValuation,
                   date: r.investmentDate,
                 },
+                description: r.description,
                 nonce: Date.now(),
               });
             }}
@@ -142,13 +148,16 @@ export function StartupPicker({
           </button>
         </div>
         {selection.kind === "random" && (
-          <p className="mt-2 text-xs text-white/40">
-            Rolled{" "}
-            <strong className="text-[color:var(--max-yellow)]">
-              {selection.values.companyName}
-            </strong>{" "}
-            — click again for a new one, or tweak the form below.
-          </p>
+          <div className="mt-2 space-y-1">
+            <p className="text-xs text-white/40">
+              Rolled{" "}
+              <strong className="text-[color:var(--max-yellow)]">
+                {selection.values.companyName}
+              </strong>{" "}
+              — click again for a new one, or tweak the form below.
+            </p>
+            <p className="text-xs text-white/60">{selection.description}</p>
+          </div>
         )}
       </div>
 

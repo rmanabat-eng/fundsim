@@ -17,6 +17,7 @@ export type DealView = {
   stage: string;
   raised: number;
   postMoney: number;
+  description: string;
   signals: string[];
 };
 
@@ -79,7 +80,9 @@ export function DealCard({ deal }: { deal: DealView }) {
       </div>
 
       <div className="flex flex-1 flex-col p-5">
-        <p className="text-sm text-white/70">
+        <p className="text-xs text-white/60">{deal.description}</p>
+
+        <p className="mt-2 text-sm text-white/70">
           <StageBadge stage={deal.stage} /> raising {formatDollars(deal.raised)} at a{" "}
           {formatDollars(deal.postMoney)}{" "}
           <Term def="The company's valuation with the new money already counted in. Your ownership is simply your check ÷ post-money.">

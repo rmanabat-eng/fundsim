@@ -589,6 +589,7 @@ export default async function PlayPage() {
     stage: d.stage,
     raised: d.raised,
     postMoney: d.postMoney,
+    description: d.description,
     signals: JSON.parse(d.signals) as string[],
   }));
 

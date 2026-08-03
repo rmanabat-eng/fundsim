@@ -43,6 +43,7 @@ describe("generateDeal", () => {
   it("produces valid pitches with hidden quality in range", () => {
     for (let i = 0; i < 200; i++) {
       const deal = generateDeal();
+      expect(deal.description.length).toBeGreaterThan(0);
       expect(deal.raised).toBeGreaterThan(0);
       expect(deal.postMoney).toBeGreaterThan(deal.raised);
       expect(deal.signals.length).toBeGreaterThanOrEqual(3);

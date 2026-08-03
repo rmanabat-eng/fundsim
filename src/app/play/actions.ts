@@ -181,6 +181,7 @@ async function dealFlow(year: number) {
         stage: deal.stage as (typeof STAGES)[number],
         raised: deal.raised,
         postMoney: deal.postMoney,
+        description: deal.description,
         signals: JSON.stringify(deal.signals),
         quality: deal.quality,
       },

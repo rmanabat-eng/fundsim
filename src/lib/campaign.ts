@@ -31,6 +31,7 @@ export type GeneratedDeal = {
   stage: string;
   raised: number;
   postMoney: number;
+  description: string; // cosmetic flavor text, never affects quality
   signals: string[]; // what the pitch card shows
   quality: number; // hidden -1..1
 };
@@ -53,6 +54,7 @@ export function generateDeal(): GeneratedDeal {
     stage: base.stage,
     raised: base.raised,
     postMoney: base.postMoneyValuation,
+    description: base.description,
     signals: drawn.map(fillTemplate),
     quality,
   };
