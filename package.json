@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "tsx prisma/seed.ts",
+    "cards": "tsx scripts/generate-card.ts",
     "test": "vitest run"
   },
   "prisma": {

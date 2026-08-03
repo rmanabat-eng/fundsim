@@ -1,0 +1,81 @@
+[
+  { "id": "team-first-time-founders", "category": "Team & Founders", "text_template": "First-time founders, no prior startup experience", "number_type": "none", "sentiment_tag": "neutral_ambiguous" },
+  { "id": "team-founder-fired", "category": "Team & Founders", "text_template": "Founder was previously fired from a senior role at a big tech company", "number_type": "none", "sentiment_tag": "negative" },
+  { "id": "team-repeat-founder-exits", "category": "Team & Founders", "text_template": "Co-founder is a repeat founder with {exits} prior exits ({failed} failed, {successful} modest/successful)", "number_type": "tiered_list", "number_config": { "options": [
+    { "exits": 1, "failed": 0, "successful": 1 },
+    { "exits": 2, "failed": 1, "successful": 1 },
+    { "exits": 2, "failed": 2, "successful": 0 },
+    { "exits": 3, "failed": 1, "successful": 2 },
+    { "exits": 3, "failed": 2, "successful": 1 }
+  ] }, "sentiment_tag": "positive" },
+  { "id": "team-cto-left-competitor", "category": "Team & Founders", "text_template": "Technical co-founder just left to join a competitor", "number_type": "none", "sentiment_tag": "negative" },
+  { "id": "team-family-founders", "category": "Team & Founders", "text_template": "Founders are siblings/family members", "number_type": "none", "sentiment_tag": "neutral_ambiguous" },
+  { "id": "team-ceo-second-company", "category": "Team & Founders", "text_template": "CEO also runs a second company on the side", "number_type": "none", "sentiment_tag": "negative" },
+  { "id": "team-no-domain-expertise", "category": "Team & Founders", "text_template": "Team has no one with domain expertise in the industry they're disrupting", "number_type": "none", "sentiment_tag": "negative" },
+  { "id": "team-lost-engineers", "category": "Team & Founders", "text_template": "Team has lost {n} senior engineers in the past {period}", "number_type": "tiered_list", "number_config": { "options": [
+    { "n": 2, "period": "quarter" },
+    { "n": 3, "period": "quarter" },
+    { "n": 3, "period": "6 months" },
+    { "n": 4, "period": "6 months" }
+  ] }, "sentiment_tag": "negative" },
+
+  { "id": "market-niche-growing", "category": "Market & Competition", "text_template": "Market is niche but growing {n}% annually", "number_type": "range", "number_config": { "min": 25, "max": 70, "unit": "%", "step": 5 }, "sentiment_tag": "positive" },
+  { "id": "market-failed-startups", "category": "Market & Competition", "text_template": "Category has had {n} failed startups in the last {years} years", "number_type": "tiered_list", "number_config": { "options": [
+    { "n": 2, "years": 3 },
+    { "n": 3, "years": 3 },
+    { "n": 3, "years": 4 },
+    { "n": 4, "years": 5 },
+    { "n": 5, "years": 5 }
+  ] }, "sentiment_tag": "negative" },
+  { "id": "market-government-subsidy", "category": "Market & Competition", "text_template": "Government just announced a subsidy that benefits this industry", "number_type": "none", "sentiment_tag": "positive" },
+  { "id": "market-competitor-megaround", "category": "Market & Competition", "text_template": "Main competitor just raised a mega-round at {n}x this startup's valuation", "number_type": "range", "number_config": { "min": 2, "max": 8, "unit": "x", "step": 1 }, "sentiment_tag": "negative" },
+  { "id": "market-unclear-regulation", "category": "Market & Competition", "text_template": "Product targets an emerging market with unclear regulatory future", "number_type": "none", "sentiment_tag": "negative" },
+  { "id": "market-pivoted-models", "category": "Market & Competition", "text_template": "Company pivoted business models {n} times in {months} months", "number_type": "tiered_list", "number_config": { "options": [
+    { "n": 1, "months": 12 },
+    { "n": 1, "months": 18 },
+    { "n": 2, "months": 18 },
+    { "n": 2, "months": 24 },
+    { "n": 3, "months": 24 }
+  ] }, "sentiment_tag": "negative" },
+
+  { "id": "product-single-vendor-ai", "category": "Product & Tech", "text_template": "Product depends heavily on a specific AI model from a single vendor", "number_type": "none", "sentiment_tag": "negative" },
+  { "id": "product-no-security-team", "category": "Product & Tech", "text_template": "No dedicated security team despite handling sensitive user data", "number_type": "none", "sentiment_tag": "negative" },
+  { "id": "product-no-differentiation", "category": "Product & Tech", "text_template": "Product has near-zero technical differentiation from competitors", "number_type": "none", "sentiment_tag": "negative" },
+  { "id": "product-fast-iteration", "category": "Product & Tech", "text_template": "Engineering team ships new features {cadence}, fast iteration cycle", "number_type": "tiered_list", "number_config": { "options": [
+    { "cadence": "weekly" },
+    { "cadence": "biweekly" },
+    { "cadence": "monthly" }
+  ] }, "sentiment_tag": "positive" },
+  { "id": "product-core-engineer-left", "category": "Product & Tech", "text_template": "Core algorithm was built by a single engineer who has since left", "number_type": "none", "sentiment_tag": "negative" },
+  { "id": "product-life-changing-thin-retention", "category": "Product & Tech", "text_template": "Beta users report the product is \"life-changing\" but retention data is thin", "number_type": "none", "sentiment_tag": "neutral_ambiguous" },
+
+  { "id": "fin-fast-fundraising", "category": "Financials & Traction", "text_template": "Company has raised {rounds} rounds in {years} years, unusually fast fundraising pace", "number_type": "tiered_list", "number_config": { "options": [
+    { "rounds": 3, "years": 2 },
+    { "rounds": 4, "years": 2 },
+    { "rounds": 4, "years": 3 },
+    { "rounds": 5, "years": 3 },
+    { "rounds": 6, "years": 4 }
+  ] }, "sentiment_tag": "neutral_ambiguous" },
+  { "id": "fin-no-revenue", "category": "Financials & Traction", "text_template": "No real revenue yet, valuation based entirely on user growth", "number_type": "none", "sentiment_tag": "negative" },
+  { "id": "fin-unit-economics-scale", "category": "Financials & Traction", "text_template": "Unit economics improve significantly at scale (positive contribution margin)", "number_type": "none", "sentiment_tag": "positive" },
+  { "id": "fin-investors-declined", "category": "Financials & Traction", "text_template": "Previous investors declined to participate in this round", "number_type": "none", "sentiment_tag": "negative" },
+  { "id": "fin-valuation-jump-flat-revenue", "category": "Financials & Traction", "text_template": "Valuation increased {n}x since the last round with flat revenue growth", "number_type": "range", "number_config": { "min": 2, "max": 6, "unit": "x", "step": 1 }, "sentiment_tag": "negative" },
+  { "id": "fin-long-runway", "category": "Financials & Traction", "text_template": "Company has {n}+ months of runway, very conservative burn", "number_type": "range", "number_config": { "min": 15, "max": 30, "unit": "months", "step": 5 }, "sentiment_tag": "positive" },
+  { "id": "fin-generous-liq-prefs", "category": "Financials & Traction", "text_template": "Investors are getting unusually generous liquidation preferences ({n}x+)", "number_type": "range", "number_config": { "min": 1.5, "max": 3, "unit": "x", "step": 0.5 }, "sentiment_tag": "negative" },
+  { "id": "fin-missed-targets", "category": "Financials & Traction", "text_template": "Company missed its last {n} quarterly targets", "number_type": "range", "number_config": { "min": 1, "max": 3, "unit": "", "step": 1 }, "sentiment_tag": "negative" },
+
+  { "id": "legal-supervoting-shares", "category": "Legal & Governance", "text_template": "Founder retains supervoting shares ({n}x voting power)", "number_type": "range", "number_config": { "min": 2, "max": 10, "unit": "x", "step": 1 }, "sentiment_tag": "neutral_ambiguous" },
+  { "id": "legal-down-round-clause", "category": "Legal & Governance", "text_template": "Previous funding round included a \"down round\" clause triggering dilution", "number_type": "none", "sentiment_tag": "negative" },
+  { "id": "legal-pending-litigation", "category": "Legal & Governance", "text_template": "Company operates in a legal gray area with pending litigation risk", "number_type": "none", "sentiment_tag": "negative" },
+  { "id": "legal-no-ip-agreements", "category": "Legal & Governance", "text_template": "No non-compete or IP assignment agreements signed by early employees", "number_type": "none", "sentiment_tag": "negative" },
+
+  { "id": "culture-burnout-track-record", "category": "Culture & Ops", "text_template": "Founder has a track record of burning out and replacing entire teams", "number_type": "none", "sentiment_tag": "negative" },
+  { "id": "culture-transparency-praised", "category": "Culture & Ops", "text_template": "Company culture praised in employee reviews for transparency", "number_type": "none", "sentiment_tag": "positive" },
+  { "id": "culture-seasoned-coo-hired", "category": "Culture & Ops", "text_template": "Recently hired a seasoned COO from a well-known unicorn", "number_type": "none", "sentiment_tag": "positive" },
+  { "id": "culture-high-exec-turnover", "category": "Culture & Ops", "text_template": "High executive turnover — {n} VPs in {years} years", "number_type": "tiered_list", "number_config": { "options": [
+    { "n": 2, "years": 1 },
+    { "n": 3, "years": 1 },
+    { "n": 3, "years": 2 },
+    { "n": 4, "years": 2 }
+  ] }, "sentiment_tag": "negative" }
+]
