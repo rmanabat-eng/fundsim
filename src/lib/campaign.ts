@@ -1,4 +1,5 @@
 import { generateRandomStartup } from "@/lib/random-startup";
+import { drawFacts, fillTemplate, SENTIMENT_WEIGHT } from "@/lib/fact-card";
 import { DEFAULT_ODDS, type SimCompanyState, type YearOdds } from "@/lib/simulate";
 
 // Campaign mode: a 10-year fund with dealt pitches, forced decisions, and
@@ -20,32 +21,6 @@ export const MARKET_LABELS: Record<Market, string> = {
   bear: "🐻 Bear market — valuations down, weak companies dying",
 };
 
-// Each pitch card shows a few of these. The weights are the game's hidden
-// truth: signals nudge the company's quality score, which tilts every later
-// roll. The player never sees weights or quality — only outcomes, run after
-// run, until the pattern sinks in.
-type Signal = { text: string; weight: number };
-
-export const SIGNALS: readonly Signal[] = [
-  { text: "Founders sold their last startup for nine figures", weight: 0.25 },
-  { text: "Revenue tripled over the last 12 months", weight: 0.25 },
-  { text: "Customers arrived organically — zero ad spend so far", weight: 0.2 },
-  { text: "Waitlist has grown 40% month over month", weight: 0.15 },
-  { text: "A top-tier fund is co-investing in this round", weight: 0.15 },
-  { text: "The team ships product updates weekly", weight: 0.1 },
-  { text: "Featured in a big tech publication last month", weight: 0.05 },
-  { text: "Based in a second-tier startup hub", weight: 0 },
-  { text: "Product is still pre-launch", weight: -0.05 },
-  { text: "Growth is entirely from paid ads", weight: -0.15 },
-  { text: "Crowded market with well-funded competitors", weight: -0.15 },
-  { text: "A single customer is 80% of revenue", weight: -0.2 },
-  { text: "Under 8 months of runway at the current burn", weight: -0.2 },
-  { text: "The CEO is on their third pivot in two years", weight: -0.2 },
-  { text: "The two co-founders disagree about direction", weight: -0.25 },
-] as const;
-
-const SIGNALS_PER_DEAL = 3;
-
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
@@ -60,19 +35,15 @@ export type GeneratedDeal = {
   quality: number; // hidden -1..1
 };
 
-// Deal a pitch: plausible pricing from the free-play generator, plus signals
-// whose weights (noisily) set the hidden quality. The noise matters — a
-// great-looking pitch can still be a dud, just less often.
+// Deal a pitch: plausible pricing from the free-play generator, plus 3-5
+// due-diligence facts (src/lib/fact-card.ts) whose sentiment_tag (noisily)
+// sets the hidden quality. The noise matters — a great-looking pitch can
+// still be a dud, just less often.
 export function generateDeal(): GeneratedDeal {
   const base = generateRandomStartup();
 
-  const pool = [...SIGNALS];
-  const drawn: Signal[] = [];
-  for (let i = 0; i < SIGNALS_PER_DEAL; i++) {
-    drawn.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
-  }
-
-  const signalSum = drawn.reduce((sum, s) => sum + s.weight, 0);
+  const drawn = drawFacts();
+  const signalSum = drawn.reduce((sum, f) => sum + SENTIMENT_WEIGHT[f.sentiment_tag], 0);
   const noise = (Math.random() * 2 - 1) * 0.35;
   const quality = clamp(signalSum + noise, -1, 1);
 
@@ -82,7 +53,7 @@ export function generateDeal(): GeneratedDeal {
     stage: base.stage,
     raised: base.raised,
     postMoney: base.postMoneyValuation,
-    signals: drawn.map((s) => s.text),
+    signals: drawn.map(fillTemplate),
     quality,
   };
 }

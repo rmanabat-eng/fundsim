@@ -41,7 +41,7 @@ function conflicts(chosen: Fact[], candidate: Fact): boolean {
   );
 }
 
-function fillTemplate(fact: Fact): string {
+export function fillTemplate(fact: Fact): string {
   if (fact.number_type === "none" || !fact.number_config) return fact.text_template;
 
   const values: Record<string, string | number> = {};
@@ -79,7 +79,11 @@ function shuffle<T>(arr: T[]): T[] {
   return copy;
 }
 
-export function generateCard(pool: Fact[] = FACT_POOL): string[] {
+// Draw a random set of non-contradictory facts (3-5, weighted per
+// pickFactCount) without filling in their templates yet — callers that need
+// the underlying Fact (e.g. campaign.ts, to derive hidden quality from
+// sentiment_tag) use this; generateCard() below is the text-only shortcut.
+export function drawFacts(pool: Fact[] = FACT_POOL): Fact[] {
   const count = pickFactCount();
   const shuffled = shuffle(pool);
   const chosen: Fact[] = [];
@@ -90,5 +94,15 @@ export function generateCard(pool: Fact[] = FACT_POOL): string[] {
     chosen.push(fact);
   }
 
-  return chosen.map(fillTemplate);
+  return chosen;
+}
+
+export const SENTIMENT_WEIGHT: Record<Fact["sentiment_tag"], number> = {
+  positive: 0.2,
+  negative: -0.2,
+  neutral_ambiguous: 0,
+};
+
+export function generateCard(pool: Fact[] = FACT_POOL): string[] {
+  return drawFacts(pool).map(fillTemplate);
 }

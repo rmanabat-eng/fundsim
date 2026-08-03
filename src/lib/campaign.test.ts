@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { FACT_POOL, SENTIMENT_WEIGHT } from "@/lib/fact-card";
 import {
-  SIGNALS,
   campaignOdds,
   dateInWindow,
   generateDeal,
@@ -26,7 +26,18 @@ import {
   maybePayToPlay,
 } from "./campaign";
 
-const weightOf = new Map(SIGNALS.map((s) => [s.text, s.weight]));
+// Facts substitute numbers into their template, so match by the static
+// prefix (text before the first "{...}") rather than exact text.
+const staticPrefix = (template: string) => template.split("{")[0];
+const weightOfPrefix = new Map(
+  FACT_POOL.map((f) => [staticPrefix(f.text_template), SENTIMENT_WEIGHT[f.sentiment_tag]])
+);
+function weightOfSignal(signal: string): number {
+  for (const [prefix, weight] of weightOfPrefix) {
+    if (signal.startsWith(prefix)) return weight;
+  }
+  throw new Error(`no fact matches signal: ${signal}`);
+}
 
 describe("generateDeal", () => {
   it("produces valid pitches with hidden quality in range", () => {
@@ -34,9 +45,10 @@ describe("generateDeal", () => {
       const deal = generateDeal();
       expect(deal.raised).toBeGreaterThan(0);
       expect(deal.postMoney).toBeGreaterThan(deal.raised);
-      expect(deal.signals).toHaveLength(3);
-      expect(new Set(deal.signals).size).toBe(3);
-      for (const s of deal.signals) expect(weightOf.has(s)).toBe(true);
+      expect(deal.signals.length).toBeGreaterThanOrEqual(3);
+      expect(deal.signals.length).toBeLessThanOrEqual(5);
+      expect(new Set(deal.signals).size).toBe(deal.signals.length);
+      for (const s of deal.signals) expect(() => weightOfSignal(s)).not.toThrow();
       expect(deal.quality).toBeGreaterThanOrEqual(-1);
       expect(deal.quality).toBeLessThanOrEqual(1);
     }
@@ -47,7 +59,7 @@ describe("generateDeal", () => {
     const weak: number[] = [];
     for (let i = 0; i < 3000; i++) {
       const deal = generateDeal();
-      const sum = deal.signals.reduce((acc, s) => acc + (weightOf.get(s) ?? 0), 0);
+      const sum = deal.signals.reduce((acc, s) => acc + weightOfSignal(s), 0);
       if (sum > 0.3) strong.push(deal.quality);
       if (sum < -0.3) weak.push(deal.quality);
     }

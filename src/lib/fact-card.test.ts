@@ -15,8 +15,8 @@ describe("generateCard", () => {
     for (let i = 0; i < 200; i++) {
       const card = generateCard();
       for (const [a, b] of EXCLUSION_PAIRS) {
-        const textA = FACT_POOL.find((f) => f.id === a)?.text_template.split(" {")[0];
-        const textB = FACT_POOL.find((f) => f.id === b)?.text_template.split(" {")[0];
+        const textA = FACT_POOL.find((f) => f.id === a)?.text_template.split("{")[0];
+        const textB = FACT_POOL.find((f) => f.id === b)?.text_template.split("{")[0];
         const hasA = card.some((line) => textA && line.startsWith(textA));
         const hasB = card.some((line) => textB && line.startsWith(textB));
         expect(hasA && hasB).toBe(false);
