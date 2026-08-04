@@ -9,13 +9,14 @@
     "lint": "eslint",
     "seed": "tsx prisma/seed.ts",
     "cards": "tsx scripts/generate-card.ts",
+    "migrate-to-postgres": "tsx scripts/migrate-to-postgres.ts",
     "test": "vitest run"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@prisma/adapter-better-sqlite3": "^7.8.0",
+    "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.8.0",
     "dotenv": "^17.4.2",
     "next": "16.2.10",
@@ -25,17 +26,16 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "better-sqlite3": "^13.0.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
     "tailwindcss": "^4",
     "tsx": "^4.23.0",
     "typescript": "^5",
     "vitest": "^4.1.10"
-  },
-  "allowScripts": {
-    "better-sqlite3@12.11.1": true
   }
 }

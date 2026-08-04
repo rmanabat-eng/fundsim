@@ -1,3 +1,26 @@
+## 2026-08-04 — Migrate from local SQLite to hosted Postgres
+
+Phase 1 of moving off a local dev.db file: schema datasource is now
+postgresql, and the Prisma client (src/lib/prisma.ts, prisma/seed.ts)
+swaps @prisma/adapter-better-sqlite3 for @prisma/adapter-pg — this
+Prisma 7 client generator requires a driver adapter for every
+datasource, so "no adapter" wasn't actually on the table for
+Postgres either. Reset the migration history (the old SQLite-dialect
+SQL doesn't apply to Postgres; full history stays in git log) and
+generated one fresh init_postgres migration against a real Neon
+database. scripts/migrate-to-postgres.ts copies every row out of the
+local SQLite file into Postgres via raw better-sqlite3 reads +
+Prisma writes, preserving ids/relations; row counts verified to match
+on all 7 tables. Added .env.example (and fixed a real gitignore bug:
+.env* was silently swallowing .env.example too, so it could never
+have been committed as a template). No component, page, or server
+action needed changes — verified the full write surface (add/edit/
+delete a company, add/edit a round, simulate a year, start/advance a
+campaign) against the live Postgres database.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+
+
 ## 2026-08-03 — Fix hydration mismatch on the company detail page's stake sparkline
 
 StakeSparkline gave each point's SVG <title> array children
