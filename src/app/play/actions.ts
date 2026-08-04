@@ -243,12 +243,16 @@ export async function startCampaign() {
   revalidatePath("/");
 }
 
-// Abandons the run: wipes the portfolio and deals, and leaves no game row —
-// /play falls back to the title screen instead of dealing a new fund.
-export async function quitCampaign() {
-  await prisma.company.deleteMany(); // cascades rounds and decisions
-  await prisma.deal.deleteMany();
-  await prisma.game.deleteMany();
+// Closes the fund exactly where it stands — same status flip advanceYear
+// does at year GAME_YEARS, but without rolling another year of events or
+// touching `year`. The scorecard reads game.year < GAME_YEARS to know this
+// was an early close and skip the quartile grade (it's calibrated to a
+// full-length run).
+export async function endCampaign() {
+  const game = await prisma.game.findUnique({ where: { id: 1 } });
+  if (!game || game.status !== "active") return;
+
+  await prisma.game.update({ where: { id: 1 }, data: { status: "ended" } });
 
   revalidatePath("/play");
   revalidatePath("/");

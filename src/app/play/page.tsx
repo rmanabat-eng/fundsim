@@ -22,7 +22,7 @@ import {
 import { DealCard, type DealView } from "@/components/DealCard";
 import { DecisionCard, type DecisionView } from "@/components/DecisionCard";
 import { StartCampaignButton } from "@/components/StartCampaignButton";
-import { QuitCampaignButton } from "@/components/QuitCampaignButton";
+import { EndCampaignButton } from "@/components/EndCampaignButton";
 import { AdvanceYearButton } from "@/components/AdvanceYearButton";
 import { Toaster } from "@/components/toast";
 import { UndoInvestmentButton } from "@/components/UndoInvestmentButton";
@@ -289,7 +289,11 @@ export default async function PlayPage() {
 
   // ---- Fund closed: the game-over scorecard ----
   if (game.status === "ended") {
-    const grade = gradeFund(metrics.tvpi);
+    // gradeFund's quartile thresholds are calibrated to a full GAME_YEARS
+    // run — an early close (End Campaign) skips the grade rather than
+    // mislabel a partial fund against those benchmarks.
+    const earlyClose = game.year < GAME_YEARS;
+    const grade = earlyClose ? null : gradeFund(metrics.tvpi);
     const { rep, drivers: repDrivers } = await currentReputation();
     const positions = companies
       .filter((c) => c.rounds.length > 0)
@@ -324,22 +328,29 @@ export default async function PlayPage() {
           Game over
         </p>
         <div
-          className={`game-deal-in mt-3 rounded-3xl border-4 p-6 text-center ${GRADE_STYLES[grade.tone]}`}
+          className={`game-deal-in mt-3 rounded-3xl border-4 p-6 text-center ${
+            earlyClose ? GRADE_STYLES.ok : GRADE_STYLES[grade!.tone]
+          }`}
         >
           <div aria-hidden className="game-float text-6xl">
-            {GRADE_EMOJI[grade.tone]}
+            {earlyClose ? "🚩" : GRADE_EMOJI[grade!.tone]}
           </div>
           <p className="mt-2 text-sm font-bold uppercase tracking-wide opacity-70">
-            Fund closed after {GAME_YEARS} years —{" "}
+            Fund closed{" "}
+            {earlyClose ? `early at year ${game.year}` : `after ${GAME_YEARS} years`} —{" "}
             {metrics.tvpi === null ? "no capital deployed" : formatMultiple(metrics.tvpi)}{" "}
             TVPI
           </p>
           {/* The one hero moment that gets the poster face — everything else
               on the scorecard stays on the calmer display font. */}
           <h2 className="mt-1 font-bungee text-4xl font-normal uppercase">
-            {grade.label}
+            {earlyClose ? "Early close" : grade!.label}
           </h2>
-          <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed">{grade.blurb}</p>
+          <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed">
+            {earlyClose
+              ? `You ended this run before year ${GAME_YEARS} — too early for a fair quartile grade against a full-length fund.`
+              : grade!.blurb}
+          </p>
         </div>
 
         <div
@@ -1010,20 +1021,22 @@ function Shell({
               }}
             />
           ))}
+          {/* Pushed below the header's top-right button row (End/Restart
+              Campaign) so they don't get covered by it. */}
           <span
-            className="game-float absolute right-[14%] top-16 text-4xl opacity-90"
+            className="game-float absolute right-[14%] top-32 text-4xl opacity-90"
             style={{ animationDelay: "0.4s" }}
           >
             🚀
           </span>
           <span
-            className="game-float absolute right-[30%] top-8 text-2xl opacity-60"
+            className="game-float absolute right-[30%] top-24 text-2xl opacity-60"
             style={{ animationDelay: "1.2s" }}
           >
             💰
           </span>
           <span
-            className="game-float absolute right-[44%] top-4 text-2xl opacity-50"
+            className="game-float absolute right-[44%] top-20 text-2xl opacity-50"
             style={{ animationDelay: "2s" }}
           >
             📈
@@ -1057,7 +1070,16 @@ function Shell({
                 )}
               </p>
             </div>
-            {year !== null && <QuitCampaignButton />}
+            {year !== null && (
+              <div className="flex flex-wrap items-center gap-2">
+                <EndCampaignButton year={year} />
+                <StartCampaignButton
+                  label="Restart Campaign"
+                  hasPortfolio={true}
+                  variant="outline"
+                />
+              </div>
+            )}
           </div>
           {year !== null && (
             <div className="mt-4">

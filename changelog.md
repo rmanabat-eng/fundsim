@@ -1,3 +1,28 @@
+## 2026-08-04 — Add End Campaign / Restart Campaign to the active-run header
+
+Replaces "Quit campaign" (which wiped the run and dropped you back to
+the title screen) with two distinct actions in the header, matched in
+visual weight via .max-btn-outline and differentiated only by accent
+color (orange/magenta) — a bigger .max-btn-primary treatment on
+Restart was drawing more attention than the campaign itself.
+
+End Campaign (new endCampaign() action, EndCampaignButton) closes the
+fund exactly where it stands — same status flip advanceYear does at
+year GAME_YEARS, without rolling another year. The scorecard detects
+game.year < GAME_YEARS and swaps the quartile-grade box for neutral
+"early close" copy in place, since gradeFund's thresholds assume a
+full-length run; reputation, the dashboard, fund log, graveyard, and
+save-as-scenario are unaffected either way.
+
+Restart Campaign reuses StartCampaignButton as-is (now with an
+optional outline variant used only in this header placement) — same
+wipe-and-deal-fresh-year-1 behavior as its other two placements, no
+tutorial detour. Also nudged the header's floating rocket/money-bag/
+chart decorations lower so the new button row doesn't cover them.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+
+
 ## 2026-08-04 — Migrate from local SQLite to hosted Postgres
 
 Phase 1 of moving off a local dev.db file: schema datasource is now
