@@ -9,7 +9,6 @@
     "lint": "eslint",
     "seed": "tsx prisma/seed.ts",
     "cards": "tsx scripts/generate-card.ts",
-    "migrate-to-postgres": "tsx scripts/migrate-to-postgres.ts",
     "test": "vitest run"
   },
   "prisma": {

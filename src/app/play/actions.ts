@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { getVisitorId } from "@/lib/visitor";
 import { STAGES } from "@/lib/constants";
 import { getSettings } from "@/lib/settings";
 import { rollYearEvent } from "@/lib/simulate";
@@ -148,14 +149,17 @@ const OFFER_POOL: ScenarioDef[] = [
   },
 ];
 
-async function deployed(): Promise<number> {
-  const rounds = await prisma.round.findMany({ select: { yourCheck: true } });
+async function deployed(visitorId: string): Promise<number> {
+  const rounds = await prisma.round.findMany({
+    where: { visitorId },
+    select: { yourCheck: true },
+  });
   return rounds.reduce((sum, r) => sum + r.yourCheck, 0);
 }
 
-async function remainingCapital(): Promise<number> {
+async function remainingCapital(visitorId: string): Promise<number> {
   const settings = await getSettings();
-  return settings.fundSize - (await deployed());
+  return settings.fundSize - (await deployed(visitorId));
 }
 
 function clampQuality(q: number): number {
@@ -181,9 +185,15 @@ function refusalStatus(dynState: CompanyDynState): string {
   return isEstablishedFounder(dynState.trackRecord) ? "declined_costly" : "declined";
 }
 
-async function createDealRow(year: number, deal: GeneratedDeal, referredBy: string | null) {
+async function createDealRow(
+  visitorId: string,
+  year: number,
+  deal: GeneratedDeal,
+  referredBy: string | null
+) {
   await prisma.deal.create({
     data: {
+      visitorId,
       year,
       name: deal.name,
       sector: deal.sector,
@@ -210,34 +220,37 @@ function generateUniqueDeal(usedNames: Set<string>, opts?: { noiseAmplitude?: nu
   return deal;
 }
 
-async function dealFlow(year: number) {
+async function dealFlow(visitorId: string, year: number) {
   const usedNames = new Set<string>();
 
   for (let i = 0; i < DEALS_PER_YEAR; i++) {
-    await createDealRow(year, generateUniqueDeal(usedNames), null);
+    await createDealRow(visitorId, year, generateUniqueDeal(usedNames), null);
   }
 
   // Founders who've earned real trust (CompanyDynState.trackRecord — see
   // isEstablishedFounder/rollsReferral in campaign.ts) can refer a deal into
   // your flow on top of the usual DEALS_PER_YEAR. Deliberately rare — most
   // companies never get anywhere near the threshold.
-  const companies = await prisma.company.findMany({ where: { exitValue: null } });
+  const companies = await prisma.company.findMany({
+    where: { visitorId, exitValue: null },
+  });
   for (const company of companies) {
     const dynState = parseDynState(company.scenarioState);
     if (!rollsReferral(dynState.trackRecord)) continue;
     const referred = generateUniqueDeal(usedNames, { noiseAmplitude: REFERRAL_QUALITY_NOISE });
-    await createDealRow(year, referred, company.name);
+    await createDealRow(visitorId, year, referred, company.name);
   }
 }
 
 // Wipes the portfolio and starts a fresh 10-year fund at year 1.
 export async function startCampaign() {
-  await prisma.company.deleteMany(); // cascades rounds and decisions
-  await prisma.deal.deleteMany();
-  await prisma.game.deleteMany();
+  const visitorId = await getVisitorId();
+  await prisma.company.deleteMany({ where: { visitorId } }); // cascades rounds and decisions
+  await prisma.deal.deleteMany({ where: { visitorId } });
+  await prisma.game.deleteMany({ where: { visitorId } });
 
-  await prisma.game.create({ data: { id: 1, market: rollMarket() } });
-  await dealFlow(1);
+  await prisma.game.create({ data: { visitorId, market: rollMarket() } });
+  await dealFlow(visitorId, 1);
 
   revalidatePath("/play");
   revalidatePath("/");
@@ -249,10 +262,11 @@ export async function startCampaign() {
 // was an early close and skip the quartile grade (it's calibrated to a
 // full-length run).
 export async function endCampaign() {
-  const game = await prisma.game.findUnique({ where: { id: 1 } });
+  const visitorId = await getVisitorId();
+  const game = await prisma.game.findUnique({ where: { visitorId } });
   if (!game || game.status !== "active") return;
 
-  await prisma.game.update({ where: { id: 1 }, data: { status: "ended" } });
+  await prisma.game.update({ where: { visitorId }, data: { status: "ended" } });
 
   revalidatePath("/play");
   revalidatePath("/");
@@ -263,13 +277,15 @@ export async function investInDeal(
   _prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
+  const visitorId = await getVisitorId();
   const [game, deal, settings] = await Promise.all([
-    prisma.game.findUnique({ where: { id: 1 } }),
+    prisma.game.findUnique({ where: { visitorId } }),
     prisma.deal.findUnique({ where: { id: dealId } }),
     getSettings(),
   ]);
   if (!game || game.status !== "active") return { error: "No active campaign." };
-  if (!deal || deal.status !== "open") return { error: "This deal is gone." };
+  if (!deal || deal.visitorId !== visitorId || deal.status !== "open")
+    return { error: "This deal is gone." };
 
   const check = Number(formData.get("check"));
   if (!Number.isFinite(check) || check <= 0)
@@ -277,18 +293,19 @@ export async function investInDeal(
   if (check > deal.raised)
     return { error: "Your check can't exceed the round's total raised." };
 
-  const remaining = await remainingCapital();
+  const remaining = await remainingCapital(visitorId);
   if (check > remaining)
     return {
       error: `Only ${formatDollars(remaining)} left to deploy.`,
     };
-  const companyCount = await prisma.company.count();
+  const companyCount = await prisma.company.count({ where: { visitorId } });
   if (companyCount >= settings.maxCompanies)
     return { error: `Maximum of ${settings.maxCompanies} companies reached.` };
 
   const window = yearWindow(game.startedAt, game.year);
   await prisma.company.create({
     data: {
+      visitorId,
       name: deal.name,
       sector: deal.sector,
       description: deal.description,
@@ -297,6 +314,7 @@ export async function investInDeal(
       dealId, // link back to the pitch so this first check can be undone
       rounds: {
         create: {
+          visitorId,
           stage: deal.stage,
           date: new Date(dateInWindow(window)),
           raised: deal.raised,
@@ -317,11 +335,12 @@ export async function investInDeal(
 // and put the pitch back in the deck. Only current-year, un-exited investments
 // straight from a deal qualify — follow-ons and decisions aren't undoable here.
 export async function undoInvestment(companyId: string) {
+  const visitorId = await getVisitorId();
   const [company, game] = await Promise.all([
     prisma.company.findUnique({ where: { id: companyId }, include: { deal: true } }),
-    prisma.game.findUnique({ where: { id: 1 } }),
+    prisma.game.findUnique({ where: { visitorId } }),
   ]);
-  if (!company || !company.deal || !game) return;
+  if (!company || company.visitorId !== visitorId || !company.deal || !game) return;
   if (game.status !== "active") return;
   if (company.deal.year !== game.year) return; // only this year's checks
   if (company.exitValue !== null) return;
@@ -337,7 +356,11 @@ export async function undoInvestment(companyId: string) {
 }
 
 export async function passDeal(dealId: string) {
-  await prisma.deal.update({ where: { id: dealId }, data: { status: "passed" } });
+  const visitorId = await getVisitorId();
+  await prisma.deal.updateMany({
+    where: { id: dealId, visitorId },
+    data: { status: "passed" },
+  });
   revalidatePath("/play");
 }
 
@@ -349,11 +372,17 @@ export async function fundProRata(
   _prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
+  const visitorId = await getVisitorId();
   const decision = await prisma.decision.findUnique({
     where: { id: decisionId },
     include: { company: true },
   });
-  if (!decision || decision.status !== "pending" || decision.type !== "pro_rata")
+  if (
+    !decision ||
+    decision.visitorId !== visitorId ||
+    decision.status !== "pending" ||
+    decision.type !== "pro_rata"
+  )
     return { error: "This decision is gone." };
   if (decision.company.exitValue !== null)
     return { error: "This company has exited — its cap table is frozen." };
@@ -364,7 +393,7 @@ export async function fundProRata(
     return { error: "Your check can't be negative." };
   if (check > payload.raised)
     return { error: "Your check can't exceed the round's total raised." };
-  const remaining = await remainingCapital();
+  const remaining = await remainingCapital(visitorId);
   if (check > remaining)
     return { error: `Only ${formatDollars(remaining)} left to deploy.` };
 
@@ -394,8 +423,14 @@ export async function fundProRata(
 }
 
 export async function acceptAcquisition(decisionId: string) {
+  const visitorId = await getVisitorId();
   const decision = await prisma.decision.findUnique({ where: { id: decisionId } });
-  if (!decision || decision.status !== "pending" || decision.type !== "acquisition")
+  if (
+    !decision ||
+    decision.visitorId !== visitorId ||
+    decision.status !== "pending" ||
+    decision.type !== "acquisition"
+  )
     return;
   const payload: AcquisitionPayload = JSON.parse(decision.payload);
 
@@ -423,8 +458,14 @@ export async function acceptAcquisition(decisionId: string) {
 // power-law upside on this one. The company itself is untouched, so unlike
 // acquisition/exit_route this doesn't close out the company or its rounds.
 export async function acceptFundSecondary(decisionId: string) {
+  const visitorId = await getVisitorId();
   const decision = await prisma.decision.findUnique({ where: { id: decisionId } });
-  if (!decision || decision.status !== "pending" || decision.type !== "fund_secondary")
+  if (
+    !decision ||
+    decision.visitorId !== visitorId ||
+    decision.status !== "pending" ||
+    decision.type !== "fund_secondary"
+  )
     return;
   const payload: FundSecondaryPayload = JSON.parse(decision.payload);
 
@@ -445,22 +486,29 @@ export async function acceptFundSecondary(decisionId: string) {
 }
 
 export async function fundBridge(decisionId: string): Promise<FormState> {
+  const visitorId = await getVisitorId();
   const decision = await prisma.decision.findUnique({
     where: { id: decisionId },
     include: { company: true },
   });
-  if (!decision || decision.status !== "pending" || decision.type !== "bridge")
+  if (
+    !decision ||
+    decision.visitorId !== visitorId ||
+    decision.status !== "pending" ||
+    decision.type !== "bridge"
+  )
     return { error: "This decision is gone." };
   if (decision.company.exitValue !== null)
     return { error: "This company has exited — its cap table is frozen." };
   const payload: BridgePayload = JSON.parse(decision.payload);
 
-  const remaining = await remainingCapital();
+  const remaining = await remainingCapital(visitorId);
   if (payload.amount > remaining)
     return { error: `Only ${formatDollars(remaining)} left to deploy.` };
 
   await prisma.round.create({
     data: {
+      visitorId,
       companyId: decision.companyId,
       stage: payload.stage as (typeof STAGES)[number],
       date: new Date(payload.date),
@@ -496,11 +544,13 @@ export async function fundBridge(decisionId: string): Promise<FormState> {
 // stays deep negative after the hit) is dropped from every future scenario
 // pool — it's done asking.
 export async function declineDecision(decisionId: string) {
+  const visitorId = await getVisitorId();
   const decision = await prisma.decision.findUnique({
     where: { id: decisionId },
     include: { company: true },
   });
-  if (!decision || decision.status !== "pending") return;
+  if (!decision || decision.visitorId !== visitorId || decision.status !== "pending")
+    return;
 
   let status: string = "declined";
   if (decision.type === "bridge") {
@@ -539,17 +589,24 @@ export async function resolveTermSheet(
   decisionId: string,
   choice: "top_tier" | "high_price"
 ) {
+  const visitorId = await getVisitorId();
   const decision = await prisma.decision.findUnique({
     where: { id: decisionId },
     include: { company: true },
   });
-  if (!decision || decision.status !== "pending" || decision.type !== "term_sheet")
+  if (
+    !decision ||
+    decision.visitorId !== visitorId ||
+    decision.status !== "pending" ||
+    decision.type !== "term_sheet"
+  )
     return;
   if (decision.company.exitValue !== null) return;
   const payload: TermSheetPayload = JSON.parse(decision.payload);
 
   await prisma.round.create({
     data: {
+      visitorId,
       companyId: decision.companyId,
       stage: payload.stage as (typeof STAGES)[number],
       date: new Date(payload.date),
@@ -591,11 +648,18 @@ export async function resolveTermSheet(
 // Bless the pivot (a high-variance quality reroll) or urge focus (a small,
 // safe boost). Either way the founder got an answer.
 export async function resolvePivot(decisionId: string, choice: "back" | "focus") {
+  const visitorId = await getVisitorId();
   const decision = await prisma.decision.findUnique({
     where: { id: decisionId },
     include: { company: true },
   });
-  if (!decision || decision.status !== "pending" || decision.type !== "pivot") return;
+  if (
+    !decision ||
+    decision.visitorId !== visitorId ||
+    decision.status !== "pending" ||
+    decision.type !== "pivot"
+  )
+    return;
   if (decision.company.exitValue !== null) return;
 
   await prisma.company.update({
@@ -630,11 +694,17 @@ export async function resolveExitRoute(
   decisionId: string,
   choice: "ipo" | "acquire" | "secondary"
 ): Promise<FormState> {
+  const visitorId = await getVisitorId();
   const decision = await prisma.decision.findUnique({
     where: { id: decisionId },
     include: { company: true },
   });
-  if (!decision || decision.status !== "pending" || decision.type !== "exit_route")
+  if (
+    !decision ||
+    decision.visitorId !== visitorId ||
+    decision.status !== "pending" ||
+    decision.type !== "exit_route"
+  )
     return { error: "This decision is gone." };
   if (decision.company.exitValue !== null)
     return { error: "This company has exited — its cap table is frozen." };
@@ -689,12 +759,14 @@ export async function resolveCeoReplacement(
   decisionId: string,
   choice: "replace" | "keep"
 ) {
+  const visitorId = await getVisitorId();
   const decision = await prisma.decision.findUnique({
     where: { id: decisionId },
     include: { company: true },
   });
   if (
     !decision ||
+    decision.visitorId !== visitorId ||
     decision.status !== "pending" ||
     decision.type !== "ceo_replacement"
   )
@@ -734,24 +806,31 @@ export async function resolvePayToPlay(
   decisionId: string,
   choice: "pay" | "decline"
 ): Promise<FormState> {
+  const visitorId = await getVisitorId();
   const decision = await prisma.decision.findUnique({
     where: { id: decisionId },
     include: { company: true },
   });
-  if (!decision || decision.status !== "pending" || decision.type !== "pay_to_play")
+  if (
+    !decision ||
+    decision.visitorId !== visitorId ||
+    decision.status !== "pending" ||
+    decision.type !== "pay_to_play"
+  )
     return { error: "This decision is gone." };
   if (decision.company.exitValue !== null)
     return { error: "This company has exited — its cap table is frozen." };
   const payload: PayToPlayPayload = JSON.parse(decision.payload);
 
   if (choice === "pay") {
-    const remaining = await remainingCapital();
+    const remaining = await remainingCapital(visitorId);
     if (payload.requiredCheck > remaining)
       return { error: `Only ${formatDollars(remaining)} left to deploy.` };
   }
 
   await prisma.round.create({
     data: {
+      visitorId,
       companyId: decision.companyId,
       stage: payload.stage as (typeof STAGES)[number],
       date: new Date(payload.date),
@@ -795,16 +874,17 @@ const MACRO_SHOCK_CHANCE = 0.1;
 // deals next year's pitches, and creates the new decisions. At year 10 it
 // closes the fund instead.
 export async function advanceYear(): Promise<YearSummary | null> {
-  const game = await prisma.game.findUnique({ where: { id: 1 } });
+  const visitorId = await getVisitorId();
+  const game = await prisma.game.findUnique({ where: { visitorId } });
   if (!game || game.status !== "active") return null;
 
   // Anything you didn't act on is gone. Unanswered bridges count as refusals.
   const expiredDeals = await prisma.deal.updateMany({
-    where: { status: "open" },
+    where: { visitorId, status: "open" },
     data: { status: "expired" },
   });
   const pendingDecisions = await prisma.decision.findMany({
-    where: { status: "pending" },
+    where: { visitorId, status: "pending" },
     include: { company: true },
   });
   for (const d of pendingDecisions) {
@@ -828,6 +908,7 @@ export async function advanceYear(): Promise<YearSummary | null> {
       const payload: TermSheetPayload = JSON.parse(d.payload);
       await prisma.round.create({
         data: {
+          visitorId,
           companyId: d.companyId,
           stage: payload.stage as (typeof STAGES)[number],
           date: new Date(payload.date),
@@ -847,7 +928,7 @@ export async function advanceYear(): Promise<YearSummary | null> {
   }
 
   if (game.year >= GAME_YEARS) {
-    await prisma.game.update({ where: { id: 1 }, data: { status: "ended" } });
+    await prisma.game.update({ where: { visitorId }, data: { status: "ended" } });
     revalidatePath("/play");
     revalidatePath("/");
     return {
@@ -889,6 +970,7 @@ export async function advanceYear(): Promise<YearSummary | null> {
   };
 
   const companies = await prisma.company.findMany({
+    where: { visitorId },
     include: { rounds: { orderBy: { date: "asc" } } },
   });
 
@@ -917,6 +999,7 @@ export async function advanceYear(): Promise<YearSummary | null> {
       if (sheet) {
         await prisma.decision.create({
           data: {
+            visitorId,
             year,
             type: "term_sheet",
             companyId: company.id,
@@ -936,6 +1019,7 @@ export async function advanceYear(): Promise<YearSummary | null> {
       if (payToPlay) {
         await prisma.decision.create({
           data: {
+            visitorId,
             year,
             type: "pay_to_play",
             companyId: company.id,
@@ -948,6 +1032,7 @@ export async function advanceYear(): Promise<YearSummary | null> {
       }
       const round = await prisma.round.create({
         data: {
+          visitorId,
           companyId: company.id,
           stage: event.stage as (typeof STAGES)[number],
           date: new Date(event.date),
@@ -964,6 +1049,7 @@ export async function advanceYear(): Promise<YearSummary | null> {
       };
       await prisma.decision.create({
         data: {
+          visitorId,
           year,
           type: "pro_rata",
           companyId: company.id,
@@ -1005,6 +1091,7 @@ export async function advanceYear(): Promise<YearSummary | null> {
         const bridge = buildBridgeRequest(state, market, window);
         await prisma.decision.create({
           data: {
+            visitorId,
             year,
             type: "bridge",
             companyId: company.id,
@@ -1018,6 +1105,7 @@ export async function advanceYear(): Promise<YearSummary | null> {
       if (picked?.type === "pivot") {
         await prisma.decision.create({
           data: {
+            visitorId,
             year,
             type: "pivot",
             companyId: company.id,
@@ -1030,6 +1118,7 @@ export async function advanceYear(): Promise<YearSummary | null> {
       if (picked?.type === "ceo_replacement") {
         await prisma.decision.create({
           data: {
+            visitorId,
             year,
             type: "ceo_replacement",
             companyId: company.id,
@@ -1067,6 +1156,7 @@ export async function advanceYear(): Promise<YearSummary | null> {
       const route = buildExitRoute(anchored, market, window);
       await prisma.decision.create({
         data: {
+          visitorId,
           year,
           type: "exit_route",
           companyId: company.id,
@@ -1082,6 +1172,7 @@ export async function advanceYear(): Promise<YearSummary | null> {
       const secondary = buildFundSecondaryOffer(anchored, market, window);
       await prisma.decision.create({
         data: {
+          visitorId,
           year,
           type: "fund_secondary",
           companyId: company.id,
@@ -1096,6 +1187,7 @@ export async function advanceYear(): Promise<YearSummary | null> {
       const offer = buildAcquisitionOffer(anchored, market, window);
       await prisma.decision.create({
         data: {
+          visitorId,
           year,
           type: "acquisition",
           companyId: company.id,
@@ -1111,13 +1203,13 @@ export async function advanceYear(): Promise<YearSummary | null> {
   // the existing per-decision "only $X left" guard already forces the player
   // to pick and choose; this just flags the shortfall on the summary so the
   // UI can call it out.
-  const remaining = await remainingCapital();
+  const remaining = await remainingCapital(visitorId);
   summary.reservesScarce = pendingAsks > remaining;
 
-  await prisma.game.update({ where: { id: 1 }, data: { year, market } });
+  await prisma.game.update({ where: { visitorId }, data: { year, market } });
   // The checkbook closes for new names after the investment period — from
   // then on it's pro-ratas, bridges, founder calls, and exits only.
-  if (year <= INVESTMENT_PERIOD_YEARS) await dealFlow(year);
+  if (year <= INVESTMENT_PERIOD_YEARS) await dealFlow(visitorId, year);
 
   revalidatePath("/play");
   revalidatePath("/");

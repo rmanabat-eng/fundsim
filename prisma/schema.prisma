@@ -20,44 +20,63 @@ enum Stage {
   SERIES_C
 }
 
-// Single-row table: the fund's knobs. Row id is always 1.
+// An anonymous per-browser identity, assigned via cookie by src/proxy.ts on
+// a visitor's first request. Deliberately the simplest possible identity —
+// no email, no password, nothing recoverable. Clearing the cookie (or
+// switching browsers/devices) permanently loses access to that visitor's
+// fund; there is no login and no account recovery in this phase.
+model Visitor {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+}
+
+// Single-row-per-visitor: the fund's knobs.
 model FundSettings {
-  id           Int   @id @default(1)
-  fundSize     Float @default(10000000)
-  maxCompanies Int   @default(15)
+  id           String @id @default(cuid())
+  visitorId    String @unique
+  fundSize     Float  @default(10000000)
+  maxCompanies Int    @default(15)
 }
 
 // A named snapshot of the whole portfolio + settings, for comparing
 // strategies. `data` is a JSON blob — scenarios are read-mostly.
 model Scenario {
   id        String   @id @default(cuid())
+  visitorId String
   name      String
   createdAt DateTime @default(now())
   data      String
+
+  @@index([visitorId])
 }
 
 model Company {
-  id        String    @id @default(cuid())
-  name      String
-  sector    String
-  description String  @default("") // cosmetic flavor text, never affects quality
-  referredBy String? // set when a founder with an earned track record referred this deal in
-  createdAt DateTime  @default(now())
-  exitValue Float? // company valuation at exit; 0 means written off; null = still active
-  exitDate  DateTime?
-  quality   Float     @default(0) // hidden -1..1; tilts campaign-mode outcomes. 0 for free-play companies.
-  scenarioState String @default("{}") // JSON CompanyDynState (src/lib/scenario-pool.ts) — chaining memory for the scenario pool, separate from quality
-  dealId    String?   @unique // the pitch this company was funded from; lets a first check be undone before the year advances
-  deal      Deal?     @relation(fields: [dealId], references: [id])
-  rounds    Round[]
-  decisions Decision[]
+  id            String     @id @default(cuid())
+  visitorId     String
+  name          String
+  sector        String
+  description   String     @default("") // cosmetic flavor text, never affects quality
+  referredBy    String? // set when a founder with an earned track record referred this deal in
+  createdAt     DateTime   @default(now())
+  exitValue     Float? // company valuation at exit; 0 means written off; null = still active
+  exitDate      DateTime?
+  quality       Float      @default(0) // hidden -1..1; tilts campaign-mode outcomes. 0 for free-play companies.
+  scenarioState String     @default("{}") // JSON CompanyDynState (src/lib/scenario-pool.ts) — chaining memory for the scenario pool, separate from quality
+  dealId        String?    @unique // the pitch this company was funded from; lets a first check be undone before the year advances
+  deal          Deal?      @relation(fields: [dealId], references: [id])
+  rounds        Round[]
+  decisions     Decision[]
+
+  @@index([visitorId])
 }
 
 // ---- Campaign mode ----
 
-// The running campaign. Single row (id 1); no row means no campaign started.
+// The running campaign — one row per visitor. No row means that visitor
+// hasn't started a campaign.
 model Game {
-  id        Int      @id @default(1)
+  id        String   @id @default(cuid())
+  visitorId String   @unique
   year      Int      @default(1)
   status    String   @default("active") // "active" | "ended"
   market    String   @default("normal") // this year's conditions: "bull" | "normal" | "bear"
@@ -67,19 +86,22 @@ model Game {
 // A pitch dealt to the player for one campaign year. `quality` is the hidden
 // score its signals (noisily) encode — never shown, only its consequences.
 model Deal {
-  id        String @id @default(cuid())
-  year      Int
-  name      String
-  sector    String
-  stage     Stage
+  id          String  @id @default(cuid())
+  visitorId   String
+  year        Int
+  name        String
+  sector      String
+  stage       Stage
   raised      Float
   postMoney   Float
-  description String @default("") // cosmetic flavor text, never affects quality
+  description String  @default("") // cosmetic flavor text, never affects quality
   referredBy  String? // set when a founder with an earned track record referred this deal in
   signals     String // JSON array of signal texts shown on the pitch card
-  quality   Float
-  status    String @default("open") // "open" | "invested" | "passed" | "expired"
-  company   Company? // set when invested; cleared if the investment is undone
+  quality     Float
+  status      String  @default("open") // "open" | "invested" | "passed" | "expired"
+  company     Company? // set when invested; cleared if the investment is undone
+
+  @@index([visitorId])
 }
 
 // A decision forced on the player: fund a pro-rata, take an acquisition
@@ -88,6 +110,7 @@ model Deal {
 // when the year advances.
 model Decision {
   id        String  @id @default(cuid())
+  visitorId String
   year      Int
   type      String // "pro_rata" | "acquisition" | "bridge" | "term_sheet" | "pivot" | "exit_route" | "ceo_replacement" | "pay_to_play"
   companyId String
@@ -99,10 +122,13 @@ model Decision {
   // plain counterparts (see reputation() in src/lib/campaign.ts), the same
   // way "ousted" already prices apart from "resolved".
   status    String  @default("pending")
+
+  @@index([visitorId])
 }
 
 model Round {
   id        String   @id @default(cuid())
+  visitorId String
   companyId String
   company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   stage     Stage
@@ -110,4 +136,6 @@ model Round {
   raised    Float // total new money in the round
   postMoney Float // company valuation after the round closes
   yourCheck Float // your fund's participation; 0 if you sat the round out
+
+  @@index([visitorId])
 }

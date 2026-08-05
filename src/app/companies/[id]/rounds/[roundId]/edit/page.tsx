@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getVisitorId } from "@/lib/visitor";
 import { RoundForm } from "@/components/RoundForm";
 import { updateRound } from "@/app/actions";
 
@@ -9,11 +10,12 @@ export default async function EditRoundPage({
   params: Promise<{ id: string; roundId: string }>;
 }) {
   const { id, roundId } = await params;
+  const visitorId = await getVisitorId();
   const round = await prisma.round.findUnique({
     where: { id: roundId },
     include: { company: true },
   });
-  if (!round || round.companyId !== id) notFound();
+  if (!round || round.companyId !== id || round.visitorId !== visitorId) notFound();
 
   const boundAction = updateRound.bind(null, roundId, id);
 

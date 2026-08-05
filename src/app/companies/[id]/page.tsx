@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getVisitorId } from "@/lib/visitor";
 import { STAGE_LABELS } from "@/lib/constants";
 import { STAGE_STYLES } from "@/lib/badges";
 import {
@@ -23,6 +24,7 @@ export default async function CompanyPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const visitorId = await getVisitorId();
   const company = await prisma.company.findUnique({
     where: { id },
     // `deal` is set for companies backed in campaign mode — it holds the
@@ -30,7 +32,7 @@ export default async function CompanyPage({
     include: { rounds: { orderBy: { date: "asc" } }, deal: true },
   });
 
-  if (!company) notFound();
+  if (!company || company.visitorId !== visitorId) notFound();
 
   const pitchNotes: string[] = company.deal
     ? (JSON.parse(company.deal.signals) as string[])

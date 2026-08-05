@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { getVisitorId } from "@/lib/visitor";
 import {
   ownershipAfterRounds,
   currentValue,
@@ -17,12 +18,14 @@ import { ClearAllButton } from "@/components/ClearAllButton";
 import { SimulateYearButton } from "@/components/SimulateYearButton";
 
 export default async function DashboardPage() {
+  const visitorId = await getVisitorId();
   const [companies, settings, game] = await Promise.all([
     prisma.company.findMany({
+      where: { visitorId },
       include: { rounds: { orderBy: { date: "asc" } } },
     }),
     getSettings(),
-    prisma.game.findUnique({ where: { id: 1 } }),
+    prisma.game.findUnique({ where: { visitorId } }),
   ]);
 
   const metrics = fundMetrics(companies);

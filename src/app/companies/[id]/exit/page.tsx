@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getVisitorId } from "@/lib/visitor";
 import { ExitForm } from "@/components/ExitForm";
 import { recordExit } from "@/app/actions";
 
@@ -9,11 +10,12 @@ export default async function ExitPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const visitorId = await getVisitorId();
   const company = await prisma.company.findUnique({
     where: { id },
     include: { rounds: { orderBy: { date: "asc" } } },
   });
-  if (!company) notFound();
+  if (!company || company.visitorId !== visitorId) notFound();
 
   const boundAction = recordExit.bind(null, id);
   const alreadyExited = company.exitValue !== null;

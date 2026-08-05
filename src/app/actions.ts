@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getVisitorId } from "@/lib/visitor";
 import { SECTORS, STAGES } from "@/lib/constants";
 import { getSettings } from "@/lib/settings";
 import { rollYearEvent } from "@/lib/simulate";
@@ -18,9 +19,12 @@ function formatRemaining(remaining: number): string {
   });
 }
 
-async function deployedExcludingRound(excludeRoundId?: string): Promise<number> {
+async function deployedExcludingRound(
+  visitorId: string,
+  excludeRoundId?: string
+): Promise<number> {
   const rounds = await prisma.round.findMany({
-    where: excludeRoundId ? { id: { not: excludeRoundId } } : undefined,
+    where: excludeRoundId ? { visitorId, id: { not: excludeRoundId } } : { visitorId },
     select: { yourCheck: true },
   });
   return rounds.reduce((sum, r) => sum + r.yourCheck, 0);
@@ -74,6 +78,7 @@ export async function createCompany(
   _prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
+  const visitorId = await getVisitorId();
   const name = String(formData.get("companyName") ?? "").trim();
   const sector = String(formData.get("sector") ?? "");
   const description = String(formData.get("description") ?? "");
@@ -86,11 +91,11 @@ export async function createCompany(
   if ("error" in parsed) return { error: parsed.error };
 
   const settings = await getSettings();
-  const companyCount = await prisma.company.count();
+  const companyCount = await prisma.company.count({ where: { visitorId } });
   if (companyCount >= settings.maxCompanies)
     return { error: `Maximum of ${settings.maxCompanies} companies reached.` };
 
-  const deployed = await deployedExcludingRound();
+  const deployed = await deployedExcludingRound(visitorId);
   const remaining = settings.fundSize - deployed;
   if (parsed.data.yourCheck > remaining) {
     return {
@@ -100,10 +105,11 @@ export async function createCompany(
 
   await prisma.company.create({
     data: {
+      visitorId,
       name,
       sector,
       description,
-      rounds: { create: parsed.data },
+      rounds: { create: { visitorId, ...parsed.data } },
     },
   });
   revalidatePath("/");
@@ -115,8 +121,12 @@ export async function addRound(
   _prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
+  const visitorId = await getVisitorId();
   const company = await prisma.company.findUnique({ where: { id: companyId } });
-  if (!company) return { error: "Company not found." };
+  // Wrong visitor and nonexistent company look identical here — both a
+  // clean "not found," never a peek at someone else's data.
+  if (!company || company.visitorId !== visitorId)
+    return { error: "Company not found." };
   if (company.exitValue !== null)
     return { error: "This company has exited — its cap table is frozen." };
 
@@ -124,7 +134,7 @@ export async function addRound(
   if ("error" in parsed) return { error: parsed.error };
 
   const settings = await getSettings();
-  const deployed = await deployedExcludingRound();
+  const deployed = await deployedExcludingRound(visitorId);
   const remaining = settings.fundSize - deployed;
   if (parsed.data.yourCheck > remaining) {
     return {
@@ -132,7 +142,7 @@ export async function addRound(
     };
   }
 
-  await prisma.round.create({ data: { companyId, ...parsed.data } });
+  await prisma.round.create({ data: { visitorId, companyId, ...parsed.data } });
   revalidatePath("/");
   revalidatePath(`/companies/${companyId}`);
   redirect(`/companies/${companyId}`);
@@ -144,11 +154,12 @@ export async function updateRound(
   _prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
+  const visitorId = await getVisitorId();
   const round = await prisma.round.findUnique({
     where: { id: roundId },
     include: { company: { include: { rounds: true } } },
   });
-  if (!round) return { error: "Round not found." };
+  if (!round || round.visitorId !== visitorId) return { error: "Round not found." };
   if (round.company.exitValue !== null)
     return { error: "This company has exited — its cap table is frozen." };
 
@@ -168,7 +179,7 @@ export async function updateRound(
   }
 
   const settings = await getSettings();
-  const deployed = await deployedExcludingRound(roundId);
+  const deployed = await deployedExcludingRound(visitorId, roundId);
   const remaining = settings.fundSize - deployed;
   if (parsed.data.yourCheck > remaining) {
     return {
@@ -187,6 +198,7 @@ export async function updateCompany(
   _prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
+  const visitorId = await getVisitorId();
   const name = String(formData.get("companyName") ?? "").trim();
   const sector = String(formData.get("sector") ?? "");
 
@@ -194,7 +206,14 @@ export async function updateCompany(
   if (!SECTORS.includes(sector as (typeof SECTORS)[number]))
     return { error: "Invalid sector." };
 
-  await prisma.company.update({ where: { id: companyId }, data: { name, sector } });
+  // updateMany (not update) so a mismatched visitorId is a silent no-op
+  // instead of a Prisma "record not found" throw — same "not found" failure
+  // mode as everywhere else, just via a where clause instead of a fetch-then-check.
+  const result = await prisma.company.updateMany({
+    where: { id: companyId, visitorId },
+    data: { name, sector },
+  });
+  if (result.count === 0) return { error: "Company not found." };
   revalidatePath("/");
   revalidatePath(`/companies/${companyId}`);
   return null;
@@ -205,11 +224,13 @@ export async function recordExit(
   _prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
+  const visitorId = await getVisitorId();
   const company = await prisma.company.findUnique({
     where: { id: companyId },
     include: { rounds: { orderBy: { date: "asc" } } },
   });
-  if (!company) return { error: "Company not found." };
+  if (!company || company.visitorId !== visitorId)
+    return { error: "Company not found." };
 
   const writeOff = formData.get("writeOff") === "true";
   const exitValue = writeOff ? 0 : Number(formData.get("exitValue"));
@@ -235,8 +256,9 @@ export async function recordExit(
 }
 
 export async function undoExit(companyId: string) {
-  await prisma.company.update({
-    where: { id: companyId },
+  const visitorId = await getVisitorId();
+  await prisma.company.updateMany({
+    where: { id: companyId, visitorId },
     data: { exitValue: null, exitDate: null },
   });
   revalidatePath("/");
@@ -244,10 +266,16 @@ export async function undoExit(companyId: string) {
 }
 
 export async function deleteRound(roundId: string, companyId: string) {
-  const count = await prisma.round.count({ where: { companyId } });
+  const visitorId = await getVisitorId();
+  const round = await prisma.round.findUnique({ where: { id: roundId } });
+  if (!round || round.visitorId !== visitorId) return;
+
+  const count = await prisma.round.count({ where: { companyId, visitorId } });
   if (count <= 1) {
     // Deleting a company's only round would leave an empty shell; delete the company.
-    await prisma.company.delete({ where: { id: companyId } });
+    // deleteMany, not delete: a visitorId mismatch (shouldn't happen given the
+    // round check above, but companyId is caller-supplied) is a silent no-op.
+    await prisma.company.deleteMany({ where: { id: companyId, visitorId } });
     revalidatePath("/");
     redirect("/");
   }
@@ -257,12 +285,14 @@ export async function deleteRound(roundId: string, companyId: string) {
 }
 
 export async function deleteCompany(id: string) {
-  await prisma.company.delete({ where: { id } });
+  const visitorId = await getVisitorId();
+  await prisma.company.deleteMany({ where: { id, visitorId } });
   revalidatePath("/");
 }
 
 export async function deleteAllCompanies() {
-  await prisma.company.deleteMany();
+  const visitorId = await getVisitorId();
+  await prisma.company.deleteMany({ where: { visitorId } });
   revalidatePath("/");
 }
 
@@ -270,6 +300,7 @@ export async function updateSettings(
   _prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
+  const visitorId = await getVisitorId();
   const fundSize = Number(formData.get("fundSize"));
   const maxCompanies = Number(formData.get("maxCompanies"));
 
@@ -278,13 +309,13 @@ export async function updateSettings(
   if (!Number.isInteger(maxCompanies) || maxCompanies < 1 || maxCompanies > 50)
     return { error: "Max companies must be a whole number between 1 and 50." };
 
-  const deployed = await deployedExcludingRound();
+  const deployed = await deployedExcludingRound(visitorId);
   if (fundSize < deployed) {
     return {
       error: `Fund size can't be below what's already deployed (${formatRemaining(deployed)}).`,
     };
   }
-  const companyCount = await prisma.company.count();
+  const companyCount = await prisma.company.count({ where: { visitorId } });
   if (maxCompanies < companyCount) {
     return {
       error: `Max companies can't be below your current ${companyCount} companies.`,
@@ -292,9 +323,9 @@ export async function updateSettings(
   }
 
   await prisma.fundSettings.upsert({
-    where: { id: 1 },
+    where: { visitorId },
     update: { fundSize, maxCompanies },
-    create: { fundSize, maxCompanies },
+    create: { visitorId, fundSize, maxCompanies },
   });
   revalidatePath("/");
   redirect("/");
@@ -324,12 +355,14 @@ export async function saveScenario(
   _prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
+  const visitorId = await getVisitorId();
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return { error: "Give the scenario a name." };
   if (name.length > 40) return { error: "Keep the name under 40 characters." };
 
   const settings = await getSettings();
   const companies = await prisma.company.findMany({
+    where: { visitorId },
     include: { rounds: { orderBy: { date: "asc" } } },
   });
 
@@ -351,27 +384,32 @@ export async function saveScenario(
     })),
   };
 
-  await prisma.scenario.create({ data: { name, data: JSON.stringify(data) } });
+  await prisma.scenario.create({
+    data: { visitorId, name, data: JSON.stringify(data) },
+  });
   revalidatePath("/scenarios");
   return null;
 }
 
 // Replaces the current portfolio and settings with the snapshot.
 export async function loadScenario(id: string) {
+  const visitorId = await getVisitorId();
   const scenario = await prisma.scenario.findUnique({ where: { id } });
-  if (!scenario) return;
+  if (!scenario || scenario.visitorId !== visitorId) return;
   const data: ScenarioData = JSON.parse(scenario.data);
 
-  await prisma.company.deleteMany();
+  await prisma.company.deleteMany({ where: { visitorId } });
   for (const c of data.companies) {
     await prisma.company.create({
       data: {
+        visitorId,
         name: c.name,
         sector: c.sector,
         exitValue: c.exitValue,
         exitDate: c.exitDate ? new Date(c.exitDate) : null,
         rounds: {
           create: c.rounds.map((r) => ({
+            visitorId,
             stage: r.stage as (typeof STAGES)[number],
             date: new Date(r.date),
             raised: r.raised,
@@ -383,9 +421,9 @@ export async function loadScenario(id: string) {
     });
   }
   await prisma.fundSettings.upsert({
-    where: { id: 1 },
+    where: { visitorId },
     update: { fundSize: data.fundSize, maxCompanies: data.maxCompanies },
-    create: { fundSize: data.fundSize, maxCompanies: data.maxCompanies },
+    create: { visitorId, fundSize: data.fundSize, maxCompanies: data.maxCompanies },
   });
 
   revalidatePath("/");
@@ -393,7 +431,8 @@ export async function loadScenario(id: string) {
 }
 
 export async function deleteScenario(id: string) {
-  await prisma.scenario.delete({ where: { id } });
+  const visitorId = await getVisitorId();
+  await prisma.scenario.deleteMany({ where: { id, visitorId } });
   revalidatePath("/scenarios");
 }
 
@@ -409,7 +448,9 @@ export type SimulationSummary = {
 // a raise, an exit, a shutdown, or a quiet year. Simulated rounds never
 // spend the fund's money (yourCheck = 0) — follow on by editing the round.
 export async function simulateYear(): Promise<SimulationSummary> {
+  const visitorId = await getVisitorId();
   const companies = await prisma.company.findMany({
+    where: { visitorId },
     include: { rounds: { orderBy: { date: "asc" } } },
   });
 
@@ -443,6 +484,7 @@ export async function simulateYear(): Promise<SimulationSummary> {
     if (event.kind === "round") {
       await prisma.round.create({
         data: {
+          visitorId,
           companyId: company.id,
           stage: event.stage as (typeof STAGES)[number],
           date: new Date(event.date),

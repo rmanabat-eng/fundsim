@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { getVisitorId } from "@/lib/visitor";
 import { getSettings } from "@/lib/settings";
 import {
   currentValue,
@@ -138,7 +139,7 @@ function Stat({
 
 // Reputation reads the paper trail: every deal and decision row keeps its
 // final status, so how you've treated founders so far is all in the database.
-async function currentReputation() {
+async function currentReputation(visitorId: string) {
   const [
     bridgesFunded,
     bridgesRefused,
@@ -150,24 +151,27 @@ async function currentReputation() {
     dealsExpired,
     foundersOusted,
   ] = await Promise.all([
-    prisma.decision.count({ where: { type: "bridge", status: "resolved" } }),
+    prisma.decision.count({ where: { visitorId, type: "bridge", status: "resolved" } }),
     prisma.decision.count({
-      where: { type: { in: ["bridge", "pro_rata"] }, status: "declined" },
+      where: { visitorId, type: { in: ["bridge", "pro_rata"] }, status: "declined" },
     }),
     prisma.decision.count({
-      where: { type: { in: ["bridge", "pro_rata"] }, status: "declined_costly" },
+      where: { visitorId, type: { in: ["bridge", "pro_rata"] }, status: "declined_costly" },
     }),
-    prisma.decision.count({ where: { type: "pro_rata", status: "resolved" } }),
-    prisma.decision.count({ where: { type: "term_sheet", status: "resolved_flattering" } }),
+    prisma.decision.count({ where: { visitorId, type: "pro_rata", status: "resolved" } }),
+    prisma.decision.count({
+      where: { visitorId, type: "term_sheet", status: "resolved_flattering" },
+    }),
     prisma.decision.count({
       where: {
+        visitorId,
         type: { in: ["pivot", "ceo_replacement"] },
         status: "resolved",
       },
     }),
-    prisma.decision.count({ where: { status: "expired" } }),
-    prisma.deal.count({ where: { status: "expired" } }),
-    prisma.decision.count({ where: { status: "ousted" } }),
+    prisma.decision.count({ where: { visitorId, status: "expired" } }),
+    prisma.deal.count({ where: { visitorId, status: "expired" } }),
+    prisma.decision.count({ where: { visitorId, status: "ousted" } }),
   ]);
   const rep = reputation({
     bridgesFunded,
@@ -204,10 +208,12 @@ async function currentReputation() {
 }
 
 export default async function PlayPage() {
+  const visitorId = await getVisitorId();
   const [game, settings, companies] = await Promise.all([
-    prisma.game.findUnique({ where: { id: 1 } }),
+    prisma.game.findUnique({ where: { visitorId } }),
     getSettings(),
     prisma.company.findMany({
+      where: { visitorId },
       include: { rounds: { orderBy: { date: "asc" } }, deal: true },
     }),
   ]);
@@ -294,7 +300,7 @@ export default async function PlayPage() {
     // mislabel a partial fund against those benchmarks.
     const earlyClose = game.year < GAME_YEARS;
     const grade = earlyClose ? null : gradeFund(metrics.tvpi);
-    const { rep, drivers: repDrivers } = await currentReputation();
+    const { rep, drivers: repDrivers } = await currentReputation(visitorId);
     const positions = companies
       .filter((c) => c.rounds.length > 0)
       .map((c) => {
@@ -583,7 +589,7 @@ export default async function PlayPage() {
   }
 
   // ---- Active campaign ----
-  const { rep } = await currentReputation();
+  const { rep } = await currentReputation(visitorId);
 
   // First checks written this year, straight from a pitch, that haven't exited
   // — these can be undone (delete the company, reopen the deal) until you advance.
@@ -598,12 +604,12 @@ export default async function PlayPage() {
     .map((c) => ({ id: c.id, name: c.name, check: c.rounds[0]?.yourCheck ?? 0 }));
   const [deals, decisions] = await Promise.all([
     prisma.deal.findMany({
-      where: { status: "open", year: game.year },
+      where: { visitorId, status: "open", year: game.year },
       orderBy: { postMoney: "asc" },
     }),
     prisma.decision.findMany({
       // An exit freezes the cap table, so decisions about exited companies are moot.
-      where: { status: "pending", company: { exitValue: null } },
+      where: { visitorId, status: "pending", company: { exitValue: null } },
       include: {
         company: {
           // `deal` carries the original pitch signals, so a decision can show

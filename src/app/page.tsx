@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { getVisitorId } from "@/lib/visitor";
 import { formatDollars } from "@/lib/fund-math";
 import { getSettings } from "@/lib/settings";
 import { GAME_YEARS } from "@/lib/campaign";
@@ -84,10 +85,10 @@ function SectionDivider({ accent }: { accent: string }) {
 }
 
 export default async function Home() {
-
+  const visitorId = await getVisitorId();
   const [settings, game] = await Promise.all([
     getSettings(),
-    prisma.game.findUnique({ where: { id: 1 } }),
+    prisma.game.findUnique({ where: { visitorId } }),
   ]);
 
   const campaignCta = !game

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { getVisitorId } from "@/lib/visitor";
 import { getSettings } from "@/lib/settings";
 import {
   fundMetrics,
@@ -32,9 +33,11 @@ function MetricCells({ m, count }: { m: FundMetrics; count: number }) {
 }
 
 export default async function ScenariosPage() {
+  const visitorId = await getVisitorId();
   const [scenarios, companies, settings] = await Promise.all([
-    prisma.scenario.findMany({ orderBy: { createdAt: "desc" } }),
+    prisma.scenario.findMany({ where: { visitorId }, orderBy: { createdAt: "desc" } }),
     prisma.company.findMany({
+      where: { visitorId },
       include: { rounds: { orderBy: { date: "asc" } } },
     }),
     getSettings(),
