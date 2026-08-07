@@ -53,3 +53,6 @@ next-env.d.ts
 # drawio exports — render on demand:
 #   "/c/Program Files/draw.io/draw.io.exe" -x -f png -o <name>.drawio.png <name>.drawio
 *.drawio.png
+
+.vercel
+.env*

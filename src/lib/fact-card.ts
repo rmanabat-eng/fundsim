@@ -19,7 +19,12 @@ export type Fact = {
   text_template: string;
   number_type: NumberType;
   number_config?: RangeConfig | TieredListConfig;
-  sentiment_tag: "positive" | "negative" | "neutral_ambiguous";
+  sentiment_tag:
+    | "strong_positive"
+    | "positive"
+    | "neutral_ambiguous"
+    | "negative"
+    | "strong_negative";
 };
 
 export const FACT_POOL: Fact[] = facts as Fact[];
@@ -62,12 +67,9 @@ function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }
 
-// 3 (20%), 4 (50%), 5 (30%)
+// Fixed at 4 facts per card.
 function pickFactCount(): number {
-  const roll = Math.random();
-  if (roll < 0.2) return 3;
-  if (roll < 0.7) return 4;
-  return 5;
+  return 4;
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -79,28 +81,50 @@ function shuffle<T>(arr: T[]): T[] {
   return copy;
 }
 
-// Draw a random set of non-contradictory facts (3-5, weighted per
-// pickFactCount) without filling in their templates yet — callers that need
-// the underlying Fact (e.g. campaign.ts, to derive hidden quality from
-// sentiment_tag) use this; generateCard() below is the text-only shortcut.
-export function drawFacts(pool: Fact[] = FACT_POOL): Fact[] {
+// Draw a random set of non-contradictory facts (4, per pickFactCount)
+// without filling in their templates yet — callers that need the underlying
+// Fact (e.g. campaign.ts, to derive hidden quality from sentiment_tag) use
+// this; generateCard() below is the text-only shortcut.
+//
+// `excludeIds` lets a caller (dealFlow in play/actions.ts) keep a fact from
+// repeating across the several deals dealt in one campaign year — it's
+// checked alongside, not instead of, EXCLUSION_PAIRS. If honoring it would
+// leave too few facts to fill the card (a deal deep into a year, once
+// EXCLUSION_PAIRS has also ruled candidates out), the exclusion is dropped
+// only for the remaining slots rather than shipping a short card — a
+// same-year repeat is a much smaller flaw than a pitch with fewer than 4
+// signals.
+export function drawFacts(pool: Fact[] = FACT_POOL, excludeIds: string[] = []): Fact[] {
   const count = pickFactCount();
+  const excluded = new Set(excludeIds);
   const shuffled = shuffle(pool);
   const chosen: Fact[] = [];
 
   for (const fact of shuffled) {
     if (chosen.length >= count) break;
+    if (excluded.has(fact.id)) continue;
     if (conflicts(chosen, fact)) continue;
     chosen.push(fact);
+  }
+
+  if (chosen.length < count) {
+    for (const fact of shuffled) {
+      if (chosen.length >= count) break;
+      if (chosen.includes(fact)) continue;
+      if (conflicts(chosen, fact)) continue;
+      chosen.push(fact);
+    }
   }
 
   return chosen;
 }
 
 export const SENTIMENT_WEIGHT: Record<Fact["sentiment_tag"], number> = {
-  positive: 0.2,
-  negative: -0.2,
+  strong_positive: 0.3,
+  positive: 0.15,
   neutral_ambiguous: 0,
+  negative: -0.15,
+  strong_negative: -0.3,
 };
 
 export function generateCard(pool: Fact[] = FACT_POOL): string[] {

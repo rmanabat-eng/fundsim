@@ -2,11 +2,10 @@ import { describe, it, expect } from "vitest";
 import { generateCard, FACT_POOL, EXCLUSION_PAIRS } from "@/lib/fact-card";
 
 describe("generateCard", () => {
-  it("returns 3-5 filled fact strings with no leftover placeholders", () => {
+  it("returns 4 filled fact strings with no leftover placeholders", () => {
     for (let i = 0; i < 50; i++) {
       const card = generateCard();
-      expect(card.length).toBeGreaterThanOrEqual(3);
-      expect(card.length).toBeLessThanOrEqual(5);
+      expect(card.length).toBe(4);
       for (const line of card) expect(line).not.toMatch(/\{.*\}/);
     }
   });

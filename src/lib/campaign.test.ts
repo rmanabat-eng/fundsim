@@ -4,6 +4,7 @@ import {
   campaignOdds,
   dateInWindow,
   dealQualityNoise,
+  DEALS_PER_YEAR,
   generateDeal,
   gradeFund,
   buildAcquisitionOffer,
@@ -57,8 +58,7 @@ describe("generateDeal", () => {
       expect(deal.description.length).toBeGreaterThan(0);
       expect(deal.raised).toBeGreaterThan(0);
       expect(deal.postMoney).toBeGreaterThan(deal.raised);
-      expect(deal.signals.length).toBeGreaterThanOrEqual(3);
-      expect(deal.signals.length).toBeLessThanOrEqual(5);
+      expect(deal.signals.length).toBe(4);
       expect(new Set(deal.signals).size).toBe(deal.signals.length);
       for (const s of deal.signals) expect(() => weightOfSignal(s)).not.toThrow();
       expect(deal.quality).toBeGreaterThanOrEqual(-1);
@@ -79,6 +79,32 @@ describe("generateDeal", () => {
     expect(strong.length).toBeGreaterThan(20);
     expect(weak.length).toBeGreaterThan(20);
     expect(mean(strong)).toBeGreaterThan(mean(weak) + 0.4);
+  });
+});
+
+describe("fact pool balance", () => {
+  it("the pool's mean weighted quality is close to neutral", () => {
+    // Safety check for pool balance: a random draw shouldn't systematically
+    // tilt the deck toward good or bad pitches. If this fails, the pool as
+    // written needs rebalancing, not this test loosened.
+    const sum = FACT_POOL.reduce((acc, f) => acc + SENTIMENT_WEIGHT[f.sentiment_tag], 0);
+    const mean = sum / FACT_POOL.length;
+    expect(Math.abs(mean)).toBeLessThanOrEqual(0.05);
+  });
+});
+
+describe("year-level fact deduplication", () => {
+  it("never repeats a fact id across one year's dealt batch, over many years", () => {
+    // Mirrors dealFlow's loop in play/actions.ts: a growing excludeFactIds
+    // list passed into every deal dealt within the same simulated year.
+    for (let year = 0; year < 500; year++) {
+      const usedFactIds: string[] = [];
+      for (let i = 0; i < DEALS_PER_YEAR; i++) {
+        const deal = generateDeal({ excludeFactIds: usedFactIds });
+        for (const id of deal.factIds) expect(usedFactIds).not.toContain(id);
+        usedFactIds.push(...deal.factIds);
+      }
+    }
   });
 });
 

@@ -33,6 +33,7 @@ export type GeneratedDeal = {
   postMoney: number;
   description: string; // cosmetic flavor text, never affects quality
   signals: string[]; // what the pitch card shows
+  factIds: string[]; // ids behind each signal — lets a caller dedup facts across a year's deals
   quality: number; // hidden -1..1
 };
 
@@ -48,17 +49,21 @@ export function dealQualityNoise(amplitude: number = DEAL_QUALITY_NOISE): number
   return (Math.random() * 2 - 1) * amplitude;
 }
 
-// Deal a pitch: plausible pricing from the free-play generator, plus 3-5
+// Deal a pitch: plausible pricing from the free-play generator, plus 4
 // due-diligence facts (src/lib/fact-card.ts) whose sentiment_tag (noisily)
 // sets the hidden quality. The noise matters — a great-looking pitch can
 // still be a dud, just less often. `noiseAmplitude` lets a referred deal
 // (see rollsReferral below) read clearer than a cold pitch without ever
 // guaranteeing its quality — the noise shrinks, the underlying draw doesn't
-// change.
-export function generateDeal(opts?: { noiseAmplitude?: number }): GeneratedDeal {
+// change. `excludeFactIds` lets a caller (dealFlow in play/actions.ts) keep
+// facts from repeating across a year's dealt batch — see drawFacts.
+export function generateDeal(opts?: {
+  noiseAmplitude?: number;
+  excludeFactIds?: string[];
+}): GeneratedDeal {
   const base = generateRandomStartup();
 
-  const drawn = drawFacts();
+  const drawn = drawFacts(undefined, opts?.excludeFactIds);
   const signalSum = drawn.reduce((sum, f) => sum + SENTIMENT_WEIGHT[f.sentiment_tag], 0);
   const noise = dealQualityNoise(opts?.noiseAmplitude);
   const quality = clamp(signalSum + noise, -1, 1);
@@ -71,6 +76,7 @@ export function generateDeal(opts?: { noiseAmplitude?: number }): GeneratedDeal 
     postMoney: base.postMoneyValuation,
     description: base.description,
     signals: drawn.map(fillTemplate),
+    factIds: drawn.map((f) => f.id),
     quality,
   };
 }

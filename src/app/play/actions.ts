@@ -213,18 +213,30 @@ async function createDealRow(
 // batch — cheap given how large the name pool is, and the only place a
 // same-year duplicate could actually show up (prior years' open deals are
 // already expired by the time dealFlow runs for a new one).
-function generateUniqueDeal(usedNames: Set<string>, opts?: { noiseAmplitude?: number }) {
-  let deal = generateDeal(opts);
-  while (usedNames.has(deal.name)) deal = generateDeal(opts);
+//
+// `usedFactIds` is passed straight through to generateDeal's excludeFactIds
+// so the same due-diligence fact doesn't show up on two startups dealt in
+// the same year either — see the fallback in drawFacts (fact-card.ts) for
+// what happens if the pool runs short.
+function generateUniqueDeal(
+  usedNames: Set<string>,
+  usedFactIds: string[],
+  opts?: { noiseAmplitude?: number }
+) {
+  let deal = generateDeal({ ...opts, excludeFactIds: usedFactIds });
+  while (usedNames.has(deal.name)) deal = generateDeal({ ...opts, excludeFactIds: usedFactIds });
   usedNames.add(deal.name);
   return deal;
 }
 
 async function dealFlow(visitorId: string, year: number) {
   const usedNames = new Set<string>();
+  const usedFactIds: string[] = [];
 
   for (let i = 0; i < DEALS_PER_YEAR; i++) {
-    await createDealRow(visitorId, year, generateUniqueDeal(usedNames), null);
+    const deal = generateUniqueDeal(usedNames, usedFactIds);
+    usedFactIds.push(...deal.factIds);
+    await createDealRow(visitorId, year, deal, null);
   }
 
   // Founders who've earned real trust (CompanyDynState.trackRecord — see
@@ -237,7 +249,10 @@ async function dealFlow(visitorId: string, year: number) {
   for (const company of companies) {
     const dynState = parseDynState(company.scenarioState);
     if (!rollsReferral(dynState.trackRecord)) continue;
-    const referred = generateUniqueDeal(usedNames, { noiseAmplitude: REFERRAL_QUALITY_NOISE });
+    const referred = generateUniqueDeal(usedNames, usedFactIds, {
+      noiseAmplitude: REFERRAL_QUALITY_NOISE,
+    });
+    usedFactIds.push(...referred.factIds);
     await createDealRow(visitorId, year, referred, company.name);
   }
 }
