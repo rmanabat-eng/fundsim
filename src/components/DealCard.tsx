@@ -99,12 +99,12 @@ export function DealCard({ deal }: { deal: DealView }) {
 
         <ul
           data-tour="deal-signals"
-          className="mt-3 space-y-1.5 text-sm text-white/70"
+          className="mt-3 grid grid-cols-1 gap-x-4 gap-y-1.5 text-sm text-white/70 md:grid-cols-2"
         >
           {deal.signals.map((s) => (
             <li key={s} className="flex gap-2">
               <span aria-hidden>🔎</span>
-              {s}
+              <span className="min-w-0">{s}</span>
             </li>
           ))}
         </ul>
