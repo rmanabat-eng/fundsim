@@ -280,6 +280,12 @@ body {
   animation: max-gradient-shift 5s ease infinite;
 }
 
+/* Commit-style press: quick 90ms press-in, then a slower ~260ms release
+   that overshoots past resting size before settling — should feel like
+   something being locked in. The :active rule's own (fast, flat) transition
+   governs the press-in; this base transition (already an overshoot curve)
+   governs the release, since that's whichever rule is current once :active
+   stops matching. */
 .max-btn-primary {
   box-shadow:
     0 0 22px rgba(255, 58, 242, 0.55),
@@ -287,8 +293,8 @@ body {
     14px 14px 0 var(--max-magenta);
   animation: max-pulse-glow 2.6s ease-in-out infinite;
   transition:
-    transform 0.25s cubic-bezier(0.68, -0.55, 0.265, 1.55),
-    box-shadow 0.25s ease-out;
+    transform 260ms cubic-bezier(0.68, -0.55, 0.265, 1.55),
+    box-shadow 260ms ease-out;
 }
 .max-btn-primary:hover {
   transform: scale(1.06) rotate(-1deg);
@@ -298,14 +304,21 @@ body {
   box-shadow:
     0 0 12px rgba(255, 58, 242, 0.4),
     3px 3px 0 var(--max-yellow);
+  transition:
+    transform 90ms ease,
+    box-shadow 90ms ease;
 }
 
+/* Decline-style press: quick 60ms press-in, ~90ms flat release, no
+   overshoot — light and dismissive, the opposite of the primary button's
+   commit feel. Same press-in/release split technique as .max-btn-primary
+   above. */
 .max-btn-outline {
   box-shadow: 7px 7px 0 var(--max-cyan);
   transition:
-    transform 0.2s ease-out,
-    box-shadow 0.2s ease-out,
-    background-color 0.2s ease-out;
+    transform 90ms ease-out,
+    box-shadow 90ms ease-out,
+    background-color 90ms ease-out;
 }
 .max-btn-outline:hover {
   transform: translate(-2px, -2px);
@@ -314,6 +327,9 @@ body {
 .max-btn-outline:active {
   transform: translate(0, 0);
   box-shadow: 2px 2px 0 var(--max-cyan);
+  transition:
+    transform 60ms ease-out,
+    box-shadow 60ms ease-out;
 }
 
 /* Reusable card surface for the campaign screen — glass panel, clashing
@@ -375,6 +391,105 @@ body {
    stamp, so it reads as the card itself perking up. */
 .group:hover .max-stamp {
   transform: rotate(-6deg) scale(1.28);
+}
+
+/* ---- Decision-card exit motions ----
+   Most of the 19 per-type/per-outcome exits (see DecisionCard.tsx) are a
+   single A-to-B move and just use an inline `transition`, the same
+   technique as DealCard's exit — no keyframes needed. These four cover the
+   handful that are genuinely multi-phase (an oscillation, or a compress-
+   then-overshoot) and can't be expressed as one transition. Bound to the
+   element via inline `style.animation` (not a class), same reasoning as
+   DealCard's exitStyle: inline always wins over the hover glow/stamp rules
+   regardless of lingering :hover state. --wobble-amp/--wobble-end let the
+   one wobble keyframe serve both pivot's "settles fully" and acquisition's
+   "stays slightly unresolved" without duplicating it. Reduced motion never
+   sees any of this — the JS side simply never sets `exiting`, so the
+   `animation` property is never added to the inline style at all. */
+/* Double-pulse pop, then settles downward and dissolves — the translateY/
+   opacity tail has to live in this same keyframe rather than a concurrent
+   transition, since both it and the pulse drive `transform`, and animation
+   + transition can't split one property between them on the same element. */
+@keyframes decision-exit-pulse {
+  0% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+  30% {
+    transform: scale(1.08) translateY(0);
+  }
+  50% {
+    transform: scale(1.02) translateY(0);
+  }
+  70% {
+    transform: scale(1.1) translateY(0);
+  }
+  100% {
+    transform: scale(1) translateY(0.6rem);
+    opacity: 0;
+  }
+}
+
+/* Quick side-to-side shake, then fades down — same reasoning as the pulse
+   above for why the dissolve tail is baked in rather than a separate
+   transition. */
+@keyframes decision-exit-shake {
+  0% {
+    transform: translateX(0) translateY(0);
+    opacity: 1;
+  }
+  15% {
+    transform: translateX(-6px) translateY(0);
+  }
+  30% {
+    transform: translateX(5px) translateY(0);
+  }
+  45% {
+    transform: translateX(-3px) translateY(0);
+  }
+  60% {
+    transform: translateX(2px) translateY(0);
+  }
+  100% {
+    transform: translateX(0) translateY(0.5rem);
+    opacity: 0;
+  }
+}
+
+@keyframes decision-exit-wobble {
+  0% {
+    transform: rotate(0deg);
+  }
+  20% {
+    transform: rotate(calc(-1 * var(--wobble-amp, 5deg)));
+  }
+  40% {
+    transform: rotate(var(--wobble-amp, 5deg));
+  }
+  60% {
+    transform: rotate(calc(-0.6 * var(--wobble-amp, 5deg)));
+  }
+  80% {
+    transform: rotate(calc(0.4 * var(--wobble-amp, 5deg)));
+  }
+  100% {
+    transform: rotate(var(--wobble-end, 0deg));
+  }
+}
+
+@keyframes decision-exit-brace {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(0.92);
+  }
+  70% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes max-gradient-shift {
