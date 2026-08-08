@@ -213,6 +213,15 @@ body {
   --max-yellow: #ffe600;
   --max-orange: #ff6b35;
   --max-purple: #7b2fff;
+
+  /* Shared hover-motion intensity — DealCard's lift+tilt and the decision
+     card's glow/stamp all read from these instead of hardcoding their own
+     duration/curve, so retuning "how punchy" is a one-line edit here
+     rather than hunting through every hover rule. --max-hover-ease is a
+     back-ease-out curve (overshoots past 1 before settling), which is the
+     main thing making hover feel springy/arcade rather than smooth. */
+  --max-hover-duration: 320ms;
+  --max-hover-ease: cubic-bezier(0.34, 1.76, 0.64, 1);
 }
 
 .max-pattern-dots {
@@ -356,6 +365,16 @@ body {
   border: 2px solid var(--max-yellow);
   background: var(--max-yellow);
   color: #241033;
+  transition: transform var(--max-hover-duration) var(--max-hover-ease);
+}
+
+/* Composed into one transform (base tilt + hover scale/rotate) rather than a
+   separate Tailwind utility on the stamp, since a second transform source
+   would silently replace the base rotate above instead of combining with
+   it. Reacts to the whole card (DecisionShell's `group`), not just the
+   stamp, so it reads as the card itself perking up. */
+.group:hover .max-stamp {
+  transform: rotate(-6deg) scale(1.28);
 }
 
 @keyframes max-gradient-shift {
@@ -451,5 +470,8 @@ body {
   .max-btn-primary:active,
   .max-btn-outline:active {
     transform: none;
+  }
+  .group:hover .max-stamp {
+    transform: rotate(-2deg);
   }
 }

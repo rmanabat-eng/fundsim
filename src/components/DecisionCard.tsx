@@ -97,7 +97,14 @@ export type DecisionView =
       ownedIfDecline: number; // % after converting at the recap price
     });
 
-const cardClasses = "max-card-flat relative h-full rounded-2xl p-5 hover:z-30 focus-within:z-30";
+// group (not lift+tilt like DealCard) — a decision awaits you, it doesn't
+// invite browsing, so the hover reads as attention drawn to something
+// stationary: a border glow here, plus a distinct stamp reaction in
+// EventStamp/globals.css. transition-shadow stays active regardless of
+// motion preference; only the glow itself is motion-safe-gated, same
+// pattern as DealCard's hover.
+const cardClasses =
+  "max-card-flat group relative h-full rounded-2xl p-5 transition-shadow duration-[var(--max-hover-duration)] ease-[var(--max-hover-ease)] hover:z-30 focus-within:z-30 motion-safe:hover:shadow-[0_0_18px_var(--max-card-border)]";
 const cardStyle = { "--max-card-border": "var(--max-yellow)" } as React.CSSProperties;
 const primaryButton =
   "max-btn-primary shrink-0 rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-r from-[color:var(--max-magenta)] via-[color:var(--max-purple)] to-[color:var(--max-cyan)] px-4 py-2 text-sm font-black uppercase tracking-wide text-white disabled:opacity-50";
