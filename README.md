@@ -8,18 +8,19 @@ The fastest way to feel the mechanics is **campaign mode** (at `/play`): a 10-ye
 
 ## Running it locally
 
-Requirements: Node.js 18+.
+Requirements: Node.js 18+ and a Postgres database (a free one from [Neon](https://neon.tech) works — `npx create-db` provisions one in seconds).
 
 ```bash
 npm install
-npx prisma migrate dev   # creates the SQLite database and applies the schema
-npm run seed              # loads 3 sample investments
+cp .env.example .env      # fill in DATABASE_URL with your Postgres connection string
+npx prisma migrate dev    # applies the schema
+npm run seed               # loads 3 sample investments
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
-The database is a single SQLite file (`dev.db`, at the project root), so all data persists between sessions without any external service.
+Every visitor gets their own private fund: the first request mints a long-lived, httpOnly, anonymous identity cookie (`src/proxy.ts`), and all data is scoped to it — no login, no accounts. Clearing the cookie loses access to that fund for good, by design.
 
 The fund math has a unit test suite (Vitest) covering ownership, dilution, TVPI/DPI, IRR, and the year simulator:
 
@@ -229,6 +230,11 @@ uncertainty — the thing real investing actually is:
   safe small win, and ghosting them means they pivot anyway,
   half-hearted.
 
+Mid-run, the active campaign header offers **End Campaign** (close the fund
+early, right where it stands — the scorecard skips the quartile grading that
+assumes a full ten years) and **Restart Campaign** (wipe the run and deal a
+fresh year one).
+
 The scorecard at the end shows where the returns actually came from,
 which — thanks to the power law — is usually one or two names. It also
 grades your **VC reputation** (0–100): funding bridges and answering
@@ -312,12 +318,12 @@ versus late stage.
 
 Not yet modeled:
 
-- Multi-user accounts
+- Real user accounts/login (funds are scoped to an anonymous cookie, not a profile)
 
 ## Tech stack
 
 - [Next.js](https://nextjs.org/) (App Router) + React
-- [Prisma](https://www.prisma.io/) with SQLite (via the `better-sqlite3` driver adapter)
+- [Prisma](https://www.prisma.io/) with hosted Postgres (via the `@prisma/adapter-pg` driver adapter)
 - [Tailwind CSS](https://tailwindcss.com/)
 
 ## Project structure
@@ -329,6 +335,7 @@ prisma/
 scripts/
   generate-card.ts   # CLI preview of the fact pool: `npm run cards [count]`
 src/
+  proxy.ts              # mints the anonymous per-visitor identity cookie (Next 16 middleware)
   app/
     page.tsx                                  # dashboard: summary bar, chart, company table
     play/page.tsx                             # campaign mode: deal flow, decisions, scorecard
