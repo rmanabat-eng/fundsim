@@ -1,3 +1,22 @@
+## 2026-08-10 — docs: refresh README for Postgres and campaign header actions
+
+The README's "Running it locally" section still walked through the old
+local-SQLite flow (npx prisma migrate dev against a dev.db file) even
+though the app moved to hosted Postgres and per-visitor cookie identity
+back on 2026-08-04. Replaced it with the current .env/DATABASE_URL setup
+(Neon via npx create-db) and added a note on the anonymous httpOnly
+identity cookie (src/proxy.ts) that scopes each fund privately.
+
+Also documented the End Campaign / Restart Campaign header actions under
+Campaign mode, fixed the Tech stack section (still said SQLite /
+better-sqlite3), updated the "out of scope" bullet from "Multi-user
+accounts" to "Real user accounts/login" now that funds are scoped per
+anonymous visitor, and added src/proxy.ts to the project structure
+listing.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+
+
 ## 2026-08-04 — Add End Campaign / Restart Campaign to the active-run header
 
 Replaces "Quit campaign" (which wiped the run and dropped you back to
