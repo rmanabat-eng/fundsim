@@ -333,6 +333,9 @@ export default async function PlayPage() {
         <p className="game-blink mt-8 text-center text-xs font-black uppercase tracking-[0.4em] text-white/50">
           Game over
         </p>
+        <h2 className="mt-1 text-center font-display text-xl font-bold text-white/80">
+          {game.name}
+        </h2>
         <div
           className={`game-deal-in mt-3 rounded-3xl border-4 p-6 text-center ${
             earlyClose ? GRADE_STYLES.ok : GRADE_STYLES[grade!.tone]

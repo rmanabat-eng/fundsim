@@ -77,6 +77,7 @@ model Company {
 model Game {
   id        String   @id @default(cuid())
   visitorId String   @unique
+  name      String   @default("Untitled Fund")
   year      Int      @default(1)
   status    String   @default("active") // "active" | "ended"
   market    String   @default("normal") // this year's conditions: "bull" | "normal" | "bear"

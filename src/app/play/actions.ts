@@ -258,13 +258,16 @@ async function dealFlow(visitorId: string, year: number) {
 }
 
 // Wipes the portfolio and starts a fresh 10-year fund at year 1.
-export async function startCampaign() {
+export async function startCampaign(name: string) {
   const visitorId = await getVisitorId();
+  const trimmed = name.trim();
   await prisma.company.deleteMany({ where: { visitorId } }); // cascades rounds and decisions
   await prisma.deal.deleteMany({ where: { visitorId } });
   await prisma.game.deleteMany({ where: { visitorId } });
 
-  await prisma.game.create({ data: { visitorId, market: rollMarket() } });
+  await prisma.game.create({
+    data: { visitorId, name: trimmed || "Untitled Fund", market: rollMarket() },
+  });
   await dealFlow(visitorId, 1);
 
   revalidatePath("/play");
