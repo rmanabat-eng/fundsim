@@ -1,10 +1,20 @@
 # FundSim
 
-FundSim is a small web app that simulates managing a $10M venture capital fund. Log hypothetical investments and watch fund-level metrics — deployed capital, remaining capital, and ownership — update in real time. Built to learn VC fund math by encoding it in working software.
+FundSim is a browser-based venture capital fund simulation game.
+Campaign mode (`/play`) is the main event: a 10-year, $10M fund played
+one year at a time — pitch decisions, forced calls under pressure, and
+a final scorecard graded against real venture quartiles. Think
+thegame.vc, but for venture investing: no install, no account, play a
+fund straight from the browser.
 
-The in-app **guide** (at `/guide`, linked from the dashboard header) walks through the playbook the simulator teaches: deploy first, keep reserves, simulate year by year, and let the power law show up in your own numbers.
+A free-play/sandbox mode is also available for logging hypothetical
+investments and watching fund metrics update in real time — useful for
+learning the mechanics slower, but campaign mode is the game.
 
-The fastest way to feel the mechanics is **campaign mode** (at `/play`): a 10-year fund played one year at a time, where the game deals you the numbers and you make the calls.
+The in-app **guide** (at `/guide`, linked from the dashboard header)
+walks through the playbook the simulator teaches: deploy first, keep
+reserves, simulate year by year, and let the power law show up in your
+own numbers.
 
 ## Running it locally
 
@@ -242,6 +252,22 @@ follow-ons builds it, a deliberate "no" costs almost nothing, and letting
 pitches or decisions expire unanswered — ghosting founders — costs the
 most, independent of whether the fund made money.
 
+### Leaderboards (planned)
+
+Every anonymous run ends with a scorecard — final TVPI and a VC
+reputation score. The plan: two public leaderboards, ranked separately
+by each metric, so a high-TVPI-but-ghosted-every-founder run and a
+modest-return-but-well-reputed run both get to be "the best" at
+something.
+
+No accounts — same anonymous-cookie model as the rest of the app.
+You'll name your fund at the start of a campaign (not yet built —
+currently only fund size and company cap are configurable), and that
+name is what shows up if you choose to submit your score at the end.
+Submission is opt-in; scores aren't published automatically. Not yet
+built — needs fund naming, a persisted record of completed runs, and a
+submit flow.
+
 ### Weighted scenario pools & chaining state (V3)
 
 Per-company events used to be a hardcoded if/else chain; they now draw
@@ -318,7 +344,10 @@ versus late stage.
 
 Not yet modeled:
 
-- Real user accounts/login (funds are scoped to an anonymous cookie, not a profile)
+- Real user accounts/login (funds are scoped to an anonymous cookie,
+  not a profile)
+- Public leaderboards (TVPI-ranked and VC-reputation-ranked) — planned,
+  see [Leaderboards](#leaderboards-planned) above
 
 ## Tech stack
 
