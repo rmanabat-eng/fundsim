@@ -224,7 +224,7 @@ export default async function PlayPage() {
   const remaining = settings.fundSize - metrics.deployed;
 
   // ---- No campaign yet: the title screen ----
-  if (!game) {
+  if (!game || (game.status === "ended" && game.dismissed)) {
     return (
       <Shell year={null} market={null}>
         <div
