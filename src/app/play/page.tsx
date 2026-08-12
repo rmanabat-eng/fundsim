@@ -23,6 +23,7 @@ import {
 import { DealCard, type DealView } from "@/components/DealCard";
 import { DecisionCard, type DecisionView } from "@/components/DecisionCard";
 import { StartCampaignButton } from "@/components/StartCampaignButton";
+import { FundNamePrompt } from "@/components/FundNamePrompt";
 import { EndCampaignButton } from "@/components/EndCampaignButton";
 import { AdvanceYearButton } from "@/components/AdvanceYearButton";
 import { Toaster } from "@/components/toast";
@@ -792,6 +793,7 @@ export default async function PlayPage() {
 
   return (
     <Shell year={game.year} market={game.market as Market}>
+      {game.year === 1 && game.name === "Untitled Fund" && <FundNamePrompt />}
       <CampaignTips />
 
       {/* Year lives in the header pips now, so the HUD is all fund health. */}
