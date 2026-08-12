@@ -24,6 +24,7 @@ import { DealCard, type DealView } from "@/components/DealCard";
 import { DecisionCard, type DecisionView } from "@/components/DecisionCard";
 import { StartCampaignButton } from "@/components/StartCampaignButton";
 import { FundNamePrompt } from "@/components/FundNamePrompt";
+import { DismissAndHomeLink } from "@/components/DismissAndHomeLink";
 import { EndCampaignButton } from "@/components/EndCampaignButton";
 import { AdvanceYearButton } from "@/components/AdvanceYearButton";
 import { Toaster } from "@/components/toast";
@@ -330,7 +331,7 @@ export default async function PlayPage() {
     const finalLog = campaignLog(companies, game.startedAt, GAME_YEARS);
 
     return (
-      <Shell year={null} market={null}>
+      <Shell year={null} market={null} ended>
         <p className="game-blink mt-8 text-center text-xs font-black uppercase tracking-[0.4em] text-white/50">
           Game over
         </p>
@@ -998,10 +999,12 @@ function YearPips({ year }: { year: number }) {
 function Shell({
   year,
   market,
+  ended = false,
   children,
 }: {
   year: number | null;
   market: Market | null;
+  ended?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -1056,12 +1059,16 @@ function Shell({
         <div className="relative mx-auto max-w-5xl px-6 py-8">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <Link
-                href="/"
-                className="text-xs font-bold uppercase tracking-widest text-white/60 hover:text-white"
-              >
-                ← Home
-              </Link>
+              {ended ? (
+                <DismissAndHomeLink />
+              ) : (
+                <Link
+                  href="/"
+                  className="text-xs font-bold uppercase tracking-widest text-white/60 hover:text-white"
+                >
+                  ← Home
+                </Link>
+              )}
               <p className="mt-2 text-[10px] font-black uppercase tracking-[0.35em] text-[color:var(--max-magenta)]">
                 ★ FundSim presents ★
               </p>

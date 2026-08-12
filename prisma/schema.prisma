@@ -81,6 +81,7 @@ model Game {
   year      Int      @default(1)
   status    String   @default("active") // "active" | "ended"
   market    String   @default("normal") // this year's conditions: "bull" | "normal" | "bear"
+  dismissed Boolean  @default(false) // ended scorecard was left via Home — reset the homepage CTA
   startedAt DateTime @default(now())
 }
 

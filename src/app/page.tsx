@@ -91,11 +91,12 @@ export default async function Home() {
     prisma.game.findUnique({ where: { visitorId } }),
   ]);
 
-  const campaignCta = !game
-    ? "🚀 Start your fund"
-    : game.status === "active"
-      ? `▶ Continue year ${game.year}`
-      : "🏁 See your scorecard";
+  const campaignCta =
+    !game || (game.status === "ended" && game.dismissed)
+      ? "🚀 Start your fund"
+      : game.status === "active"
+        ? `▶ Continue year ${game.year}`
+        : "🏁 See your scorecard";
 
   return (
     <div className="max-hero relative min-h-screen bg-[#0d0d1a]">

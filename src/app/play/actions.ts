@@ -271,6 +271,17 @@ export async function startCampaign() {
   revalidatePath("/");
 }
 
+// Leaving an ended run's scorecard resets what the homepage offers — it goes
+// back to "Start your fund" instead of "See your scorecard" — without
+// touching the game's data. The wipe still only happens when a fresh
+// startCampaign() actually runs.
+export async function dismissScorecard() {
+  const visitorId = await getVisitorId();
+  await prisma.game.update({ where: { visitorId }, data: { dismissed: true } });
+  revalidatePath("/play");
+  revalidatePath("/");
+}
+
 // Names the current campaign — prompted once, right after a fresh fund
 // starts (see the FundNamePrompt in src/app/play/page.tsx).
 export async function updateFundName(name: string) {
