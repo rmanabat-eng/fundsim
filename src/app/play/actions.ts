@@ -258,20 +258,30 @@ async function dealFlow(visitorId: string, year: number) {
 }
 
 // Wipes the portfolio and starts a fresh 10-year fund at year 1.
-export async function startCampaign(name: string) {
+export async function startCampaign() {
   const visitorId = await getVisitorId();
-  const trimmed = name.trim();
   await prisma.company.deleteMany({ where: { visitorId } }); // cascades rounds and decisions
   await prisma.deal.deleteMany({ where: { visitorId } });
   await prisma.game.deleteMany({ where: { visitorId } });
 
-  await prisma.game.create({
-    data: { visitorId, name: trimmed || "Untitled Fund", market: rollMarket() },
-  });
+  await prisma.game.create({ data: { visitorId, market: rollMarket() } });
   await dealFlow(visitorId, 1);
 
   revalidatePath("/play");
   revalidatePath("/");
+}
+
+// Names the current campaign — prompted once, right after a fresh fund
+// starts (see the FundNamePrompt in src/app/play/page.tsx).
+export async function updateFundName(name: string) {
+  const visitorId = await getVisitorId();
+  const trimmed = name.trim();
+  await prisma.game.update({
+    where: { visitorId },
+    data: { name: trimmed || "Untitled Fund" },
+  });
+
+  revalidatePath("/play");
 }
 
 // Closes the fund exactly where it stands — same status flip advanceYear

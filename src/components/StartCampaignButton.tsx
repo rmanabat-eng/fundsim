@@ -21,28 +21,16 @@ export function StartCampaignButton({
   variant?: "primary" | "outline";
 }) {
   const [confirming, setConfirming] = useState(false);
-  const [name, setName] = useState("");
   const [pending, startTransition] = useTransition();
 
   function run() {
     setConfirming(false);
-    startTransition(() => startCampaign(name));
+    startTransition(() => startCampaign());
   }
 
   if (confirming) {
     return (
       <span className="flex flex-wrap items-center gap-2 text-sm text-white/75">
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Name your fund..."
-          className="min-w-0 flex-1 rounded-full border-2 border-white/25 bg-[#2d1b4e]/60 px-3 py-1 text-sm text-white placeholder:text-white/40 focus:border-[color:var(--max-cyan)] focus:outline-none"
-        />
-        <span className="w-full text-xs text-white/50">
-          This name may show up on the public leaderboard if you choose to
-          submit your score at the end of the run.
-        </span>
         {hasPortfolio
           ? "This clears your current portfolio and deals a fresh fund. Ready?"
           : "Deal the first year's pitches?"}
