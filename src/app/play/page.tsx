@@ -801,7 +801,7 @@ export default async function PlayPage() {
 
   return (
     <Shell year={game.year} market={game.market as Market}>
-      {game.year === 1 && game.name === "Untitled Fund" && <FundNamePrompt />}
+      {game.year === 1 && game.name === "Untitled Fund" && <FundNamePrompt gameId={game.id} />}
       <CampaignTips />
 
       {/* Year lives in the header pips now, so the HUD is all fund health. */}

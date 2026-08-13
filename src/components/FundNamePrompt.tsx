@@ -9,9 +9,8 @@ import { updateFundName } from "@/app/play/actions";
 // with no tour steps to track, just a single dismiss-on-save flag kept in
 // sessionStorage so it doesn't nag again this tab session. Reappearing after
 // a hard refresh is an accepted edge case.
-const STORAGE_KEY = "fundsim-fund-name-prompted";
-
-export function FundNamePrompt() {
+export function FundNamePrompt({ gameId }: { gameId: string }) {
+  const STORAGE_KEY = `fundsim-fund-name-prompted-${gameId}`;
   const [dismissed, setDismissed] = useState(true);
   const [name, setName] = useState("");
   const [pending, startTransition] = useTransition();
