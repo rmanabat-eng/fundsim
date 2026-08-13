@@ -25,6 +25,7 @@ import { DecisionCard, type DecisionView } from "@/components/DecisionCard";
 import { StartCampaignButton } from "@/components/StartCampaignButton";
 import { FundNamePrompt } from "@/components/FundNamePrompt";
 import { DismissAndHomeLink } from "@/components/DismissAndHomeLink";
+import { SubmitToLeaderboardButton } from "@/components/SubmitToLeaderboardButton";
 import { EndCampaignButton } from "@/components/EndCampaignButton";
 import { AdvanceYearButton } from "@/components/AdvanceYearButton";
 import { Toaster } from "@/components/toast";
@@ -141,7 +142,9 @@ function Stat({
 
 // Reputation reads the paper trail: every deal and decision row keeps its
 // final status, so how you've treated founders so far is all in the database.
-async function currentReputation(visitorId: string) {
+// Exported so submitToLeaderboard() (src/app/play/actions.ts) can reuse it
+// rather than recomputing reputation independently.
+export async function currentReputation(visitorId: string) {
   const [
     bridgesFunded,
     bridgesRefused,
@@ -446,6 +449,10 @@ export default async function PlayPage() {
             delay={240}
             index={4}
           />
+        </div>
+
+        <div className="mt-6 flex justify-center">
+          <SubmitToLeaderboardButton />
         </div>
 
         {positions.length > 0 && (
