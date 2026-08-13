@@ -1,3 +1,37 @@
+## 2026-08-13 — feat: fund naming, a per-campaign dismissed state, and the leaderboard submission backend
+
+Three related additions building toward a public leaderboard, still to come:
+
+Fund naming. Game gains a `name` column (default "Untitled Fund").
+Rather than typing a name mid-confirm on Start/Restart, a FundNamePrompt
+modal appears once a fresh campaign is actually underway (year 1, name
+still default), styled like the existing CampaignTutorial overlay. Save
+calls a new updateFundName() action; skipping just leaves the default.
+The "don't show again" flag lives in sessionStorage keyed by game.id, so
+it can't leak across campaigns and suppress the prompt on a new one.
+
+Dismissed state. Leaving an ended run's scorecard via Home now flips a
+new Game.dismissed flag (dismissScorecard()) instead of just navigating
+away — no data is touched, startCampaign() still owns the actual wipe.
+The homepage CTA and /play's own title-screen check both read it, so a
+dismissed-and-ended game correctly falls back to "Start your fund"
+instead of re-showing a stale scorecard.
+
+Leaderboard backend (no display UI yet — a separate follow-up). New
+standalone LeaderboardEntry model, deliberately not foreign-keyed to
+Game/Company/etc so a submitted snapshot survives startCampaign()'s
+wipe; visitorId on it is a private lookup key only, never meant for
+public display. submitToLeaderboard() guards on an ended game and
+reuses the existing fundMetrics()/currentReputation() helpers rather
+than recomputing TVPI or reputation, snapshotting fund name, TVPI, and
+reputation into a row. The scorecard gets a "Submit to leaderboard"
+button next to the final TVPI/reputation display that swaps to a
+"Submitted!" label on success — known gap: nothing yet stops a second
+submission if the scorecard is revisited before being dismissed.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+
+
 ## 2026-08-10 — docs: refresh README for Postgres and campaign header actions
 
 The README's "Running it locally" section still walked through the old
