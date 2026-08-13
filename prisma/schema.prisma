@@ -85,6 +85,22 @@ model Game {
   startedAt DateTime @default(now())
 }
 
+// A snapshot of one ended run, captured on submission — deliberately not
+// foreign-keyed to Game/Company/etc, so it survives startCampaign()'s wipe
+// untouched. `visitorId` here is a private lookup key only (never displayed
+// on any public leaderboard UI), used solely to answer "which entries are
+// mine" later.
+model LeaderboardEntry {
+  id          String   @id @default(cuid())
+  visitorId   String
+  fundName    String
+  tvpi        Float
+  reputation  Float
+  submittedAt DateTime @default(now())
+
+  @@index([visitorId])
+}
+
 // A pitch dealt to the player for one campaign year. `quality` is the hidden
 // score its signals (noisily) encode — never shown, only its consequences.
 model Deal {

@@ -6,7 +6,8 @@ import { getVisitorId } from "@/lib/visitor";
 import { STAGES } from "@/lib/constants";
 import { getSettings } from "@/lib/settings";
 import { rollYearEvent } from "@/lib/simulate";
-import { exitProceeds, formatDollars, ownershipAfterRounds } from "@/lib/fund-math";
+import { exitProceeds, formatDollars, fundMetrics, ownershipAfterRounds } from "@/lib/fund-math";
+import { currentReputation } from "@/app/play/page";
 import {
   ACQUISITION_CHANCE,
   BRIDGE_CHANCE,
@@ -280,6 +281,34 @@ export async function dismissScorecard() {
   await prisma.game.update({ where: { visitorId }, data: { dismissed: true } });
   revalidatePath("/play");
   revalidatePath("/");
+}
+
+// Snapshots an ended run into LeaderboardEntry — a private copy, not a live
+// link. Doesn't touch Game/Company/Deal/Decision; the wipe still only
+// happens when startCampaign() runs. No display/ranking logic here — this
+// stage only captures and stores the data (see LeaderboardEntry in
+// prisma/schema.prisma).
+export async function submitToLeaderboard() {
+  const visitorId = await getVisitorId();
+  const game = await prisma.game.findUnique({ where: { visitorId } });
+  if (!game || game.status !== "ended") return; // guard: only ended runs can submit
+
+  const companies = await prisma.company.findMany({
+    where: { visitorId },
+    include: { rounds: true, deal: true },
+  });
+  const metrics = fundMetrics(companies); // reuse — don't recompute TVPI
+  const { rep } = await currentReputation(visitorId); // reuse — don't recompute reputation
+
+  await prisma.leaderboardEntry.create({
+    data: {
+      visitorId,
+      fundName: game.name,
+      tvpi: metrics.tvpi ?? 0, // no capital deployed — no realized multiple to report
+      reputation: rep.score,
+    },
+  });
+  revalidatePath("/play");
 }
 
 // Names the current campaign — prompted once, right after a fresh fund
