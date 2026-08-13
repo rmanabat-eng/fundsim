@@ -7,7 +7,7 @@ import { STAGES } from "@/lib/constants";
 import { getSettings } from "@/lib/settings";
 import { rollYearEvent } from "@/lib/simulate";
 import { exitProceeds, formatDollars, fundMetrics, ownershipAfterRounds } from "@/lib/fund-math";
-import { currentReputation } from "@/app/play/page";
+import { currentReputation } from "@/lib/reputation";
 import {
   ACQUISITION_CHANCE,
   BRIDGE_CHANCE,
