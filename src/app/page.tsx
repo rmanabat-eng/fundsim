@@ -379,6 +379,35 @@ export default async function Home() {
         </div>
 
         <SectionDivider accent="var(--max-cyan)" />
+
+        {/* -------- Leaderboard: single centered card, same recipe as the
+            Free Play card above (label, headline, CTA, blurb) -------- */}
+        <div className="relative left-1/2 w-screen -translate-x-1/2 bg-[#0d0d1a]">
+          <div aria-hidden className="max-pattern-dots pointer-events-none absolute inset-0" />
+          <section className="relative mx-auto max-w-3xl px-6 py-20">
+            <div className="mx-auto max-w-xl rounded-3xl border-4 border-[color:var(--max-purple)] bg-[#2d1b4e]/50 p-8 text-center backdrop-blur-sm sm:p-10">
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[color:var(--max-cyan)]">
+                Public
+              </p>
+              <h2 className="mt-1 font-display text-3xl font-black uppercase tracking-tight text-white [text-shadow:2px_2px_0_var(--max-magenta)] sm:text-4xl">
+                Leaderboard
+              </h2>
+              <Link
+                href="/leaderboard"
+                className="max-btn-primary mt-6 inline-flex items-center gap-2 rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-r from-[color:var(--max-magenta)] via-[color:var(--max-purple)] to-[color:var(--max-cyan)] px-7 py-[14px] text-sm font-black uppercase tracking-[0.06em] text-white"
+              >
+                🏆 See the leaderboard
+              </Link>
+              <p className="mx-auto mt-6 max-w-[52ch] text-sm leading-relaxed text-white/80">
+                Every fund whose GP chose to submit their score at the end of
+                a run is ranked here by TVPI and by reputation — not your own
+                private runs, just the results other players opted to share.
+              </p>
+            </div>
+          </section>
+        </div>
+
+        <SectionDivider accent="var(--max-purple)" />
       </main>
     </div>
   );
