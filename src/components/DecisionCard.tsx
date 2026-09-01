@@ -12,6 +12,7 @@ import {
   resolveExitRoute,
   resolvePayToPlay,
   resolvePivot,
+  resolveTermConcession,
   resolveTermSheet,
 } from "@/app/play/actions";
 import { formatDollars, formatPercent } from "@/lib/fund-math";
@@ -69,6 +70,16 @@ export type DecisionView =
       highPricePost: number;
       ownedTopTier: number; // your % after signing the top-tier sheet
       ownedHighPrice: number; // your % after signing the high-price sheet
+    })
+  | (Common & {
+      type: "term_concession";
+      stage: string;
+      raised: number; // conceding funds this
+      heldRaised: number; // your smaller check if you hold the soft term
+      postMoney: number; // conceding locks this in
+      heldPostMoney: number; // the better price if you hold the hard term and it lands
+      ownedConceded: number; // your % if you concede valuation
+      ownedHeldValuation: number; // your % if you hold valuation and it lands
     })
   | (Common & {
       type: "pivot";
@@ -940,6 +951,101 @@ function TermSheetCard({ d }: { d: Extract<DecisionView, { type: "term_sheet" }>
   );
 }
 
+const CONCESSION_EXIT_MS = 400;
+
+function TermConcessionCard({
+  d,
+}: {
+  d: Extract<DecisionView, { type: "term_concession" }>;
+}) {
+  const [pending, startTransition] = useTransition();
+  const [exiting, setExiting] = useState(false);
+  const [holdValuation, setHoldValuation] = useState(false);
+  const [holdAmount, setHoldAmount] = useState(false);
+
+  function send() {
+    const reduced = prefersReducedMotion();
+    if (!reduced) setExiting(true);
+    startTransition(async () => {
+      if (!reduced) await new Promise((r) => setTimeout(r, CONCESSION_EXIT_MS));
+      await resolveTermConcession(d.id, { holdValuation, holdAmount });
+      toast(
+        holdValuation
+          ? `Held firm on valuation with ${d.companyName} — the founder may walk`
+          : `Sent terms to ${d.companyName}`
+      );
+    });
+  }
+
+  return (
+    <DecisionShell
+      stamp="Term concession"
+      exitStyle={
+        exiting
+          ? { animation: `decision-exit-pulse ${CONCESSION_EXIT_MS}ms ease-out forwards` }
+          : {}
+      }
+    >
+      <p className="text-sm text-white/85">
+        🤝 <CompanyName id={d.companyId} name={d.companyName} /> is closing its{" "}
+        <StageBadge stage={d.stage} /> and wants your terms before signing. Hold
+        firm for the better number, or concede to keep the deal moving.
+      </p>
+
+      <PitchNotes signals={d.signals} />
+
+      <div className="max-chip-box rounded-lg px-3 py-2 text-sm">
+        <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
+          💰 Valuation — hard term
+        </p>
+        <p className="mt-0.5 text-white/70">
+          Concede: {formatDollars(d.postMoney)} post, you&apos;d hold{" "}
+          {formatPercent(d.ownedConceded)}. Hold firm:{" "}
+          {formatDollars(d.heldPostMoney)} post, you&apos;d hold{" "}
+          {formatPercent(d.ownedHeldValuation)} —{" "}
+          <Term def="Holding firm risks the founder walking away entirely. Losing them here is final: no resurfacing, no second chance on this deal.">
+            but the founder might walk
+          </Term>
+          .
+        </p>
+        <label className="mt-2 flex items-center gap-2 text-xs font-bold text-white/80">
+          <input
+            type="checkbox"
+            checked={holdValuation}
+            onChange={(e) => setHoldValuation(e.target.checked)}
+          />
+          Hold firm on valuation
+        </label>
+      </div>
+
+      <div className="max-chip-box rounded-lg px-3 py-2 text-sm">
+        <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
+          🧾 Investment amount — soft term
+        </p>
+        <p className="mt-0.5 text-white/70">
+          Concede: fund {formatDollars(d.raised)}. Hold firm: fund{" "}
+          {formatDollars(d.heldRaised)} instead — preserves dry powder, no risk
+          either way.
+        </p>
+        <label className="mt-2 flex items-center gap-2 text-xs font-bold text-white/80">
+          <input
+            type="checkbox"
+            checked={holdAmount}
+            onChange={(e) => setHoldAmount(e.target.checked)}
+          />
+          Hold firm on amount
+        </label>
+      </div>
+
+      <DecisionActions>
+        <button type="button" disabled={pending} onClick={send} className={primaryButton}>
+          {pending ? "Sending..." : "🤝 Send terms"}
+        </button>
+      </DecisionActions>
+    </DecisionShell>
+  );
+}
+
 function PivotCard({ d }: { d: Extract<DecisionView, { type: "pivot" }> }) {
   const [pending, startTransition] = useTransition();
   const [exiting, setExiting] = useState<"back" | "focus" | null>(null);
@@ -1272,6 +1378,7 @@ export function DecisionCard({ decision }: { decision: DecisionView }) {
   if (decision.type === "acquisition") return <AcquisitionCard d={decision} />;
   if (decision.type === "fund_secondary") return <FundSecondaryCard d={decision} />;
   if (decision.type === "term_sheet") return <TermSheetCard d={decision} />;
+  if (decision.type === "term_concession") return <TermConcessionCard d={decision} />;
   if (decision.type === "pivot") return <PivotCard d={decision} />;
   if (decision.type === "exit_route") return <ExitRouteCard d={decision} />;
   if (decision.type === "ceo_replacement") return <CeoReplacementCard d={decision} />;

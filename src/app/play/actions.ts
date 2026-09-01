@@ -41,7 +41,9 @@ import {
   buildBridgeRequest,
   buildExitRoute,
   buildFundSecondaryOffer,
+  founderWalkRisk,
   maybePayToPlay,
+  maybeTermConcession,
   maybeTermSheet,
   pivotOutcome,
   rollMarket,
@@ -84,6 +86,16 @@ export type TermSheetPayload = {
   raised: number;
   topTierPost: number;
   highPricePost: number;
+  date: string;
+};
+// One hard term (valuation) + one soft term (investment amount) to hold firm
+// on or concede. See maybeTermConcession/founderWalkRisk in campaign.ts.
+export type TermConcessionPayload = {
+  stage: string;
+  raised: number;
+  heldRaised: number;
+  postMoney: number;
+  heldPostMoney: number;
   date: string;
 };
 // A pivot request carries no numbers — the whole decision is a judgment call.
@@ -713,6 +725,63 @@ export async function resolveTermSheet(
   revalidatePath("/");
 }
 
+// Hold firm on the hard term (valuation) or the soft term (investment
+// amount), independently. Holding the hard term risks the founder walking —
+// final, no resurfacing — scaled down by your reputation. The soft term
+// carries no risk either way.
+export async function resolveTermConcession(
+  decisionId: string,
+  choice: { holdValuation: boolean; holdAmount: boolean }
+) {
+  const visitorId = await getVisitorId();
+  const decision = await prisma.decision.findUnique({
+    where: { id: decisionId },
+    include: { company: true },
+  });
+  if (
+    !decision ||
+    decision.visitorId !== visitorId ||
+    decision.status !== "pending" ||
+    decision.type !== "term_concession"
+  )
+    return;
+  if (decision.company.exitValue !== null) return;
+  const payload: TermConcessionPayload = JSON.parse(decision.payload);
+
+  if (choice.holdValuation) {
+    const { rep } = await currentReputation(visitorId); // reuse — don't recompute reputation
+    if (Math.random() < founderWalkRisk(rep.score)) {
+      await prisma.decision.update({
+        where: { id: decisionId },
+        data: { status: "declined_founder_walked" },
+      });
+      revalidatePath("/play");
+      revalidatePath("/");
+      return;
+    }
+  }
+
+  await prisma.round.create({
+    data: {
+      visitorId,
+      companyId: decision.companyId,
+      stage: payload.stage as (typeof STAGES)[number],
+      date: new Date(payload.date),
+      raised: choice.holdAmount ? payload.heldRaised : payload.raised,
+      postMoney: choice.holdValuation ? payload.heldPostMoney : payload.postMoney,
+      yourCheck: 0,
+    },
+  });
+  await prisma.decision.update({
+    where: { id: decisionId },
+    // "resolved_held" is its own status so reputation can credit holding
+    // firm and winning apart from a plain concede (reputation-neutral).
+    data: { status: choice.holdValuation ? "resolved_held" : "resolved" },
+  });
+  revalidatePath("/play");
+  revalidatePath("/");
+}
+
 // Bless the pivot (a high-variance quality reroll) or urge focus (a small,
 // safe boost). Either way the founder got an answer.
 export async function resolvePivot(decisionId: string, choice: "back" | "focus") {
@@ -991,6 +1060,21 @@ export async function advanceYear(): Promise<YearSummary | null> {
           quality: clampQuality(d.company.quality + TERM_SHEET_HIGH_PRICE_QUALITY_HIT),
         },
       });
+    } else if (d.type === "term_concession") {
+      // No answer from you, so the founder assumes the safe read: concede
+      // both, no risk, no reputation effect either way.
+      const payload: TermConcessionPayload = JSON.parse(d.payload);
+      await prisma.round.create({
+        data: {
+          visitorId,
+          companyId: d.companyId,
+          stage: payload.stage as (typeof STAGES)[number],
+          date: new Date(payload.date),
+          raised: payload.raised,
+          postMoney: payload.postMoney,
+          yourCheck: 0,
+        },
+      });
     }
     await prisma.decision.update({ where: { id: d.id }, data: { status: "expired" } });
   }
@@ -1072,6 +1156,22 @@ export async function advanceYear(): Promise<YearSummary | null> {
             type: "term_sheet",
             companyId: company.id,
             payload: JSON.stringify(sheet satisfies TermSheetPayload),
+          },
+        });
+        summary.newDecisions++;
+        continue; // nothing is signed yet — no round, no offers
+      }
+      // Otherwise the founder may instead ask you to hold firm or concede on
+      // valuation (hard) and the check size (soft) before signing.
+      const concession = maybeTermConcession(event);
+      if (concession) {
+        await prisma.decision.create({
+          data: {
+            visitorId,
+            year,
+            type: "term_concession",
+            companyId: company.id,
+            payload: JSON.stringify(concession satisfies TermConcessionPayload),
           },
         });
         summary.newDecisions++;

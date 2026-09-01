@@ -279,6 +279,50 @@ export function maybeTermSheet(round: {
   };
 }
 
+// ---- Term concessions: hold firm on a term or concede it ----
+// One hard term (high stakes, real risk the founder walks) and one soft term
+// (low stakes either way) per round. Modeled on how VCs actually negotiate:
+// inflexible on valuation/pro-rata/liquidation pref/anti-dilution/vesting/
+// board control, more willing to bend on option pool/participation/amount/
+// redemption/dividends. Pass 1 only wires up the two simplest: valuation
+// (hard) and investment amount (soft).
+export type TermConcessionChoice = {
+  stage: string;
+  raised: number; // the founder's ask — concede to fund this
+  heldRaised: number; // your smaller check if you hold firm — preserves dry powder, no walk risk
+  postMoney: number; // the founder's ask — concede to lock this in
+  heldPostMoney: number; // the better price if you hold firm and it lands
+  date: string;
+};
+
+const TERM_CONCESSION_CHANCE = 0.3;
+// Base chance the founder walks if you hold firm on the hard term (valuation).
+// Reputation buys you room to push: at 100 reputation the risk is roughly
+// halved, at 0 it's unchanged. See resolveTermConcession in play/actions.ts.
+export const TERM_CONCESSION_BASE_WALK_RISK = 0.35;
+export function founderWalkRisk(reputationScore: number): number {
+  return TERM_CONCESSION_BASE_WALK_RISK * (1 - reputationScore / 200);
+}
+export const TERM_HELD_WON_REPUTATION_BOOST = 4;
+export const TERM_HELD_LOST_REPUTATION_HIT = 8;
+
+export function maybeTermConcession(round: {
+  stage: string;
+  raised: number;
+  postMoney: number;
+  date: string;
+}): TermConcessionChoice | null {
+  if (Math.random() >= TERM_CONCESSION_CHANCE) return null;
+  return {
+    stage: round.stage,
+    raised: round.raised,
+    heldRaised: roundTo500k(round.raised * 0.85),
+    postMoney: round.postMoney,
+    heldPostMoney: roundTo500k(round.postMoney * 0.85),
+    date: round.date,
+  };
+}
+
 // Base per-year chance a quiet company's founder calls asking to pivot — read
 // as a scenario-pool weight now.
 export const PIVOT_CHANCE = 0.18;
@@ -461,6 +505,8 @@ export type ReputationCounts = {
   decisionsExpired: number; // ghosted a founder waiting on you
   dealsExpired: number; // pitches that never got a yes or a no
   foundersOusted: number; // voted a founder out of their own company
+  termsHeldWon: number; // held firm on a hard term and the founder didn't walk
+  termsHeldLost: number; // held firm on a hard term and the founder walked
 };
 
 export type Reputation = {
@@ -500,7 +546,9 @@ export function reputation(c: ReputationCounts): Reputation {
       4 * c.dealsExpired -
       // Ousting a founder is the efficient call and the expensive one: it
       // travels further in founder circles than any single no.
-      12 * c.foundersOusted,
+      12 * c.foundersOusted +
+      TERM_HELD_WON_REPUTATION_BOOST * c.termsHeldWon -
+      TERM_HELD_LOST_REPUTATION_HIT * c.termsHeldLost,
     0,
     100
   );

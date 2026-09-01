@@ -213,6 +213,8 @@ describe("reputation", () => {
     decisionsExpired: 0,
     dealsExpired: 0,
     foundersOusted: 0,
+    termsHeldWon: 0,
+    termsHeldLost: 0,
   };
 
   it("starts neutral when nothing founder-facing ever happened", () => {
@@ -580,6 +582,8 @@ describe("reputation — ousting founders", () => {
     decisionsExpired: 0,
     dealsExpired: 0,
     foundersOusted: 0,
+    termsHeldWon: 0,
+    termsHeldLost: 0,
   };
 
   it("costs more than refusing a bridge", () => {
