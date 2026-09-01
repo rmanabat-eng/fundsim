@@ -14,6 +14,8 @@ export async function currentReputation(visitorId: string) {
     decisionsExpired,
     dealsExpired,
     foundersOusted,
+    termsHeldWon,
+    termsHeldLost,
   ] = await Promise.all([
     prisma.decision.count({ where: { visitorId, type: "bridge", status: "resolved" } }),
     prisma.decision.count({
@@ -36,6 +38,12 @@ export async function currentReputation(visitorId: string) {
     prisma.decision.count({ where: { visitorId, status: "expired" } }),
     prisma.deal.count({ where: { visitorId, status: "expired" } }),
     prisma.decision.count({ where: { visitorId, status: "ousted" } }),
+    prisma.decision.count({
+      where: { visitorId, type: "term_concession", status: "resolved_held" },
+    }),
+    prisma.decision.count({
+      where: { visitorId, type: "term_concession", status: "declined_founder_walked" },
+    }),
   ]);
   const rep = reputation({
     bridgesFunded,
@@ -47,6 +55,8 @@ export async function currentReputation(visitorId: string) {
     decisionsExpired,
     dealsExpired,
     foundersOusted,
+    termsHeldWon,
+    termsHeldLost,
   });
   const drivers = [
     bridgesFunded > 0 &&
@@ -67,6 +77,10 @@ export async function currentReputation(visitorId: string) {
       `${dealsExpired} ${dealsExpired === 1 ? "pitch" : "pitches"} never answered`,
     foundersOusted > 0 &&
       `${foundersOusted} ${foundersOusted === 1 ? "founder" : "founders"} ousted`,
+    termsHeldWon > 0 &&
+      `${termsHeldWon} ${termsHeldWon === 1 ? "term" : "terms"} held firm and won`,
+    termsHeldLost > 0 &&
+      `${termsHeldLost} ${termsHeldLost === 1 ? "founder" : "founders"} walked over a held term`,
   ].filter(Boolean) as string[];
   return { rep, drivers };
 }

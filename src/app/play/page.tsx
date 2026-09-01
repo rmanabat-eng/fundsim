@@ -42,6 +42,7 @@ import type {
   BridgePayload,
   FundSecondaryPayload,
   ProRataPayload,
+  TermConcessionPayload,
   TermSheetPayload,
 } from "@/app/play/actions";
 import type { ExitRoutePayload, PayToPlayPayload } from "@/lib/campaign";
@@ -644,6 +645,25 @@ export default async function PlayPage() {
         highPricePost: payload.highPricePost,
         ownedTopTier: dilute(payload.topTierPost),
         ownedHighPrice: dilute(payload.highPricePost),
+        signals,
+      };
+    }
+    if (d.type === "term_concession") {
+      const payload = JSON.parse(d.payload) as TermConcessionPayload;
+      const ownedNow = ownershipAfterRounds(rounds);
+      const dilute = (post: number, raised: number) => (ownedNow * (post - raised)) / post;
+      return {
+        id: d.id,
+        type: "term_concession",
+        companyId: d.companyId,
+        companyName: d.company.name,
+        stage: payload.stage,
+        raised: payload.raised,
+        heldRaised: payload.heldRaised,
+        postMoney: payload.postMoney,
+        heldPostMoney: payload.heldPostMoney,
+        ownedConceded: dilute(payload.postMoney, payload.raised),
+        ownedHeldValuation: dilute(payload.heldPostMoney, payload.raised),
         signals,
       };
     }
