@@ -6,7 +6,17 @@ import { endCampaign } from "@/app/play/actions";
 // Ending the run early is a real decision (you lose the quartile grade,
 // which is calibrated to a full-length fund), so it gets the same inline
 // confirm step as the other destructive buttons.
-export function EndCampaignButton({ year }: { year: number }) {
+// variant controls only the resting-state button's visual weight: "outline"
+// (default) is the loud border-4 pill; "menu" is a plain text row for use
+// inside the quiet header dropdown, where the item itself supplies the click
+// target and doesn't need to shout.
+export function EndCampaignButton({
+  year,
+  variant = "outline",
+}: {
+  year: number;
+  variant?: "outline" | "menu";
+}) {
   const [confirming, setConfirming] = useState(false);
   const [pending, startTransition] = useTransition();
 
@@ -36,7 +46,11 @@ export function EndCampaignButton({ year }: { year: number }) {
     <button
       type="button"
       onClick={() => setConfirming(true)}
-      className="max-btn-outline rounded-full border-4 border-[color:var(--max-orange)] bg-[#2d1b4e]/60 px-4 py-2 text-sm font-bold uppercase tracking-wide text-[color:var(--max-orange)] hover:bg-[color:var(--max-orange)]/10"
+      className={
+        variant === "menu"
+          ? "w-full rounded-md px-3 py-2 text-left text-xs font-bold text-[color:var(--max-orange)] hover:bg-white/5"
+          : "max-btn-outline rounded-full border-4 border-[color:var(--max-orange)] bg-[#2d1b4e]/60 px-4 py-2 text-sm font-bold uppercase tracking-wide text-[color:var(--max-orange)] hover:bg-[color:var(--max-orange)]/10"
+      }
     >
       End campaign
     </button>

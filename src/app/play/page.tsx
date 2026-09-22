@@ -34,6 +34,7 @@ import { CampaignTutorial } from "@/components/CampaignTutorial";
 import { CampaignTips } from "@/components/CampaignTips";
 import { CampaignLog } from "@/components/CampaignLog";
 import { PortfolioPanel } from "@/components/PortfolioPanel";
+import { HudStrip } from "@/components/HudStrip";
 import { SaveScenarioForm } from "@/components/SaveScenarioForm";
 import { toCompanyRows, toChartPoints } from "@/lib/portfolio-view";
 import { sectorArt } from "@/lib/sectors";
@@ -72,7 +73,8 @@ const MARKET_CHIP_STYLES: Record<Market, string> = {
 };
 
 // Rotated per-instance via the `border` prop so a row of stats clashes
-// intentionally instead of repeating one accent down the line.
+// intentionally instead of repeating one accent down the line. Used by the
+// end-of-campaign scorecard grid; the live in-play HUD uses HudStrip instead.
 const STAT_BORDERS = [
   "var(--max-yellow)",
   "var(--max-cyan)",
@@ -752,53 +754,44 @@ export default async function PlayPage() {
       {game.year === 1 && game.name === "Untitled Fund" && <FundNamePrompt gameId={game.id} />}
       <CampaignTips />
 
-      {/* Year lives in the header pips now, so the HUD is all fund health. */}
-      <div data-tour="hud" className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3">
-        <Stat
-          icon="💰"
-          label="Dry powder"
-          value={formatDollars(remaining)}
-          accent="from-amber-400 to-orange-600"
-          hint="Capital you haven't deployed yet. Every check — first, follow-on, or bridge — comes out of this, and exits don't refill it."
-          index={0}
-        />
-        <Stat
-          icon="🏢"
-          label="Companies backed"
-          value={`${companies.length} of ${settings.maxCompanies}`}
-          accent="from-indigo-400 to-blue-600"
-          hint="Portfolio companies you've written checks into, out of the fund's cap. When it's full, new deals bounce — pace yourself."
-          delay={60}
-          index={1}
-        />
-        <Stat
-          icon="📈"
-          label="Portfolio value"
-          value={formatDollars(metrics.portfolioValue + metrics.distributions)}
-          accent="from-emerald-400 to-teal-600"
-          hint="Active stakes marked at each company's latest post-money valuation, plus cash already returned by exits."
-          delay={120}
-          index={2}
-        />
-        <Stat
-          icon="🏆"
-          label="TVPI"
-          value={metrics.tvpi === null ? "—" : formatMultiple(metrics.tvpi)}
-          accent="from-violet-400 to-fuchsia-600"
-          hint="Total Value to Paid-In: (paper value + cash back) ÷ capital deployed. The headline multiple LPs grade a fund by."
-          delay={180}
-          index={3}
-        />
-        <Stat
-          icon={REP_EMOJI[rep.tone]}
-          label="Reputation"
-          value={`${rep.score}/100`}
-          accent="from-pink-400 to-rose-600"
-          hint="How founders talk about you. Funding bridges and answering follow-ons builds it; a quick no barely costs; ghosting costs the most."
-          delay={240}
-          index={4}
-        />
-      </div>
+      {/* Year lives in the header pips now, so the HUD is all fund health.
+          A thin strip instead of a card grid: numbers stay one row on any
+          screen width, and each label carries its own hover/tab hint —
+          no separate expanded view to maintain. */}
+      <HudStrip
+        stats={[
+          {
+            icon: "💰",
+            label: "Dry powder",
+            value: formatDollars(remaining),
+            hint: "Capital you haven't deployed yet. Every check — first, follow-on, or bridge — comes out of this, and exits don't refill it.",
+          },
+          {
+            icon: "🏢",
+            label: "Companies backed",
+            value: `${companies.length} of ${settings.maxCompanies}`,
+            hint: "Portfolio companies you've written checks into, out of the fund's cap. When it's full, new deals bounce — pace yourself.",
+          },
+          {
+            icon: "📈",
+            label: "Portfolio value",
+            value: formatDollars(metrics.portfolioValue + metrics.distributions),
+            hint: "Active stakes marked at each company's latest post-money valuation, plus cash already returned by exits.",
+          },
+          {
+            icon: "🏆",
+            label: "TVPI",
+            value: metrics.tvpi === null ? "—" : formatMultiple(metrics.tvpi),
+            hint: "Total Value to Paid-In: (paper value + cash back) ÷ capital deployed. The headline multiple LPs grade a fund by.",
+          },
+          {
+            icon: REP_EMOJI[rep.tone],
+            label: "Reputation",
+            value: `${rep.score}/100`,
+            hint: "How founders talk about you. Funding bridges and answering follow-ons builds it; a quick no barely costs; ghosting costs the most.",
+          },
+        ]}
+      />
 
       {backedThisYear.length > 0 && (
         <section className="mt-6">
@@ -1044,14 +1037,22 @@ function Shell({
               </p>
             </div>
             {year !== null && (
-              <div className="flex flex-wrap items-center gap-2">
-                <EndCampaignButton year={year} />
-                <StartCampaignButton
-                  label="Restart Campaign"
-                  hasPortfolio={true}
-                  variant="outline"
-                />
-              </div>
+              // Quiet dropdown instead of two loud pill buttons: these are
+              // rare/destructive actions, not primary CTAs, so they shouldn't
+              // shout as loud as the game's own identity on every load.
+              <details className="group relative">
+                <summary className="cursor-pointer select-none rounded-md px-2 py-1 text-xs font-bold uppercase tracking-widest text-white/60 outline-none [&::-webkit-details-marker]:hidden hover:text-white">
+                  ⋯ More
+                </summary>
+                <div className="max-card-flat absolute right-0 top-full z-30 mt-1.5 w-56 rounded-xl p-1.5">
+                  <EndCampaignButton year={year} variant="menu" />
+                  <StartCampaignButton
+                    label="Restart campaign"
+                    hasPortfolio={true}
+                    variant="menu"
+                  />
+                </div>
+              </details>
             )}
           </div>
           {year !== null && (
