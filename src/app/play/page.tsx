@@ -755,6 +755,8 @@ export default async function PlayPage() {
     };
   });
 
+  const logEntries = campaignLog(companies, game.startedAt, game.year);
+
   return (
     <AdvanceYearProvider
       year={game.year}
@@ -887,18 +889,24 @@ export default async function PlayPage() {
         )}
       </section>
 
-      <PortfolioPanel
-        rows={toCompanyRows(companies)}
-        points={toChartPoints(companies)}
-      />
-
-      <CampaignLog entries={campaignLog(companies, game.startedAt, game.year)} />
+      {/* Fund Dashboard and Fund log both moved into the Portfolio popup
+          (Snapshot/History/Chart tabs) on the sticky bar — one place for
+          "what do I own", "what happened", and "how it's trended" instead
+          of three separate sections down here. */}
 
       {/* Extra bottom room so the sticky bar never sits over the last
           card — the bar itself lives outside normal flow (fixed). */}
       <div className="h-20" aria-hidden />
       </Shell>
-      <AdvanceYearBar portfolio={<PortfolioLogButton rows={toCompanyRows(companies)} />} />
+      <AdvanceYearBar
+        portfolio={
+          <PortfolioLogButton
+            rows={toCompanyRows(companies)}
+            logEntries={logEntries}
+            points={toChartPoints(companies)}
+          />
+        }
+      />
     </AdvanceYearProvider>
   );
 }
