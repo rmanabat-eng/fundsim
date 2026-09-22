@@ -30,27 +30,26 @@ const CONCEPTS = [
   },
 ] as const;
 
-// What the learning guide actually covers, as the four "why this matters" bullets.
-const GUIDE_POINTS = [
-  {
-    accent: "var(--max-magenta)",
-    title: "The power law",
-    desc: "A couple of big winners carry the whole fund — most bets return zero.",
-  },
-  {
-    accent: "var(--max-cyan)",
-    title: "Dilution",
-    desc: "Every new round shrinks your stake, unless you defend it with a follow-on.",
-  },
+// How-it-works steps — replaces the old guide/dashboard/leaderboard promo
+// stack so a beginner reaches /play after one screen, not four.
+const STEPS = [
   {
     accent: "var(--max-yellow)",
-    title: "TVPI vs. cash",
-    desc: "Paper markups aren't real money until there's an exit — know the difference.",
+    emoji: "1️⃣",
+    title: "Source & decide",
+    desc: "Evaluate deals, pick check size and valuation. Jargon is underlined — hover to learn it.",
+  },
+  {
+    accent: "var(--max-purple)",
+    emoji: "2️⃣",
+    title: "Watch it compound",
+    desc: "Your dashboard updates every year: dilution, TVPI, dry powder.",
   },
   {
     accent: "var(--max-orange)",
-    title: "Vintages & the J-curve",
-    desc: "Timing warps everything, and staying silent costs more than saying no.",
+    emoji: "3️⃣",
+    title: "Compare your run",
+    desc: "See your TVPI ranked on the public leaderboard.",
   },
 ] as const;
 
@@ -65,24 +64,6 @@ const HERO_STARS = [
   { top: "22%", left: "78%", size: "4px", delay: "1.4s" },
   { top: "68%", left: "90%", size: "5px", delay: "0.7s" },
 ] as const;
-
-// Full-bleed section break: just the colour bar. Earlier versions duplicated
-// each neighbour's pattern in their own top/bottom band divs, but a tiled
-// background restarts its phase at each element's own top-left corner — two
-// separately-tiled diagonal-stripe layers meeting at a seam rarely line up,
-// which showed as a faint seam line even with identical classes/colours.
-// Sitting the bar directly between the sections' own (single, unbroken)
-// pattern layers removes the seam entirely: each side is one continuous
-// background, not two stitched together.
-function SectionDivider({ accent }: { accent: string }) {
-  return (
-    <div
-      aria-hidden
-      className="relative left-1/2 h-2 w-screen -translate-x-1/2"
-      style={{ backgroundColor: accent }}
-    />
-  );
-}
 
 export default async function Home() {
   const visitorId = await getVisitorId();
@@ -248,166 +229,43 @@ export default async function Home() {
       </header>
 
       <main>
-        {/* -------- Learning guide: identity + CTA left, four "why it matters" bullets right -------- */}
-        <div className="relative left-1/2 w-screen -translate-x-1/2 bg-[#0d0d1a]">
-          <div aria-hidden className="max-pattern-grid pointer-events-none absolute inset-0" />
-          <section className="relative mx-auto grid max-w-6xl items-start gap-10 px-6 py-20 lg:grid-cols-[0.85fr_1.15fr]">
-          <div>
-            <span
-              aria-hidden
-              className="inline-flex h-14 w-14 items-center justify-center rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-br from-[color:var(--max-magenta)] to-[color:var(--max-purple)] text-2xl shadow-[4px_4px_0_rgba(0,0,0,0.35)]"
-            >
-              📚
-            </span>
-            <h2 className="mb-5 mt-5 font-display text-4xl font-black uppercase leading-[0.95] tracking-tight text-white [text-shadow:3px_3px_0_var(--max-purple),6px_6px_0_var(--max-magenta)]">
-              Learning
-              <br />
-              Guide
-            </h2>
-            <p className="mb-6 max-w-sm rounded-xl border-[3px] border-dashed border-[color:var(--max-cyan)] bg-[#2d1b4e]/40 px-5 py-4 text-sm leading-relaxed text-white/85">
-              Start here — learn what the game is actually teaching.
-            </p>
-            <Link
-              href="/guide"
-              className="max-btn-primary inline-flex items-center gap-2 rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-r from-[color:var(--max-magenta)] via-[color:var(--max-purple)] to-[color:var(--max-cyan)] px-7 py-[14px] text-sm font-black uppercase tracking-[0.06em] text-white"
-            >
-              📖 Read the guide
-            </Link>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            {GUIDE_POINTS.map((p) => (
+        {/* -------- How it works: replaces the old guide/dashboard/leaderboard
+            promo stack, so /play is one screen away instead of four. -------- */}
+        <section className="relative mx-auto max-w-6xl px-6 pb-16 pt-4 sm:pb-20">
+          <div className="grid gap-4 sm:grid-cols-3">
+            {STEPS.map((s) => (
               <div
-                key={p.title}
+                key={s.title}
                 className="rounded-2xl border-[3px] bg-[#2d1b4e]/40 p-5 backdrop-blur-sm"
-                style={{ borderColor: p.accent }}
+                style={{ borderColor: s.accent }}
               >
-                <div className="flex items-start gap-4">
-                  <span
-                    aria-hidden
-                    className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-black text-[#0d0d1a]"
-                    style={{ backgroundColor: p.accent }}
-                  >
-                    ✓
-                  </span>
-                  <div className="min-w-0">
-                    <h3 className="font-display text-base font-bold uppercase tracking-tight text-white">
-                      {p.title}
-                    </h3>
-                    <p className="mt-1 text-sm leading-relaxed text-white/75">{p.desc}</p>
-                  </div>
-                </div>
+                <span aria-hidden className="text-2xl">
+                  {s.emoji}
+                </span>
+                <h3 className="mt-2 font-display text-base font-bold uppercase tracking-tight text-white">
+                  {s.title}
+                </h3>
+                <p className="mt-1 text-sm leading-relaxed text-white/75">{s.desc}</p>
               </div>
             ))}
           </div>
-          </section>
-        </div>
+        </section>
 
-        <SectionDivider accent="var(--max-yellow)" />
-
-        {/* -------- Fund dashboard: preview left, copy + CTA right -------- */}
-        <div className="relative left-1/2 w-screen -translate-x-1/2 bg-[#150f28]">
-          <div aria-hidden className="max-pattern-stripes pointer-events-none absolute inset-0" />
-          <div aria-hidden className="max-pattern-dots pointer-events-none absolute inset-0" />
-          <section className="relative mx-auto grid max-w-6xl items-center gap-10 px-6 py-20 lg:grid-cols-[1fr_1.05fr]">
-          {/* Stylized dashboard preview — mimics the real dashboard's chart + stat
-              tiles rather than an embedded screenshot, so it never goes stale. */}
-          <div className="relative rounded-3xl border-4 border-[color:var(--max-cyan)] bg-[#15102a] p-4 shadow-[8px_8px_0_var(--max-magenta)]">
-            <div className="flex items-center gap-1.5 border-b border-white/10 px-1 pb-3">
-              <span className="h-2.5 w-2.5 rounded-full bg-[color:var(--max-magenta)]" />
-              <span className="h-2.5 w-2.5 rounded-full bg-[color:var(--max-yellow)]" />
-              <span className="h-2.5 w-2.5 rounded-full bg-[color:var(--max-cyan)]" />
-              <span className="ml-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">
-                fundsim.app/dashboard
-              </span>
-            </div>
-            <div className="mt-3 grid grid-cols-3 gap-2 px-1">
-              <div className="rounded-lg border-2 border-[color:var(--max-magenta)]/60 bg-white/5 p-2.5">
-                <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-white/50">
-                  Fund size
-                </p>
-                <p className="mt-1 font-display text-lg font-bold text-white">$10M</p>
-              </div>
-              <div className="rounded-lg border-2 border-[color:var(--max-yellow)]/60 bg-white/5 p-2.5">
-                <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-white/50">
-                  TVPI
-                </p>
-                <p className="mt-1 font-display text-lg font-bold text-white">2.4x</p>
-              </div>
-              <div className="rounded-lg border-2 border-[color:var(--max-orange)]/60 bg-white/5 p-2.5">
-                <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-white/50">
-                  Deals
-                </p>
-                <p className="mt-1 font-display text-lg font-bold text-white">14</p>
-              </div>
-            </div>
-            <div className="mt-3 rounded-lg border-2 border-white/10 bg-white/5 px-3 pb-3 pt-4">
-              <svg viewBox="0 0 220 70" className="h-16 w-full" aria-hidden>
-                <polyline
-                  points="0,55 30,50 60,52 90,35 120,38 150,15 180,20 220,5"
-                  fill="none"
-                  stroke="var(--max-cyan)"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <circle cx="220" cy="5" r="4" fill="var(--max-cyan)" />
-              </svg>
-            </div>
-          </div>
-
-          <div className="rounded-3xl border-4 border-[color:var(--max-magenta)] bg-[#2d1b4e]/50 p-8 backdrop-blur-sm sm:p-10">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[color:var(--max-orange)]">
-              Free play
-            </p>
-            <h2 className="mt-1 font-display text-3xl font-black uppercase tracking-tight text-white [text-shadow:2px_2px_0_var(--max-cyan)] sm:text-4xl">
-              Fund Dashboard
-            </h2>
-            <Link
-              href="/dashboard"
-              className="max-btn-primary mt-6 inline-flex items-center gap-2 rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-r from-[color:var(--max-orange)] via-[color:var(--max-magenta)] to-[color:var(--max-purple)] px-7 py-[14px] text-sm font-black uppercase tracking-[0.06em] text-white"
-            >
-              📊 Open dashboard
+        {/* -------- Footer nav: guide/dashboard/leaderboard as links, not
+            full-bleed sections — kept consistent for every visitor. -------- */}
+        <footer className="relative left-1/2 w-screen -translate-x-1/2 border-t-2 border-white/10 bg-[#150f28]">
+          <div className="mx-auto flex max-w-6xl flex-wrap gap-6 px-6 py-5 text-sm font-bold text-white/70">
+            <Link href="/guide" className="hover:text-white">
+              📖 Learning guide
             </Link>
-            <p className="mt-6 max-w-[52ch] text-sm leading-relaxed text-white/80">
-              Build a portfolio by hand, simulate years, and watch the metrics —
-              the sandbox behind the campaign, plus your campaign portfolio in
-              detail.
-            </p>
+            <Link href="/dashboard" className="hover:text-white">
+              📊 Fund dashboard
+            </Link>
+            <Link href="/leaderboard" className="hover:text-white">
+              🏆 Public leaderboard
+            </Link>
           </div>
-          </section>
-        </div>
-
-        <SectionDivider accent="var(--max-cyan)" />
-
-        {/* -------- Leaderboard: single centered card, same recipe as the
-            Free Play card above (label, headline, CTA, blurb) -------- */}
-        <div className="relative left-1/2 w-screen -translate-x-1/2 bg-[#0d0d1a]">
-          <div aria-hidden className="max-pattern-dots pointer-events-none absolute inset-0" />
-          <section className="relative mx-auto max-w-3xl px-6 py-20">
-            <div className="mx-auto max-w-xl rounded-3xl border-4 border-[color:var(--max-purple)] bg-[#2d1b4e]/50 p-8 text-center backdrop-blur-sm sm:p-10">
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[color:var(--max-cyan)]">
-                Public
-              </p>
-              <h2 className="mt-1 font-display text-3xl font-black uppercase tracking-tight text-white [text-shadow:2px_2px_0_var(--max-magenta)] sm:text-4xl">
-                Leaderboard
-              </h2>
-              <Link
-                href="/leaderboard"
-                className="max-btn-primary mt-6 inline-flex items-center gap-2 rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-r from-[color:var(--max-magenta)] via-[color:var(--max-purple)] to-[color:var(--max-cyan)] px-7 py-[14px] text-sm font-black uppercase tracking-[0.06em] text-white"
-              >
-                🏆 See the leaderboard
-              </Link>
-              <p className="mx-auto mt-6 max-w-[52ch] text-sm leading-relaxed text-white/80">
-                Every fund whose GP chose to submit their score at the end of
-                a run is ranked here by TVPI and by reputation — not your own
-                private runs, just the results other players opted to share.
-              </p>
-            </div>
-          </section>
-        </div>
-
-        <SectionDivider accent="var(--max-purple)" />
+        </footer>
       </main>
     </div>
   );

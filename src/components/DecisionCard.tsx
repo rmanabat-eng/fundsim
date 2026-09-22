@@ -1002,9 +1002,13 @@ function TermConcessionCard({
           Concede: {formatDollars(d.postMoney)} post, you&apos;d hold{" "}
           {formatPercent(d.ownedConceded)}. Hold firm:{" "}
           {formatDollars(d.heldPostMoney)} post, you&apos;d hold{" "}
-          {formatPercent(d.ownedHeldValuation)} —{" "}
+          {formatPercent(d.ownedHeldValuation)} — holding firm means less{" "}
+          <Term def="Dilution: a higher post-money valuation means the same check buys a smaller slice of the company — that's what shrinks the founder's stake here, not yours.">
+            dilution
+          </Term>{" "}
+          for the founder, but{" "}
           <Term def="Holding firm risks the founder walking away entirely. Losing them here is final: no resurfacing, no second chance on this deal.">
-            but the founder might walk
+            the founder might walk
           </Term>
           .
         </p>
