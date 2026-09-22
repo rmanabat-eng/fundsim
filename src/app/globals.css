@@ -364,6 +364,16 @@ body {
   backdrop-filter: blur(4px);
 }
 
+/* Same border as .max-card-flat, opaque instead of glass — for surfaces
+   read on demand (tooltips, popup modals) where whatever's behind them
+   showing through hurts legibility more than the glass look is worth. */
+.max-card-solid {
+  border-width: 4px;
+  border-style: solid;
+  border-color: var(--max-card-border, var(--max-magenta));
+  background: #2d1b4e;
+}
+
 
 /* Small inline stat/detail box used inside cards (replaces the light
    bg-white/70 boxes from the arcade skin). */

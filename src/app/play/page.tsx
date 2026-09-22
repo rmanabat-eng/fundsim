@@ -27,7 +27,12 @@ import { FundNamePrompt } from "@/components/FundNamePrompt";
 import { DismissAndHomeLink } from "@/components/DismissAndHomeLink";
 import { SubmitToLeaderboardButton } from "@/components/SubmitToLeaderboardButton";
 import { EndCampaignButton } from "@/components/EndCampaignButton";
-import { AdvanceYearButton } from "@/components/AdvanceYearButton";
+import { ReplayTutorialButton } from "@/components/ReplayTutorialButton";
+import {
+  AdvanceYearProvider,
+  AdvanceYearBar,
+  AdvanceYearResults,
+} from "@/components/AdvanceYearButton";
 import { Toaster } from "@/components/toast";
 import { UndoInvestmentButton } from "@/components/UndoInvestmentButton";
 import { CampaignTutorial } from "@/components/CampaignTutorial";
@@ -750,15 +755,21 @@ export default async function PlayPage() {
   });
 
   return (
-    <Shell year={game.year} market={game.market as Market}>
+    <AdvanceYearProvider
+      year={game.year}
+      openDeals={dealViews.length}
+      pendingDecisions={decisionViews.length}
+    >
+      <Shell year={game.year} market={game.market as Market}>
+      {game.year === 1 && <CampaignTutorial gameId={game.id} />}
       {game.year === 1 && game.name === "Untitled Fund" && <FundNamePrompt gameId={game.id} />}
-      <CampaignTips />
 
-      {/* Year lives in the header pips now, so the HUD is all fund health.
-          A thin strip instead of a card grid: numbers stay one row on any
-          screen width, and each label carries its own hover/tab hint —
-          no separate expanded view to maintain. */}
+      {/* Year lives in the header pips (their original small size) now, so
+          the HUD is all fund health — just stats and Tips, no button
+          fighting them for room. Advance lives in its own sticky bottom
+          bar instead, reachable from anywhere without scrolling. */}
       <HudStrip
+        trailing={<CampaignTips />}
         stats={[
           {
             icon: "💰",
@@ -792,6 +803,7 @@ export default async function PlayPage() {
           },
         ]}
       />
+      <AdvanceYearResults />
 
       {backedThisYear.length > 0 && (
         <section className="mt-6">
@@ -831,19 +843,10 @@ export default async function PlayPage() {
       )}
 
       <section className="mt-8">
-        <AdvanceYearButton
-          year={game.year}
-          openDeals={dealViews.length}
-          pendingDecisions={decisionViews.length}
-          heading={
-            <h2 className="text-sm font-black uppercase tracking-widest text-white/60">
-              🃏 This year&apos;s deal flow{" "}
-              <span className="text-white/40">
-                (Year {game.year})
-              </span>
-            </h2>
-          }
-        />
+        <h2 className="text-sm font-black uppercase tracking-widest text-white/60">
+          🃏 This year&apos;s deal flow{" "}
+          <span className="text-white/40">(Year {game.year})</span>
+        </h2>
         {dealViews.length === 0 ? (
           <p className="mt-4 rounded-2xl border-4 border-dashed border-[color:var(--max-cyan)] p-6 text-center text-sm text-white/60">
             {game.year > INVESTMENT_PERIOD_YEARS ? (
@@ -890,9 +893,12 @@ export default async function PlayPage() {
 
       <CampaignLog entries={campaignLog(companies, game.startedAt, game.year)} />
 
-      {/* First-run coach marks, year 1 only. */}
-      {game.year === 1 && <CampaignTutorial gameId={game.id} />}
-    </Shell>
+      {/* Extra bottom room so the sticky bar never sits over the last
+          card — the bar itself lives outside normal flow (fixed). */}
+      <div className="h-20" aria-hidden />
+      </Shell>
+      <AdvanceYearBar />
+    </AdvanceYearProvider>
   );
 }
 
@@ -1037,14 +1043,16 @@ function Shell({
               </p>
             </div>
             {year !== null && (
-              // Quiet dropdown instead of two loud pill buttons: these are
-              // rare/destructive actions, not primary CTAs, so they shouldn't
-              // shout as loud as the game's own identity on every load.
+              // Quiet dropdown instead of loud pill buttons: these are
+              // rare actions (or, for the tutorial, a one-time replay), not
+              // primary CTAs, so they shouldn't shout as loud as the game's
+              // own identity on every load.
               <details className="group relative">
                 <summary className="cursor-pointer select-none rounded-md px-2 py-1 text-xs font-bold uppercase tracking-widest text-white/60 outline-none [&::-webkit-details-marker]:hidden hover:text-white">
                   ⋯ More
                 </summary>
                 <div className="max-card-flat absolute right-0 top-full z-30 mt-1.5 w-56 rounded-xl p-1.5">
+                  {year === 1 && <ReplayTutorialButton />}
                   <EndCampaignButton year={year} variant="menu" />
                   <StartCampaignButton
                     label="Restart campaign"

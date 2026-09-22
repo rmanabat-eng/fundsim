@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+import { createPortal } from "react-dom";
 import {
   DEALS_PER_YEAR,
   GAME_YEARS,
@@ -5,8 +9,10 @@ import {
 } from "@/lib/campaign";
 
 // Tactical advice for the turn you're actually playing — distinct from the
-// one-time tutorial (onboarding) and the guide (theory). A collapsed <details>
-// keeps it out of the way and needs no client JS or dismissal state.
+// one-time tutorial (onboarding) and the guide (theory). A popup modal
+// (FundNamePrompt's dialog pattern) instead of an inline <details> block:
+// the tip list is long enough that expanding it in place pushed the deal
+// feed down every time someone opened it.
 
 type Tip = { lead: string; body: string };
 type Group = { heading: string; tips: Tip[] };
@@ -91,63 +97,83 @@ const GROUPS: Group[] = [
 ];
 
 export function CampaignTips() {
-  return (
-    // Collapsed, this is just a small pill — a full-width bar left a long
-    // empty band across the top of the page.
-    <details className="group">
-      <summary className="max-btn-outline inline-flex w-fit cursor-pointer select-none list-none items-center gap-2 rounded-full border-4 border-[color:var(--max-yellow)] bg-[#2d1b4e]/60 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white outline-none transition-transform focus-visible:ring-2 focus-visible:ring-[color:var(--max-yellow)] [&::-webkit-details-marker]:hidden">
-        <span aria-hidden className="text-sm">
-          💡
-        </span>
-        Tips for playing
-        <span
-          aria-hidden
-          className="text-[10px] transition-transform group-open:rotate-180"
-        >
-          ▼
-        </span>
-      </summary>
+  const [open, setOpen] = useState(false);
 
-      {/* Each group gets its own box: uneven tip counts would otherwise leave
-          ragged gaps where a short section meets a tall one in the grid. */}
-      <div
-        className="max-card-flat mt-3 grid gap-4 rounded-2xl p-5 sm:grid-cols-2"
-        style={{ "--max-card-border": "var(--max-yellow)" } as React.CSSProperties}
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="Tips for playing"
+        className="whitespace-nowrap text-xs font-bold uppercase tracking-widest text-white/60 hover:text-white"
       >
-        {GROUPS.map((g, i) => (
-          <section
-            key={g.heading}
-            className="max-chip-box rounded-xl p-4"
-            style={
-              {
-                borderColor: [
-                  "var(--max-magenta)",
-                  "var(--max-cyan)",
-                  "var(--max-orange)",
-                  "var(--max-purple)",
-                ][i % 4],
-              } as React.CSSProperties
-            }
+        💡 Tips
+      </button>
+
+      {open &&
+        createPortal(
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Tips for playing"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
           >
-            <h3 className="text-xs font-black uppercase tracking-widest text-white">
-              {g.heading}
-            </h3>
-            <ul className="mt-3 space-y-2.5">
-              {g.tips.map((t) => (
-                <li key={t.lead} className="text-sm leading-relaxed">
-                  <span className="font-semibold text-white/90">
-                    {t.lead}
-                  </span>
-                  <span className="text-white/65">
-                    {" "}
-                    — {t.body}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
-      </div>
-    </details>
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-[#0d0d1a]/85"
+              onClick={() => setOpen(false)}
+            />
+            <div
+              className="max-card-solid relative max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl p-5 shadow-[6px_6px_0_var(--max-cyan)] sm:p-6"
+              style={{ "--max-card-border": "var(--max-yellow)" } as React.CSSProperties}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <h3 className="font-display text-lg font-bold text-white">
+                  💡 Tips for playing
+                </h3>
+                <button
+                  onClick={() => setOpen(false)}
+                  aria-label="Close"
+                  className="shrink-0 text-xl leading-none text-white/50 hover:text-white"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                {GROUPS.map((g, i) => (
+                  <section
+                    key={g.heading}
+                    className="max-chip-box rounded-xl p-4"
+                    style={
+                      {
+                        borderColor: [
+                          "var(--max-magenta)",
+                          "var(--max-cyan)",
+                          "var(--max-orange)",
+                          "var(--max-purple)",
+                        ][i % 4],
+                      } as React.CSSProperties
+                    }
+                  >
+                    <h4 className="text-xs font-black uppercase tracking-widest text-white">
+                      {g.heading}
+                    </h4>
+                    <ul className="mt-3 space-y-2.5">
+                      {g.tips.map((t) => (
+                        <li key={t.lead} className="text-sm leading-relaxed">
+                          <span className="font-semibold text-white/90">{t.lead}</span>
+                          <span className="text-white/65"> — {t.body}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                ))}
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+    </>
   );
 }
