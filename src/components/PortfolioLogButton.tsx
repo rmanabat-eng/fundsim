@@ -3,9 +3,14 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import type { CompanyRow } from "@/components/CompanyTable";
+import { CampaignLogList } from "@/components/CampaignLog";
+import { FundChart, type FundChartPoint } from "@/components/FundChart";
+import type { CampaignLogEntry } from "@/lib/campaign";
 import { STAGE_LABELS } from "@/lib/constants";
 import { SECTOR_STYLES, STAGE_STYLES } from "@/lib/badges";
 import { formatDollars, formatPercent, formatMultiple } from "@/lib/fund-math";
+
+type Tab = "snapshot" | "history" | "chart";
 
 const STATUS_STYLES: Record<CompanyRow["status"], string> = {
   active: "bg-white/10 text-white/70",
@@ -21,10 +26,22 @@ const STATUS_LABELS: Record<CompanyRow["status"], string> = {
 
 // A quick-glance popup of everything backed so far, reachable from the
 // sticky bar — lighter than the full filterable CompanyTable (which stays
-// on the dashboard/scorecard): just name, stage, status, and the numbers
-// that answer "how's it doing".
-export function PortfolioLogButton({ rows }: { rows: CompanyRow[] }) {
+// on the dashboard sandbox, a different tool): just name, stage, status,
+// and the numbers that answer "how's it doing". History folds in the
+// year-by-year fund log, and Chart folds in the value-over-time trend, so
+// "state of things", "what happened", and "how it's trended" all live in
+// one place instead of three separate page sections.
+export function PortfolioLogButton({
+  rows,
+  logEntries,
+  points,
+}: {
+  rows: CompanyRow[];
+  logEntries: CampaignLogEntry[];
+  points: FundChartPoint[];
+}) {
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<Tab>("snapshot");
   if (rows.length === 0) return null;
 
   return (
@@ -68,6 +85,38 @@ export function PortfolioLogButton({ rows }: { rows: CompanyRow[] }) {
                 </button>
               </div>
 
+              <div className="mt-3 flex gap-1 border-b-2 border-white/10">
+                {(["snapshot", "history", "chart"] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setTab(t)}
+                    className={`-mb-0.5 border-b-2 px-3 py-2 text-xs font-black uppercase tracking-widest ${
+                      tab === t
+                        ? "border-[color:var(--max-cyan)] text-white"
+                        : "border-transparent text-white/50 hover:text-white/80"
+                    }`}
+                  >
+                    {t === "snapshot" ? "Snapshot" : t === "history" ? "History" : "Chart"}
+                  </button>
+                ))}
+              </div>
+
+              {tab === "history" ? (
+                <div className="mt-4">
+                  <CampaignLogList entries={logEntries} />
+                </div>
+              ) : tab === "chart" ? (
+                <div className="mt-4">
+                  {points.length >= 2 ? (
+                    <FundChart points={points} />
+                  ) : (
+                    <p className="text-sm text-white/50">
+                      Not enough history yet — the trend line needs at least two events.
+                    </p>
+                  )}
+                </div>
+              ) : (
               <ul className="mt-4 space-y-2">
                 {rows.map((c) => (
                   <li
@@ -122,6 +171,7 @@ export function PortfolioLogButton({ rows }: { rows: CompanyRow[] }) {
                   </li>
                 ))}
               </ul>
+              )}
             </div>
           </div>,
           document.body
