@@ -1079,7 +1079,7 @@ function Shell({
           )}
         </div>
       </header>
-      <main className="relative mx-auto max-w-5xl px-6 py-8">{children}</main>
+      <main className="relative mx-auto max-w-5xl px-6 pb-8 pt-3">{children}</main>
       <Toaster />
     </div>
   );
