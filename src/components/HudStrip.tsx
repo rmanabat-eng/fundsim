@@ -19,7 +19,7 @@ export function HudStrip({
   return (
     <div
       data-tour="hud"
-      className="max-card-flat mt-6 flex flex-wrap items-center gap-x-1 gap-y-3 rounded-2xl px-4 py-3"
+      className="max-card-flat flex flex-wrap items-center gap-x-1 gap-y-3 rounded-2xl px-4 py-3"
     >
       {stats.map((s) => (
         <div
