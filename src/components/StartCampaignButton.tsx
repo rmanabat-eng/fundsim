@@ -18,7 +18,7 @@ export function StartCampaignButton({
 }: {
   label: string;
   hasPortfolio: boolean;
-  variant?: "primary" | "outline";
+  variant?: "primary" | "outline" | "menu";
 }) {
   const [confirming, setConfirming] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -56,9 +56,11 @@ export function StartCampaignButton({
       onClick={() => setConfirming(true)}
       disabled={pending}
       className={
-        variant === "outline"
-          ? "max-btn-outline rounded-full border-4 border-[color:var(--max-magenta)] bg-[#2d1b4e]/60 px-4 py-2 text-sm font-bold uppercase tracking-wide text-[color:var(--max-magenta)] hover:bg-[color:var(--max-magenta)]/10 disabled:opacity-50"
-          : "max-btn-primary rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-r from-[color:var(--max-magenta)] via-[color:var(--max-purple)] to-[color:var(--max-cyan)] px-6 py-3 text-base font-black uppercase tracking-wide text-white disabled:opacity-50"
+        variant === "menu"
+          ? "w-full rounded-md px-3 py-2 text-left text-xs font-bold text-white/80 hover:bg-white/5 disabled:opacity-50"
+          : variant === "outline"
+            ? "max-btn-outline rounded-full border-4 border-[color:var(--max-magenta)] bg-[#2d1b4e]/60 px-4 py-2 text-sm font-bold uppercase tracking-wide text-[color:var(--max-magenta)] hover:bg-[color:var(--max-magenta)]/10 disabled:opacity-50"
+            : "max-btn-primary rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-r from-[color:var(--max-magenta)] via-[color:var(--max-purple)] to-[color:var(--max-cyan)] px-6 py-3 text-base font-black uppercase tracking-wide text-white disabled:opacity-50"
       }
     >
       {pending ? "Dealing..." : label}
