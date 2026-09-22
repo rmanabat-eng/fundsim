@@ -39,6 +39,7 @@ import { CampaignTutorial } from "@/components/CampaignTutorial";
 import { CampaignTips } from "@/components/CampaignTips";
 import { CampaignLog } from "@/components/CampaignLog";
 import { PortfolioPanel } from "@/components/PortfolioPanel";
+import { PortfolioLogButton } from "@/components/PortfolioLogButton";
 import { HudStrip } from "@/components/HudStrip";
 import { SaveScenarioForm } from "@/components/SaveScenarioForm";
 import { toCompanyRows, toChartPoints } from "@/lib/portfolio-view";
@@ -897,7 +898,7 @@ export default async function PlayPage() {
           card — the bar itself lives outside normal flow (fixed). */}
       <div className="h-20" aria-hidden />
       </Shell>
-      <AdvanceYearBar />
+      <AdvanceYearBar portfolio={<PortfolioLogButton rows={toCompanyRows(companies)} />} />
     </AdvanceYearProvider>
   );
 }

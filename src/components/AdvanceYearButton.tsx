@@ -110,9 +110,10 @@ function AdvanceYearTrigger() {
 
 // A bar pinned to the viewport (not the page), so it's reachable from
 // anywhere without scrolling back up — the one control every year ends
-// with, sharing space with nothing else. Renders only for an active,
-// in-progress run (Shell passes null year for the title/scorecard screens).
-export function AdvanceYearBar() {
+// with, plus a quick portfolio glance, sharing space with nothing else.
+// Renders only for an active, in-progress run (Shell passes null year for
+// the title/scorecard screens).
+export function AdvanceYearBar({ portfolio }: { portfolio?: React.ReactNode }) {
   const { closing, openDeals, pendingDecisions, leftovers, confirming, setConfirming, run } =
     useAdvanceYear();
 
@@ -145,10 +146,13 @@ export function AdvanceYearBar() {
           </>
         ) : (
           <>
-            <span className="text-xs font-bold uppercase tracking-widest text-white/50">
-              {openDeals > 0 || pendingDecisions > 0
-                ? `${openDeals} ${openDeals === 1 ? "deal" : "deals"} open · ${pendingDecisions} ${pendingDecisions === 1 ? "decision" : "decisions"} pending`
-                : "Desk clear for this year"}
+            <span className="flex flex-wrap items-center gap-4">
+              <span className="text-xs font-bold uppercase tracking-widest text-white/50">
+                {openDeals > 0 || pendingDecisions > 0
+                  ? `${openDeals} ${openDeals === 1 ? "deal" : "deals"} open · ${pendingDecisions} ${pendingDecisions === 1 ? "decision" : "decisions"} pending`
+                  : "Desk clear for this year"}
+              </span>
+              {portfolio}
             </span>
             <AdvanceYearTrigger />
           </>
