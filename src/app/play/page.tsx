@@ -764,7 +764,12 @@ export default async function PlayPage() {
       pendingDecisions={decisionViews.length}
     >
       <Shell year={game.year} market={game.market as Market}>
-      {game.year === 1 && <CampaignTutorial gameId={game.id} />}
+      {/* Mounted every year, not just year 1: it only auto-runs the tour
+          once (tracked in localStorage), but it also owns the
+          fundsim:replay-tutorial listener the "More" menu's button
+          dispatches — unmounting it after year 1 would silently break
+          replay from every later year. */}
+      <CampaignTutorial gameId={game.id} />
       {game.year === 1 && game.name === "Untitled Fund" && <FundNamePrompt gameId={game.id} />}
 
       {/* Year lives in the header pips (their original small size) now, so
@@ -1061,7 +1066,7 @@ function Shell({
                   ⋯ More
                 </summary>
                 <div className="max-card-flat absolute right-0 top-full z-30 mt-1.5 w-56 rounded-xl p-1.5">
-                  {year === 1 && <ReplayTutorialButton />}
+                  <ReplayTutorialButton />
                   <EndCampaignButton year={year} variant="menu" />
                   <StartCampaignButton
                     label="Restart campaign"
