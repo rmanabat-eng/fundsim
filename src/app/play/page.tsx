@@ -773,11 +773,10 @@ export default async function PlayPage() {
       {game.year === 1 && game.name === "Untitled Fund" && <FundNamePrompt gameId={game.id} />}
 
       {/* Year lives in the header pips (their original small size) now, so
-          the HUD is all fund health — just stats and Tips, no button
-          fighting them for room. Advance lives in its own sticky bottom
-          bar instead, reachable from anywhere without scrolling. */}
+          the HUD is all fund health — just stats, no button or Tips
+          fighting them for room. Both live in the sticky bottom bar
+          instead, reachable from anywhere without scrolling. */}
       <HudStrip
-        trailing={<CampaignTips />}
         stats={[
           {
             icon: "💰",
@@ -904,12 +903,15 @@ export default async function PlayPage() {
       <div className="h-20" aria-hidden />
       </Shell>
       <AdvanceYearBar
-        portfolio={
-          <PortfolioLogButton
-            rows={toCompanyRows(companies)}
-            logEntries={logEntries}
-            points={toChartPoints(companies)}
-          />
+        extras={
+          <>
+            <CampaignTips />
+            <PortfolioLogButton
+              rows={toCompanyRows(companies)}
+              logEntries={logEntries}
+              points={toChartPoints(companies)}
+            />
+          </>
         }
       />
     </AdvanceYearProvider>
