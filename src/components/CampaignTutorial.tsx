@@ -106,6 +106,15 @@ export function CampaignTutorial({ gameId }: { gameId: string }) {
     setOverride("running");
   }, []);
 
+  // The trigger lives in the "⋯ More" menu now, outside this component (the
+  // running tour is a fixed full-screen overlay — nesting it inside a
+  // collapsible <details> would hide it if the menu ever closed). The menu
+  // item just dispatches this event instead.
+  useEffect(() => {
+    window.addEventListener("fundsim:replay-tutorial", replay);
+    return () => window.removeEventListener("fundsim:replay-tutorial", replay);
+  }, [replay]);
+
   const measure = useCallback(() => {
     if (!step?.target) {
       setRect(null);
@@ -159,18 +168,7 @@ export function CampaignTutorial({ gameId }: { gameId: string }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [status, finish, next]);
 
-  if (status === "dismissed") {
-    return (
-      <button
-        type="button"
-        onClick={replay}
-        className="fixed bottom-4 right-4 z-40 rounded-full border-4 border-[color:var(--max-magenta)] bg-[#2d1b4e]/90 px-3 py-1.5 text-xs font-bold text-white/80 shadow-lg backdrop-blur outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-[color:var(--max-cyan)]"
-      >
-        ↻ Tutorial
-      </button>
-    );
-  }
-  if (status === "loading" || !step) return null;
+  if (status === "dismissed" || status === "loading" || !step) return null;
 
   // Place the card below the spotlight when there's room, otherwise above —
   // then clamp it into the viewport so the buttons are never cut off.

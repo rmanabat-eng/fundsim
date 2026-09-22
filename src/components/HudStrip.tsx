@@ -7,7 +7,15 @@ export type HudStat = {
 
 // Compact one-row HUD: hover/tab a label for its hint, same dotted-underline
 // cue as Term. No expand state needed — the strip IS the detail view.
-export function HudStrip({ stats }: { stats: HudStat[] }) {
+// `trailing` is a slot for a same-weight sibling action (Tips) so it lives
+// in this one strip instead of its own separate element elsewhere.
+export function HudStrip({
+  stats,
+  trailing,
+}: {
+  stats: HudStat[];
+  trailing?: React.ReactNode;
+}) {
   return (
     <div
       data-tour="hud"
@@ -35,13 +43,16 @@ export function HudStrip({ stats }: { stats: HudStat[] }) {
           </div>
           <div
             aria-hidden="true"
-            className="max-card-flat pointer-events-none invisible absolute left-1/2 top-full z-20 mt-1.5 w-56 -translate-x-1/2 rounded-lg px-3 py-2 text-xs font-normal normal-case tracking-normal text-white/80 group-hover/stat:visible group-focus-within/stat:visible"
+            className="max-card-solid pointer-events-none invisible absolute left-1/2 top-full z-20 mt-1.5 w-56 -translate-x-1/2 rounded-lg px-3 py-2 text-xs font-normal normal-case tracking-normal text-white/80 group-hover/stat:visible group-focus-within/stat:visible"
             style={{ "--max-card-border": "var(--max-cyan)" } as React.CSSProperties}
           >
             {s.hint}
           </div>
         </div>
       ))}
+      {trailing && (
+        <div className="ml-auto flex shrink-0 flex-wrap items-center gap-4 pl-2">{trailing}</div>
+      )}
     </div>
   );
 }
