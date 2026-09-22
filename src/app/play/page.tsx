@@ -898,7 +898,7 @@ export default async function PlayPage() {
       <CampaignLog entries={campaignLog(companies, game.startedAt, game.year)} />
 
       {/* First-run coach marks, year 1 only. */}
-      {game.year === 1 && <CampaignTutorial />}
+      {game.year === 1 && <CampaignTutorial gameId={game.id} />}
     </Shell>
   );
 }

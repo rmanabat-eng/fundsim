@@ -6,8 +6,6 @@ import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 
 // describing it in the abstract. Steps whose target isn't on the page (no
 // deals dealt, say) drop out, so the tour never points at nothing.
 
-const STORAGE_KEY = "fundsim-tutorial-seen";
-
 type Step = {
   target: string | null; // data-tour value; null renders centered
   title: string;
@@ -63,9 +61,6 @@ function subscribeSeen(onChange: () => void) {
   window.addEventListener("storage", onChange);
   return () => window.removeEventListener("storage", onChange);
 }
-const readSeen = () =>
-  window.localStorage.getItem(STORAGE_KEY) === "1" ? "seen" : "unseen";
-const readSeenOnServer = () => "unknown" as const;
 
 function prefersReducedMotion() {
   return (
@@ -74,7 +69,13 @@ function prefersReducedMotion() {
   );
 }
 
-export function CampaignTutorial() {
+export function CampaignTutorial({ gameId }: { gameId: string }) {
+  const storageKey = `fundsim-tutorial-seen-${gameId}`;
+  const readSeen = useCallback(
+    () => (window.localStorage.getItem(storageKey) === "1" ? "seen" : "unseen"),
+    [storageKey]
+  );
+  const readSeenOnServer = useCallback(() => "unknown" as const, []);
   const seen = useSyncExternalStore(subscribeSeen, readSeen, readSeenOnServer);
   // Skip/replay override what storage says, for this page view.
   const [override, setOverride] = useState<"running" | "dismissed" | null>(null);
@@ -96,9 +97,9 @@ export function CampaignTutorial() {
   const step = steps[Math.min(index, steps.length - 1)];
 
   const finish = useCallback(() => {
-    window.localStorage.setItem(STORAGE_KEY, "1");
+    window.localStorage.setItem(storageKey, "1");
     setOverride("dismissed");
-  }, []);
+  }, [storageKey]);
 
   const replay = useCallback(() => {
     setIndex(0);
