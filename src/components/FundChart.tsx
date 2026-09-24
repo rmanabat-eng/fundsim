@@ -14,20 +14,16 @@ const W = 720;
 const H = 280;
 const PAD = { left: 60, right: 88, top: 16, bottom: 32 };
 
-// Validated palette (dataviz six checks, light + dark surfaces):
-// total value = violet, deployed = cyan. Identity is also carried by the
-// direct labels and legend, never by color alone.
+// This app never toggles Tailwind's `dark:` variant (no .dark class is ever
+// set), so the light-surface violet/cyan/slate this component originally
+// shipped with was the only palette that ever actually rendered — on
+// fundsim's permanently dark background that read as muddy, low-contrast
+// lines and near-invisible grid/axis text. These are the colors that
+// actually paint now: high-contrast against dark, identity also carried by
+// the direct labels and legend, never by color alone.
 const SERIES = {
-  total: {
-    label: "Total value",
-    light: "#7c3aed", // violet-600
-    dark: "#8b5cf6", // violet-500
-  },
-  deployed: {
-    label: "Deployed",
-    light: "#0891b2", // cyan-600
-    dark: "#0891b2",
-  },
+  total: { label: "Total value", color: "var(--max-magenta, #ff3af2)" },
+  deployed: { label: "Deployed", color: "var(--max-cyan, #00f5d4)" },
 };
 
 function niceCeil(x: number): number {
@@ -118,19 +114,19 @@ export function FundChart({ points }: { points: FundChartPoint[] }) {
   const tooltipOnLeft = hoverIdx !== null && xs[hoverIdx] > W * 0.6;
 
   return (
-    <div className="[--fundsim-total:#7c3aed] dark:[--fundsim-total:#8b5cf6]">
-      <div className="flex items-center gap-5 text-xs text-slate-600 dark:text-slate-400">
+    <div>
+      <div className="flex items-center gap-5 text-xs text-white/70">
         <span className="inline-flex items-center gap-1.5">
           <span
             className="h-2.5 w-2.5 rounded-sm"
-            style={{ backgroundColor: "var(--fundsim-total)" }}
+            style={{ backgroundColor: SERIES.total.color }}
           />
           Total value (paper + cash)
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span
             className="h-2.5 w-2.5 rounded-sm"
-            style={{ backgroundColor: SERIES.deployed.light }}
+            style={{ backgroundColor: SERIES.deployed.color }}
           />
           Capital deployed
         </span>
@@ -153,14 +149,14 @@ export function FundChart({ points }: { points: FundChartPoint[] }) {
                 x2={W - PAD.right}
                 y1={yOf(v)}
                 y2={yOf(v)}
-                className="stroke-slate-200 dark:stroke-slate-800"
+                className="stroke-white/10"
                 strokeWidth={1}
               />
               <text
                 x={PAD.left - 8}
                 y={yOf(v) + 3.5}
                 textAnchor="end"
-                className="fill-slate-400 dark:fill-slate-500"
+                className="fill-white/50"
                 fontSize={11}
               >
                 {shortDollars(v)}
@@ -175,7 +171,7 @@ export function FundChart({ points }: { points: FundChartPoint[] }) {
               x={xs[i]}
               y={H - PAD.bottom + 18}
               textAnchor={i === 0 ? "start" : i === last ? "end" : "middle"}
-              className="fill-slate-400 dark:fill-slate-500"
+              className="fill-white/50"
               fontSize={11}
             >
               {shortDate(points[i].date)}
@@ -186,13 +182,13 @@ export function FundChart({ points }: { points: FundChartPoint[] }) {
           <path
             d={stepPath(xs, deployedYs)}
             fill="none"
-            stroke={SERIES.deployed.light}
+            stroke={SERIES.deployed.color}
             strokeWidth={2}
           />
           <path
             d={stepPath(xs, totalYs)}
             fill="none"
-            stroke="var(--fundsim-total)"
+            stroke={SERIES.total.color}
             strokeWidth={2}
           />
 
@@ -202,7 +198,7 @@ export function FundChart({ points }: { points: FundChartPoint[] }) {
             y={totalLabelY + 3.5}
             fontSize={11}
             fontWeight={600}
-            className="fill-slate-600 dark:fill-slate-300"
+            className="fill-white/90"
           >
             {shortDollars(points[last].value + points[last].distributions)} total
           </text>
@@ -210,7 +206,7 @@ export function FundChart({ points }: { points: FundChartPoint[] }) {
             x={W - PAD.right + 6}
             y={deployedLabelY + 3.5}
             fontSize={11}
-            className="fill-slate-500 dark:fill-slate-400"
+            className="fill-white/60"
           >
             {shortDollars(points[last].deployed)} in
           </text>
@@ -223,23 +219,23 @@ export function FundChart({ points }: { points: FundChartPoint[] }) {
                 x2={xs[hoverIdx]}
                 y1={PAD.top}
                 y2={H - PAD.bottom}
-                className="stroke-slate-300 dark:stroke-slate-700"
+                className="stroke-white/20"
                 strokeWidth={1}
               />
               <circle
                 cx={xs[hoverIdx]}
                 cy={totalYs[hoverIdx]}
                 r={4}
-                fill="var(--fundsim-total)"
-                className="stroke-white dark:stroke-slate-900"
+                fill={SERIES.total.color}
+                className="stroke-[#151528]"
                 strokeWidth={2}
               />
               <circle
                 cx={xs[hoverIdx]}
                 cy={deployedYs[hoverIdx]}
                 r={4}
-                fill={SERIES.deployed.light}
-                className="stroke-white dark:stroke-slate-900"
+                fill={SERIES.deployed.color}
+                className="stroke-[#151528]"
                 strokeWidth={2}
               />
             </g>
@@ -248,25 +244,28 @@ export function FundChart({ points }: { points: FundChartPoint[] }) {
 
         {hover && hoverIdx !== null && (
           <div
-            className="pointer-events-none absolute top-2 z-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs shadow-md dark:border-slate-700 dark:bg-slate-800"
+            className="max-card-solid pointer-events-none absolute top-2 z-10 rounded-lg px-3 py-2 text-xs"
             style={
-              tooltipOnLeft
-                ? { right: `${100 - (xs[hoverIdx] / W) * 100 + 2}%` }
-                : { left: `${(xs[hoverIdx] / W) * 100 + 2}%` }
+              {
+                "--max-card-border": "var(--max-cyan)",
+                ...(tooltipOnLeft
+                  ? { right: `${100 - (xs[hoverIdx] / W) * 100 + 2}%` }
+                  : { left: `${(xs[hoverIdx] / W) * 100 + 2}%` }),
+              } as unknown as React.CSSProperties
             }
           >
-            <p className="font-medium text-slate-700 dark:text-slate-200">
+            <p className="font-medium text-white/90">
               {formatDate(new Date(hover.date))}
             </p>
-            <p className="mt-1 text-slate-600 dark:text-slate-300">
+            <p className="mt-1 text-white/75">
               Total value: <strong>{formatDollars(hover.value + hover.distributions)}</strong>
             </p>
             {hover.distributions > 0 && (
-              <p className="text-slate-500 dark:text-slate-400">
+              <p className="text-white/60">
                 of which cash: {formatDollars(hover.distributions)}
               </p>
             )}
-            <p className="text-slate-500 dark:text-slate-400">
+            <p className="text-white/60">
               Deployed: {formatDollars(hover.deployed)}
             </p>
           </div>
