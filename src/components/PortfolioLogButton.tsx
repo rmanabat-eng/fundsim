@@ -48,7 +48,13 @@ export function PortfolioLogButton({
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        data-tour="portfolio-button"
+        onClick={() => {
+          setOpen(true);
+          // The tutorial's gated "go open your portfolio" step listens for
+          // this to advance itself instead of requiring a Next click.
+          window.dispatchEvent(new Event("fundsim:portfolio-opened"));
+        }}
         aria-label="Portfolio log"
         className="whitespace-nowrap text-xs font-bold uppercase tracking-widest text-white/60 hover:text-white"
       >
