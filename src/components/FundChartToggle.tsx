@@ -14,10 +14,13 @@ export function FundChartToggle() {
     <button
       type="button"
       onClick={toggle}
-      className="text-xs font-bold text-[color:var(--max-cyan)] hover:underline"
+      className="flex items-center gap-1.5 text-xs font-bold text-[color:var(--max-cyan)] hover:text-white"
     >
       <span className="[.chart-hidden_&]:hidden">Hide chart</span>
       <span className="hidden [.chart-hidden_&]:inline">Show chart</span>
+      <span aria-hidden className="text-[10px] transition-transform [.chart-hidden_&]:-rotate-90">
+        ▼
+      </span>
     </button>
   );
 }

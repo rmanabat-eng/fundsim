@@ -141,15 +141,55 @@ export default async function DashboardPage() {
       </header>
 
       <main className="relative mx-auto max-w-5xl px-6 py-8">
-        <SummaryBar
-          deployed={metrics.deployed}
-          portfolioValue={metrics.portfolioValue}
-          distributions={metrics.distributions}
-          irr={metrics.irr}
-          count={companies.length}
-          fundSize={settings.fundSize}
-          maxCompanies={settings.maxCompanies}
-        />
+        {/* Expanded by default only for an empty portfolio — a first-timer
+            needs this read before backing a company; a returning GP with a
+            table full of companies already knows it, so it stays one click
+            away instead of greeting them every visit. */}
+        <details
+          open={companies.length === 0}
+          className="group max-card-flat rounded-2xl"
+          style={{ "--max-card-border": "var(--max-yellow)" } as React.CSSProperties}
+        >
+          {/* Padding lives on the summary/list, not the <details> itself, so
+              the closed state is just this one pill-height row instead of a
+              full card's worth of empty space around one line. */}
+          <summary className="flex cursor-pointer select-none list-none items-center justify-between px-4 py-3 font-display text-lg font-bold text-white outline-none [text-shadow:2px_2px_0_var(--max-purple)] [&::-webkit-details-marker]:hidden">
+            How it works
+            <span
+              aria-hidden
+              className="text-sm text-white/50 transition-transform group-open:rotate-180"
+            >
+              ▼
+            </span>
+          </summary>
+          <ol className="space-y-3 px-4 pb-5 text-sm text-white/75">
+            {HOW_IT_WORKS.map((step, i) => (
+              <li key={step.title} className="flex gap-3">
+                <span
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-black text-[#0d0d1a]"
+                  style={{ backgroundColor: step.accent }}
+                >
+                  {i + 1}
+                </span>
+                <span>
+                  <strong className="text-white">{step.title}</strong> {step.body}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </details>
+
+        <div className="mt-8">
+          <SummaryBar
+            deployed={metrics.deployed}
+            portfolioValue={metrics.portfolioValue}
+            distributions={metrics.distributions}
+            irr={metrics.irr}
+            count={companies.length}
+            fundSize={settings.fundSize}
+            maxCompanies={settings.maxCompanies}
+          />
+        </div>
 
         {chartPoints.length >= 2 && (
           <section className="mt-8">
@@ -184,7 +224,22 @@ export default async function DashboardPage() {
                 activeCount={rows.filter((r) => r.status === "active").length}
               />
             )}
-            {companies.length > 0 && <ClearAllButton />}
+            {companies.length > 0 && (
+              // Quiet dropdown instead of a loud pill next to "Back a
+              // company": clearing the whole portfolio is rare and
+              // destructive, not something that needs equal billing.
+              <details className="group relative">
+                <summary className="cursor-pointer select-none rounded-md px-2 py-1 text-xs font-bold uppercase tracking-widest text-white/60 outline-none [&::-webkit-details-marker]:hidden hover:text-white">
+                  ⋯ More
+                </summary>
+                <div
+                  className="max-card-flat absolute right-0 top-full z-30 mt-1.5 w-56 rounded-xl p-1.5"
+                  style={{ "--max-card-border": "var(--max-orange)" } as React.CSSProperties}
+                >
+                  <ClearAllButton variant="menu" />
+                </div>
+              </details>
+            )}
             {companies.length < settings.maxCompanies && (
               <Link
                 href="/companies/new"
@@ -198,34 +253,10 @@ export default async function DashboardPage() {
 
         <div
           className="max-card-flat mt-3 overflow-hidden rounded-2xl"
-          style={{ "--max-card-border": "var(--max-purple)" } as React.CSSProperties}
+          style={{ "--max-card-border": "var(--max-magenta)" } as React.CSSProperties}
         >
           <CompanyTable companies={rows} />
         </div>
-
-        <section
-          className="max-card-flat mt-8 rounded-2xl p-6"
-          style={{ "--max-card-border": "var(--max-yellow)" } as React.CSSProperties}
-        >
-          <h2 className="font-display text-lg font-bold text-white [text-shadow:2px_2px_0_var(--max-purple)]">
-            How it works
-          </h2>
-          <ol className="mt-4 space-y-3 text-sm text-white/75">
-            {HOW_IT_WORKS.map((step, i) => (
-              <li key={step.title} className="flex gap-3">
-                <span
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-black text-[#0d0d1a]"
-                  style={{ backgroundColor: step.accent }}
-                >
-                  {i + 1}
-                </span>
-                <span>
-                  <strong className="text-white">{step.title}</strong> {step.body}
-                </span>
-              </li>
-            ))}
-          </ol>
-        </section>
       </main>
     </div>
   );
