@@ -147,7 +147,10 @@ export function AdvanceYearBar({ extras }: { extras?: React.ReactNode }) {
         ) : (
           <>
             <span className="flex flex-wrap items-center gap-4">
-              <span className="text-xs font-bold uppercase tracking-widest text-white/50">
+              <span
+                data-tour="bar-status"
+                className="text-xs font-bold uppercase tracking-widest text-white/50"
+              >
                 {openDeals > 0 || pendingDecisions > 0
                   ? `${openDeals} ${openDeals === 1 ? "deal" : "deals"} open · ${pendingDecisions} ${pendingDecisions === 1 ? "decision" : "decisions"} pending`
                   : "Desk clear for this year"}

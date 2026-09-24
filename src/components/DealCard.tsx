@@ -76,6 +76,10 @@ export function DealCard({ deal }: { deal: DealView }) {
         toast(
           `Wired ${formatDollars(check)} into ${deal.name} — ${ownership.toFixed(2)}%`
         );
+        // The tutorial's gated "go invest" step listens for this to advance
+        // itself instead of requiring a Next click — it's already watching
+        // the real action happen.
+        window.dispatchEvent(new Event("fundsim:invested"));
       }
     });
   }
@@ -171,48 +175,54 @@ export function DealCard({ deal }: { deal: DealView }) {
           }}
           className="mt-auto flex flex-col gap-2 border-t-2 border-white/10 pt-4"
         >
-          <div data-tour="deal-check" className="flex flex-col gap-2">
-            <div className="flex items-baseline justify-between text-sm">
-              <span className="text-white/60">Your check</span>
-              <span className="font-semibold tabular-nums text-white">
-                {formatDollars(check)}{" "}
-                <span className="font-normal text-white/60">
-                  · {ownership.toFixed(2)}%
+          {/* Slider alone has its own data-tour for the "here's the check
+              size control" step; this outer one spans slider + buttons too,
+              for the later "go ahead and click Invest" step that needs the
+              button included in the ring, not just the slider above it. */}
+          <div data-tour="deal-invest" className="flex flex-col gap-2">
+            <div data-tour="deal-check" className="flex flex-col gap-2">
+              <div className="flex items-baseline justify-between text-sm">
+                <span className="text-white/60">Your check</span>
+                <span className="font-semibold tabular-nums text-white">
+                  {formatDollars(check)}{" "}
+                  <span className="font-normal text-white/60">
+                    · {ownership.toFixed(2)}%
+                  </span>
                 </span>
-              </span>
+              </div>
+              <input
+                name="check"
+                type="range"
+                min={CHECK_STEP}
+                max={deal.raised}
+                step={CHECK_STEP}
+                value={check}
+                onChange={(e) => setCheck(Number(e.target.value))}
+                className="w-full accent-[color:var(--max-magenta)]"
+                aria-label="Check size"
+              />
+              <div className="flex justify-between text-xs text-white/40">
+                <span>{formatDollars(CHECK_STEP)}</span>
+                <span>{formatDollars(deal.raised)} (lead it)</span>
+              </div>
             </div>
-            <input
-              name="check"
-              type="range"
-              min={CHECK_STEP}
-              max={deal.raised}
-              step={CHECK_STEP}
-              value={check}
-              onChange={(e) => setCheck(Number(e.target.value))}
-              className="w-full accent-[color:var(--max-magenta)]"
-              aria-label="Check size"
-            />
-            <div className="flex justify-between text-xs text-white/40">
-              <span>{formatDollars(CHECK_STEP)}</span>
-              <span>{formatDollars(deal.raised)} (lead it)</span>
+            <div className="mt-1 flex items-center gap-2">
+              <button
+                type="submit"
+                disabled={pending}
+                className="max-btn-primary shrink-0 rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-r from-[color:var(--max-magenta)] via-[color:var(--max-purple)] to-[color:var(--max-cyan)] px-4 py-2 text-sm font-black uppercase tracking-wide text-white disabled:opacity-50"
+              >
+                {pending ? "Wiring..." : "💸 Invest"}
+              </button>
+              <button
+                type="button"
+                disabled={pending}
+                onClick={pass}
+                className="max-btn-outline shrink-0 rounded-full border-4 border-white/30 bg-[#2d1b4e]/60 px-3 py-2 text-sm font-bold text-white/80 disabled:opacity-50"
+              >
+                Pass
+              </button>
             </div>
-          </div>
-          <div className="mt-1 flex items-center gap-2">
-            <button
-              type="submit"
-              disabled={pending}
-              className="max-btn-primary shrink-0 rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-r from-[color:var(--max-magenta)] via-[color:var(--max-purple)] to-[color:var(--max-cyan)] px-4 py-2 text-sm font-black uppercase tracking-wide text-white disabled:opacity-50"
-            >
-              {pending ? "Wiring..." : "💸 Invest"}
-            </button>
-            <button
-              type="button"
-              disabled={pending}
-              onClick={pass}
-              className="max-btn-outline shrink-0 rounded-full border-4 border-white/30 bg-[#2d1b4e]/60 px-3 py-2 text-sm font-bold text-white/80 disabled:opacity-50"
-            >
-              Pass
-            </button>
           </div>
           {error && (
             <p className="text-xs text-[color:var(--max-orange)]" role="alert">
