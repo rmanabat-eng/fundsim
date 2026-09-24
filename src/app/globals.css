@@ -203,17 +203,25 @@ body {
 
 /* ---- Maximalism/Dopamine skin ----
    A louder sibling of the arcade skin above: five clashing accents, stacked
-   hard shadows instead of one offset, and layered background patterns. Scoped
-   to .max-hero so it never leaks into the rest of the (calmer) app chrome.
-   Used on the homepage and the campaign (/play) surface. */
+   hard shadows instead of one offset, and layered background patterns. Used
+   on the homepage and the campaign (/play) surface. */
 
-.max-hero {
+:root {
+  /* On :root, not .max-hero: fixed-position elements (the sticky advance
+     bar) and portaled ones (popups rendered to document.body, for z-index
+     reasons) aren't DOM descendants of the .max-hero wrapper even when
+     they're visually part of that surface, and CSS custom properties only
+     inherit through the DOM tree — a var scoped to .max-hero silently
+     resolves to nothing for them, which computed to near-black text before
+     this was global (a real bug, not a hypothetical one). */
   --max-magenta: #ff3af2;
   --max-cyan: #00f5d4;
   --max-yellow: #ffe600;
   --max-orange: #ff6b35;
   --max-purple: #7b2fff;
+}
 
+.max-hero {
   /* Shared hover-motion intensity — DealCard's lift+tilt and the decision
      card's glow/stamp all read from these instead of hardcoding their own
      duration/curve, so retuning "how punchy" is a one-line edit here

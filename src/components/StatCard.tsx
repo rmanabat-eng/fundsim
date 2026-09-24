@@ -35,7 +35,7 @@ export function StatCard({
       {hint && (
         <div
           aria-hidden="true"
-          className="max-card-flat pointer-events-none invisible absolute left-1/2 top-full z-20 mt-1.5 w-48 -translate-x-1/2 rounded-lg px-3 py-2 text-xs font-normal normal-case tracking-normal text-white/85 group-hover:visible group-focus-within:visible"
+          className="max-card-solid pointer-events-none invisible absolute left-1/2 top-full z-20 mt-1.5 w-48 -translate-x-1/2 rounded-lg px-3 py-2 text-xs font-normal normal-case tracking-normal text-white/85 group-hover:visible group-focus-within:visible"
           style={{ "--max-card-border": "var(--max-cyan)" } as React.CSSProperties}
         >
           {hint}
