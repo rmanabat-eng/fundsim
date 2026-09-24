@@ -3,7 +3,11 @@
 import { useState, useTransition } from "react";
 import { deleteAllCompanies } from "@/app/actions";
 
-export function ClearAllButton() {
+// variant controls only the resting-state button's visual weight: "outline"
+// (default) is the loud pill. "menu" is a plain text row for the quiet
+// "⋯ More" dropdown — this is a rare, destructive action, not something
+// that needs equal billing with "Back a company" every visit.
+export function ClearAllButton({ variant = "outline" }: { variant?: "outline" | "menu" }) {
   const [confirming, setConfirming] = useState(false);
   const [pending, startTransition] = useTransition();
 
@@ -39,7 +43,11 @@ export function ClearAllButton() {
   return (
     <button
       onClick={() => setConfirming(true)}
-      className="rounded-full border-2 border-[color:var(--max-orange)]/60 px-3 py-1.5 text-xs font-bold text-[color:var(--max-orange)] transition-colors hover:bg-[color:var(--max-orange)]/10"
+      className={
+        variant === "menu"
+          ? "w-full rounded-md px-3 py-2 text-left text-xs font-bold text-[color:var(--max-orange)] hover:bg-white/5"
+          : "rounded-full border-2 border-[color:var(--max-orange)]/60 px-3 py-1.5 text-xs font-bold text-[color:var(--max-orange)] transition-colors hover:bg-[color:var(--max-orange)]/10"
+      }
     >
       Clear all
     </button>
