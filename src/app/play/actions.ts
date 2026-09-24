@@ -8,6 +8,7 @@ import { getSettings } from "@/lib/settings";
 import { rollYearEvent } from "@/lib/simulate";
 import { exitProceeds, formatDollars, fundMetrics, ownershipAfterRounds } from "@/lib/fund-math";
 import { currentReputation } from "@/lib/reputation";
+import { snapshotPortfolioAsScenario } from "@/lib/scenario";
 import {
   ACQUISITION_CHANCE,
   BRIDGE_CHANCE,
@@ -273,6 +274,23 @@ async function dealFlow(visitorId: string, year: number) {
 // Wipes the portfolio and starts a fresh 10-year fund at year 1.
 export async function startCampaign() {
   const visitorId = await getVisitorId();
+
+  // The previous run's whole portfolio is about to be deleted — the
+  // leaderboard submission (if any) only ever kept a bare tvpi/reputation
+  // number, never the company-by-company detail. Auto-snapshotting it into
+  // a Scenario first means a finished (or abandoned) campaign always shows
+  // up on /scenarios next to sandbox saves, instead of just vanishing —
+  // this is the sync point between "campaign runs" and "saved scenarios".
+  // A no-op if there's nothing to preserve (fresh visitor, empty portfolio).
+  const previousGame = await prisma.game.findUnique({ where: { visitorId } });
+  if (previousGame) {
+    const label =
+      previousGame.status === "ended"
+        ? `${previousGame.name} (final)`
+        : `${previousGame.name} (year ${previousGame.year})`;
+    await snapshotPortfolioAsScenario(visitorId, label);
+  }
+
   await prisma.company.deleteMany({ where: { visitorId } }); // cascades rounds and decisions
   await prisma.deal.deleteMany({ where: { visitorId } });
   await prisma.game.deleteMany({ where: { visitorId } });
@@ -282,6 +300,7 @@ export async function startCampaign() {
 
   revalidatePath("/play");
   revalidatePath("/");
+  revalidatePath("/scenarios");
 }
 
 // Leaving an ended run's scorecard resets what the homepage offers — it goes

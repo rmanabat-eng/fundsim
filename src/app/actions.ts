@@ -8,6 +8,7 @@ import { SECTORS, STAGES } from "@/lib/constants";
 import { getSettings } from "@/lib/settings";
 import { rollYearEvent } from "@/lib/simulate";
 import { exitProceeds } from "@/lib/fund-math";
+import { snapshotPortfolioAsScenario, type ScenarioData } from "@/lib/scenario";
 
 export type FormState = { error: string } | null;
 
@@ -332,24 +333,8 @@ export async function updateSettings(
 }
 
 // ---- Scenarios: named snapshots of the whole portfolio + settings ----
-
-type ScenarioData = {
-  fundSize: number;
-  maxCompanies: number;
-  companies: {
-    name: string;
-    sector: string;
-    exitValue: number | null;
-    exitDate: string | null;
-    rounds: {
-      stage: string;
-      date: string;
-      raised: number;
-      postMoney: number;
-      yourCheck: number;
-    }[];
-  }[];
-};
+// (the snapshot shape and write itself live in src/lib/scenario.ts, shared
+// with campaign mode's automatic snapshot-before-wipe)
 
 export async function saveScenario(
   _prevState: FormState,
@@ -360,33 +345,7 @@ export async function saveScenario(
   if (!name) return { error: "Give the scenario a name." };
   if (name.length > 40) return { error: "Keep the name under 40 characters." };
 
-  const settings = await getSettings();
-  const companies = await prisma.company.findMany({
-    where: { visitorId },
-    include: { rounds: { orderBy: { date: "asc" } } },
-  });
-
-  const data: ScenarioData = {
-    fundSize: settings.fundSize,
-    maxCompanies: settings.maxCompanies,
-    companies: companies.map((c) => ({
-      name: c.name,
-      sector: c.sector,
-      exitValue: c.exitValue,
-      exitDate: c.exitDate?.toISOString() ?? null,
-      rounds: c.rounds.map((r) => ({
-        stage: r.stage,
-        date: r.date.toISOString(),
-        raised: r.raised,
-        postMoney: r.postMoney,
-        yourCheck: r.yourCheck,
-      })),
-    })),
-  };
-
-  await prisma.scenario.create({
-    data: { visitorId, name, data: JSON.stringify(data) },
-  });
+  await snapshotPortfolioAsScenario(visitorId, name);
   revalidatePath("/scenarios");
   return null;
 }
