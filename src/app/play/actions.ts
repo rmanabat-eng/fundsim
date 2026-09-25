@@ -1004,6 +1004,16 @@ export async function resolvePayToPlay(
   return null;
 }
 
+// Cheap read used by the decision cards to measure a resolution's real
+// reputation effect (before/after, not a hardcoded per-type guess) — see
+// currentReputation for why that's the only correct way to price ambiguous
+// outcomes like a "costly" refusal.
+export async function getReputationScore(): Promise<number> {
+  const visitorId = await getVisitorId();
+  const { rep } = await currentReputation(visitorId);
+  return rep.score;
+}
+
 export type YearSummary = {
   year: number; // the year just entered (or GAME_YEARS+... when closed)
   market: Market;

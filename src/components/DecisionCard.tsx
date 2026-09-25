@@ -21,6 +21,7 @@ import { inputClasses } from "@/components/RoundFields";
 import { Term } from "@/components/Term";
 import { toast } from "@/components/toast";
 import { prefersReducedMotion } from "@/lib/motion";
+import { withRepDelta, repSuffix } from "@/lib/decision-reveal";
 
 // Everything the card needs is computed server-side in the play page —
 // ownership math stays in one place (fund-math) and the card just renders.
@@ -505,13 +506,13 @@ function ProRataCard({ d }: { d: Extract<DecisionView, { type: "pro_rata" }> }) 
       if (!reduced) await new Promise((r) => setTimeout(r, ms));
       const data = new FormData();
       data.set("check", check);
-      const res = await fundProRata(d.id, null, data);
+      const { result: res, delta } = await withRepDelta(() => fundProRata(d.id, null, data));
       if (res?.error) {
         setExiting(null);
         setError(res.error);
       } else if (checkNumber > 0)
-        toast(`Backed ${d.companyName}'s round — ${formatDollars(checkNumber)}`);
-      else toast(`Sat out ${d.companyName}'s round`, "info");
+        toast(`Backed ${d.companyName}'s round — ${formatDollars(checkNumber)}${repSuffix(delta)}`);
+      else toast(`Sat out ${d.companyName}'s round${repSuffix(delta)}`, "info");
     });
   }
 
@@ -520,8 +521,8 @@ function ProRataCard({ d }: { d: Extract<DecisionView, { type: "pro_rata" }> }) 
     if (!reduced) setExiting("decline");
     startTransition(async () => {
       if (!reduced) await new Promise((r) => setTimeout(r, DECLINE_EXIT_MS));
-      await declineDecision(d.id);
-      toast(`Sat out ${d.companyName}'s round`, "info");
+      const { delta } = await withRepDelta(() => declineDecision(d.id));
+      toast(`Sat out ${d.companyName}'s round${repSuffix(delta)}`, "info");
     });
   }
 
@@ -639,8 +640,8 @@ function AcquisitionCard({
     if (!reduced) setExiting("accept");
     startTransition(async () => {
       if (!reduced) await new Promise((r) => setTimeout(r, ACCEPT_EXIT_MS));
-      await acceptAcquisition(d.id);
-      toast(`Took the exit on ${d.companyName} — ${formatDollars(d.yourShare)}`);
+      const { delta } = await withRepDelta(() => acceptAcquisition(d.id));
+      toast(`Took the exit on ${d.companyName} — ${formatDollars(d.yourShare)}${repSuffix(delta)}`);
     });
   }
 
@@ -649,8 +650,8 @@ function AcquisitionCard({
     if (!reduced) setExiting("hold");
     startTransition(async () => {
       if (!reduced) await new Promise((r) => setTimeout(r, HOLD_EXIT_MS));
-      await declineDecision(d.id);
-      toast(`Held ${d.companyName} — passed on the offer`, "info");
+      const { delta } = await withRepDelta(() => declineDecision(d.id));
+      toast(`Held ${d.companyName} — passed on the offer${repSuffix(delta)}`, "info");
     });
   }
 
@@ -718,8 +719,8 @@ function FundSecondaryCard({
     if (!reduced) setExiting("fund");
     startTransition(async () => {
       if (!reduced) await new Promise((r) => setTimeout(r, FUND_EXIT_MS));
-      await acceptFundSecondary(d.id);
-      toast(`Sold your stake in ${d.companyName} — ${formatDollars(d.yourShare)}`);
+      const { delta } = await withRepDelta(() => acceptFundSecondary(d.id));
+      toast(`Sold your stake in ${d.companyName} — ${formatDollars(d.yourShare)}${repSuffix(delta)}`);
     });
   }
 
@@ -728,8 +729,8 @@ function FundSecondaryCard({
     if (!reduced) setExiting("decline");
     startTransition(async () => {
       if (!reduced) await new Promise((r) => setTimeout(r, DECLINE_EXIT_MS));
-      await declineDecision(d.id);
-      toast(`Held ${d.companyName} — kept the position`, "info");
+      const { delta } = await withRepDelta(() => declineDecision(d.id));
+      toast(`Held ${d.companyName} — kept the position${repSuffix(delta)}`, "info");
     });
   }
 
@@ -793,12 +794,12 @@ function BridgeCard({ d }: { d: Extract<DecisionView, { type: "bridge" }> }) {
     if (!reduced) setExiting("fund");
     startTransition(async () => {
       if (!reduced) await new Promise((r) => setTimeout(r, FUND_BRIDGE_EXIT_MS));
-      const res = await fundBridge(d.id);
+      const { result: res, delta } = await withRepDelta(() => fundBridge(d.id));
       if (res?.error) {
         setExiting(null);
         setError(res.error);
       } else {
-        toast(`Bridged ${d.companyName} — ${formatDollars(d.amount)}`);
+        toast(`Bridged ${d.companyName} — ${formatDollars(d.amount)}${repSuffix(delta)}`);
       }
     });
   }
@@ -810,8 +811,8 @@ function BridgeCard({ d }: { d: Extract<DecisionView, { type: "bridge" }> }) {
     if (!reduced) setExiting("letDie");
     startTransition(async () => {
       if (!reduced) await new Promise((r) => setTimeout(r, LET_DIE_EXIT_MS));
-      await declineDecision(d.id);
-      toast(`Refused the bridge for ${d.companyName}`, "info");
+      const { delta } = await withRepDelta(() => declineDecision(d.id));
+      toast(`Refused the bridge for ${d.companyName}${repSuffix(delta)}`, "info");
     });
   }
 
@@ -877,8 +878,8 @@ function TermSheetCard({ d }: { d: Extract<DecisionView, { type: "term_sheet" }>
     if (!reduced) setExiting("top_tier");
     startTransition(async () => {
       if (!reduced) await new Promise((r) => setTimeout(r, TOP_TIER_EXIT_MS));
-      await resolveTermSheet(d.id, "top_tier");
-      toast(`Advised ${d.companyName}: signed the top-tier lead`);
+      const { delta } = await withRepDelta(() => resolveTermSheet(d.id, "top_tier"));
+      toast(`Advised ${d.companyName}: signed the top-tier lead${repSuffix(delta)}`);
     });
   }
 
@@ -887,8 +888,8 @@ function TermSheetCard({ d }: { d: Extract<DecisionView, { type: "term_sheet" }>
     if (!reduced) setExiting("high_price");
     startTransition(async () => {
       if (!reduced) await new Promise((r) => setTimeout(r, HIGH_PRICE_EXIT_MS));
-      await resolveTermSheet(d.id, "high_price");
-      toast(`Advised ${d.companyName}: took the higher price`);
+      const { delta } = await withRepDelta(() => resolveTermSheet(d.id, "high_price"));
+      toast(`Advised ${d.companyName}: took the higher price${repSuffix(delta)}`);
     });
   }
 
@@ -968,11 +969,13 @@ function TermConcessionCard({
     if (!reduced) setExiting(true);
     startTransition(async () => {
       if (!reduced) await new Promise((r) => setTimeout(r, CONCESSION_EXIT_MS));
-      await resolveTermConcession(d.id, { holdValuation, holdAmount });
+      const { delta } = await withRepDelta(() =>
+        resolveTermConcession(d.id, { holdValuation, holdAmount })
+      );
       toast(
-        holdValuation
+        (holdValuation
           ? `Held firm on valuation with ${d.companyName} — the founder may walk`
-          : `Sent terms to ${d.companyName}`
+          : `Sent terms to ${d.companyName}`) + repSuffix(delta)
       );
     });
   }
@@ -1061,8 +1064,8 @@ function PivotCard({ d }: { d: Extract<DecisionView, { type: "pivot" }> }) {
     if (!reduced) setExiting("back");
     startTransition(async () => {
       if (!reduced) await new Promise((r) => setTimeout(r, PIVOT_BACK_EXIT_MS));
-      await resolvePivot(d.id, "back");
-      toast(`Advised ${d.companyName}: backed the pivot`);
+      const { delta } = await withRepDelta(() => resolvePivot(d.id, "back"));
+      toast(`Advised ${d.companyName}: backed the pivot${repSuffix(delta)}`);
     });
   }
 
@@ -1071,8 +1074,8 @@ function PivotCard({ d }: { d: Extract<DecisionView, { type: "pivot" }> }) {
     if (!reduced) setExiting("focus");
     startTransition(async () => {
       if (!reduced) await new Promise((r) => setTimeout(r, PIVOT_FOCUS_EXIT_MS));
-      await resolvePivot(d.id, "focus");
-      toast(`Advised ${d.companyName}: urged focus`);
+      const { delta } = await withRepDelta(() => resolvePivot(d.id, "focus"));
+      toast(`Advised ${d.companyName}: urged focus${repSuffix(delta)}`);
     });
   }
 
@@ -1126,12 +1129,12 @@ function ExitRouteCard({ d }: { d: Extract<DecisionView, { type: "exit_route" }>
     if (!reduced) setExiting(choice);
     startTransition(async () => {
       if (!reduced) await new Promise((r) => setTimeout(r, EXIT_ROUTE_MS[choice]));
-      const res = await resolveExitRoute(d.id, choice);
+      const { result: res, delta } = await withRepDelta(() => resolveExitRoute(d.id, choice));
       if (res?.error) {
         setExiting(null);
         setError(res.error);
       } else {
-        toast(`${d.companyName}: ${label}`);
+        toast(`${d.companyName}: ${label}${repSuffix(delta)}`);
       }
     });
   }
@@ -1238,8 +1241,8 @@ function CeoReplacementCard({
     if (!reduced) setExiting("replace");
     startTransition(async () => {
       if (!reduced) await new Promise((r) => setTimeout(r, REPLACE_EXIT_MS));
-      await resolveCeoReplacement(d.id, "replace");
-      toast(`Voted out the founder of ${d.companyName}`, "error");
+      const { delta } = await withRepDelta(() => resolveCeoReplacement(d.id, "replace"));
+      toast(`Voted out the founder of ${d.companyName}${repSuffix(delta)}`, "error");
     });
   }
 
@@ -1248,8 +1251,8 @@ function CeoReplacementCard({
     if (!reduced) setExiting("keep");
     startTransition(async () => {
       if (!reduced) await new Promise((r) => setTimeout(r, KEEP_EXIT_MS));
-      await resolveCeoReplacement(d.id, "keep");
-      toast(`Backed the founder at ${d.companyName}`);
+      const { delta } = await withRepDelta(() => resolveCeoReplacement(d.id, "keep"));
+      toast(`Backed the founder at ${d.companyName}${repSuffix(delta)}`);
     });
   }
 
@@ -1296,12 +1299,12 @@ function PayToPlayCard({ d }: { d: Extract<DecisionView, { type: "pay_to_play" }
     if (!reduced) setExiting(kind);
     startTransition(async () => {
       if (!reduced) await new Promise((r) => setTimeout(r, ms));
-      const res = await resolvePayToPlay(d.id, choice);
+      const { result: res, delta } = await withRepDelta(() => resolvePayToPlay(d.id, choice));
       if (res?.error) {
         setExiting(null);
         setError(res.error);
       } else {
-        toast(`${d.companyName}: ${label}`, choice === "pay" ? "success" : "info");
+        toast(`${d.companyName}: ${label}${repSuffix(delta)}`, choice === "pay" ? "success" : "info");
       }
     });
   }
