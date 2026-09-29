@@ -193,6 +193,34 @@ export function buildAcquisitionOffer(
   };
 }
 
+// ---- Acqui-hire ----
+// A buyer wants the team and tech, not the business — an offer that prices
+// below what's usually been put in. Unlike a normal acquisition (always
+// 1.5x-3x last round), this is the "the exit itself is bad news" case:
+// accepting locks in a loss but ends the bleeding; declining keeps a dying
+// company's optionality alive on paper, except a team that was just told
+// no to a buyout tends to scatter on its own — see ACQUIHIRE_DECLINED_
+// QUALITY_HIT below, which feeds the same quality → campaignOdds pipeline
+// every other quality hit does, rather than adding a second lever.
+export const ACQUIHIRE_CHANCE = 0.1;
+export const ACQUIHIRE_DECLINED_QUALITY_HIT = -0.25;
+
+export type AcquihireOffer = { offerValue: number; exitDate: string };
+
+export function buildAcquihireOffer(
+  company: SimCompanyState,
+  market: Market,
+  window: { start: Date; end: Date }
+): AcquihireOffer {
+  const scale = market === "bull" ? 1.2 : market === "bear" ? 0.8 : 1;
+  const offerValue = Math.max(
+    Math.round((company.postMoney * (0.25 + Math.random() * 0.35) * scale) / 250_000) *
+      250_000,
+    250_000
+  );
+  return { offerValue, exitDate: dateInWindow(window, company.lastDate) };
+}
+
 export type BridgeRequest = {
   amount: number; // what they're asking you for
   postMoney: number; // flat-to-down pricing on the bridge
@@ -341,6 +369,28 @@ export const PIVOT_FOCUS_VARIANCE_MULT = 0.8;
 // The quality swing of a backed pivot — upside-tilted, but no sure thing.
 export function pivotOutcome(): number {
   return PIVOT_BACKED_MIN + Math.random() * (PIVOT_BACKED_MAX - PIVOT_BACKED_MIN);
+}
+
+// ---- Founder split ----
+// Co-founders are fighting and one wants to leave. Unlike a pivot (a known
+// risky-vs-safe range) this is a bet on people, not a business: you can't see
+// which founder actually carried the company, so the two answers aren't
+// equal-and-opposite — brokering a clean exit is a small, safe, always-good
+// call; staying out of it is free today but a blind roll on whether the
+// person leaving was the one who mattered.
+export const FOUNDER_SPLIT_CHANCE = 0.1;
+export const FOUNDER_SPLIT_BROKERED_QUALITY = 0.05;
+export const FOUNDER_SPLIT_IGNORED_MIN = -0.35;
+export const FOUNDER_SPLIT_IGNORED_MAX = 0.1;
+
+// Skewed toward bad: most of the time the departing founder mattered more
+// than it looked from outside, and an unmediated split costs the company.
+// Occasionally it barely registers.
+export function founderSplitIgnoredOutcome(): number {
+  return (
+    FOUNDER_SPLIT_IGNORED_MIN +
+    Math.random() * (FOUNDER_SPLIT_IGNORED_MAX - FOUNDER_SPLIT_IGNORED_MIN)
+  );
 }
 
 // ---- Exit routes ----

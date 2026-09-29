@@ -31,7 +31,7 @@ export async function currentReputation(visitorId: string) {
     prisma.decision.count({
       where: {
         visitorId,
-        type: { in: ["pivot", "ceo_replacement"] },
+        type: { in: ["pivot", "ceo_replacement", "founder_split"] },
         status: "resolved",
       },
     }),

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import {
+  acceptAcquihire,
   acceptAcquisition,
   acceptFundSecondary,
   declineDecision,
@@ -10,6 +11,7 @@ import {
   fundProRata,
   resolveCeoReplacement,
   resolveExitRoute,
+  resolveFounderSplit,
   resolvePayToPlay,
   resolvePivot,
   resolveTermConcession,
@@ -46,6 +48,12 @@ export type DecisionView =
     })
   | (Common & {
       type: "acquisition";
+      offerValue: number;
+      yourShare: number; // ownership × offer
+      invested: number; // total checks into this company so far
+    })
+  | (Common & {
+      type: "acquihire";
       offerValue: number;
       yourShare: number; // ownership × offer
       invested: number; // total checks into this company so far
@@ -98,6 +106,9 @@ export type DecisionView =
     })
   | (Common & {
       type: "ceo_replacement";
+    })
+  | (Common & {
+      type: "founder_split";
     })
   | (Common & {
       type: "pay_to_play";
@@ -166,6 +177,12 @@ const KEEP_EXIT_MS = 500; // slower, warmer settle, no hard edges
 // pivot — risky option (back) gets the wobble.
 const PIVOT_BACK_EXIT_MS = 600; // wobble, then settles fully
 const PIVOT_FOCUS_EXIT_MS = 260; // contained, grounded settle, no wobble
+
+// founder_split — INVERSE of pivot: here the safe option is the one you
+// actively choose (broker), and doing nothing (ignore) is the blind roll, so
+// ignore gets the wobble instead of the backing option.
+const BROKER_EXIT_MS = 320; // contained, grounded settle, no wobble
+const IGNORE_EXIT_MS = 600; // wobble, then settles fully
 
 // acquisition — INVERSE of pivot: the risky option here is holding, not
 // accepting, so hold gets the (longer) wobble instead.
@@ -314,6 +331,34 @@ function pivotExitStyle(
       transitionTimingFunction: "ease-out",
       transform: "scale(1.04)",
       opacity: 0,
+    };
+  }
+  return {};
+}
+
+// Case 5b (founder_split): INVERSE of pivot — ignore is the blind roll here,
+// so it gets the wobble instead of the backed option.
+function founderSplitExitStyle(
+  exiting: "broker" | "ignore" | null
+): Record<string, string | number> {
+  if (exiting === "broker") {
+    return {
+      transitionProperty: "transform, opacity",
+      transitionDuration: `${BROKER_EXIT_MS}ms`,
+      transitionTimingFunction: "ease-out",
+      transform: "scale(1.04)",
+      opacity: 0,
+    };
+  }
+  if (exiting === "ignore") {
+    return {
+      animation: `decision-exit-wobble ${IGNORE_EXIT_MS}ms ease-out forwards`,
+      transitionProperty: "opacity",
+      transitionDuration: `${IGNORE_EXIT_MS}ms`,
+      transitionTimingFunction: "ease-out",
+      opacity: 0,
+      "--wobble-amp": "5deg",
+      "--wobble-end": "0deg",
     };
   }
   return {};
@@ -694,6 +739,88 @@ function AcquisitionCard({
       <DecisionActions>
         <button type="button" disabled={pending} onClick={accept} className={primaryButton}>
           {pending ? "Signing..." : "Take the exit"}
+        </button>
+        <button type="button" disabled={pending} onClick={hold} className={secondaryButton}>
+          Hold
+        </button>
+      </DecisionActions>
+    </DecisionShell>
+  );
+}
+
+// The exit itself is bad news here — usually below what's been put in. Same
+// accept/hold shape (and motion) as AcquisitionCard, since holding is still
+// the riskier call either way, just framed around ending the pain instead
+// of cashing in a winner.
+function AcquihireCard({
+  d,
+}: {
+  d: Extract<DecisionView, { type: "acquihire" }>;
+}) {
+  const [pending, startTransition] = useTransition();
+  const [exiting, setExiting] = useState<"accept" | "hold" | null>(null);
+  const multiple = d.invested > 0 ? d.yourShare / d.invested : 0;
+
+  function accept() {
+    const reduced = prefersReducedMotion();
+    if (!reduced) setExiting("accept");
+    startTransition(async () => {
+      if (!reduced) await new Promise((r) => setTimeout(r, ACCEPT_EXIT_MS));
+      const { delta } = await withRepDelta(() => acceptAcquihire(d.id));
+      toast(`Took the acqui-hire on ${d.companyName} — ${formatDollars(d.yourShare)}${repSuffix(delta)}`);
+    });
+  }
+
+  function hold() {
+    const reduced = prefersReducedMotion();
+    if (!reduced) setExiting("hold");
+    startTransition(async () => {
+      if (!reduced) await new Promise((r) => setTimeout(r, HOLD_EXIT_MS));
+      const { delta } = await withRepDelta(() => declineDecision(d.id));
+      toast(`Held ${d.companyName} — passed on the acqui-hire${repSuffix(delta)}`, "info");
+    });
+  }
+
+  return (
+    <DecisionShell stamp="Acqui-hire" exitStyle={acquisitionExitStyle(exiting)}>
+      <p className="text-sm text-white/85">
+        🩹 A buyer wants the team and tech at{" "}
+        <CompanyName id={d.companyId} name={d.companyName} />
+        {" "}— not the business. They&apos;re offering{" "}
+        {formatDollars(d.offerValue)}, all in.
+      </p>
+
+      <PitchNotes signals={d.signals} />
+
+      <div className="max-chip-box rounded-lg px-3 py-2">
+        <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
+          Your stake returns
+        </p>
+        <p className="mt-0.5 text-base font-black text-white">
+          {formatDollars(d.yourShare)}
+          {d.invested > 0 && (
+            <span className="ml-2 text-sm font-bold text-[color:var(--max-orange)]">
+              {multiple.toFixed(1)}×
+            </span>
+          )}
+        </p>
+        {d.invested > 0 && (
+          <p className="text-xs text-white/60">
+            on {formatDollars(d.invested)} invested
+          </p>
+        )}
+      </div>
+
+      <p className="text-sm text-white/70">
+        This isn&apos;t a winner cashing out — it&apos;s a below-cost exit that
+        ends the bleeding. Holding out keeps the position alive on paper, but
+        a team just told no to a buyout rarely stays together long enough to
+        prove you right.
+      </p>
+
+      <DecisionActions>
+        <button type="button" disabled={pending} onClick={accept} className={primaryButton}>
+          {pending ? "Signing..." : "🩹 Take the acqui-hire"}
         </button>
         <button type="button" disabled={pending} onClick={hold} className={secondaryButton}>
           Hold
@@ -1111,6 +1238,66 @@ function PivotCard({ d }: { d: Extract<DecisionView, { type: "pivot" }> }) {
   );
 }
 
+function FounderSplitCard({
+  d,
+}: {
+  d: Extract<DecisionView, { type: "founder_split" }>;
+}) {
+  const [pending, startTransition] = useTransition();
+  const [exiting, setExiting] = useState<"broker" | "ignore" | null>(null);
+
+  function broker() {
+    const reduced = prefersReducedMotion();
+    if (!reduced) setExiting("broker");
+    startTransition(async () => {
+      if (!reduced) await new Promise((r) => setTimeout(r, BROKER_EXIT_MS));
+      const { delta } = await withRepDelta(() => resolveFounderSplit(d.id, "broker"));
+      toast(`Brokered the split at ${d.companyName}${repSuffix(delta)}`);
+    });
+  }
+
+  // Staying out is the risky option here — you find out who mattered only
+  // after the fact — so it gets the wobble, same shape as pivot's "back".
+  function ignore() {
+    const reduced = prefersReducedMotion();
+    if (!reduced) setExiting("ignore");
+    startTransition(async () => {
+      if (!reduced) await new Promise((r) => setTimeout(r, IGNORE_EXIT_MS));
+      const { delta } = await withRepDelta(() => resolveFounderSplit(d.id, "ignore"));
+      toast(`Stayed out of the split at ${d.companyName}${repSuffix(delta)}`, "info");
+    });
+  }
+
+  return (
+    <DecisionShell stamp="Founder split" exitStyle={founderSplitExitStyle(exiting)}>
+      <p className="text-sm text-white/85">
+        💔 The co-founders at{" "}
+        <CompanyName id={d.companyId} name={d.companyName} />{" "}
+        are splitting up — one wants out. They&apos;re asking you to help
+        broker the exit before it turns into a fight over equity.
+      </p>
+
+      <PitchNotes signals={d.signals} />
+
+      <p className="text-sm text-white/70">
+        You can&apos;t tell from here which of them actually carried the
+        company. Brokering a clean exit is the safe, modest win either way.
+        Staying out costs nothing today, but it&apos;s a blind bet on who
+        mattered more — and it usually isn&apos;t the one who stayed.
+      </p>
+
+      <DecisionActions>
+        <button type="button" disabled={pending} onClick={broker} className={primaryButton}>
+          {pending ? "Brokering..." : "🤝 Broker a clean exit"}
+        </button>
+        <button type="button" disabled={pending} onClick={ignore} className={secondaryButton}>
+          🎲 Stay out of it
+        </button>
+      </DecisionActions>
+    </DecisionShell>
+  );
+}
+
 const EXIT_ROUTE_MS: Record<"ipo" | "acquire" | "secondary", number> = {
   ipo: IPO_EXIT_MS,
   acquire: ACQUIRE_EXIT_MS,
@@ -1383,12 +1570,14 @@ function PayToPlayCard({ d }: { d: Extract<DecisionView, { type: "pay_to_play" }
 export function DecisionCard({ decision }: { decision: DecisionView }) {
   if (decision.type === "pro_rata") return <ProRataCard d={decision} />;
   if (decision.type === "acquisition") return <AcquisitionCard d={decision} />;
+  if (decision.type === "acquihire") return <AcquihireCard d={decision} />;
   if (decision.type === "fund_secondary") return <FundSecondaryCard d={decision} />;
   if (decision.type === "term_sheet") return <TermSheetCard d={decision} />;
   if (decision.type === "term_concession") return <TermConcessionCard d={decision} />;
   if (decision.type === "pivot") return <PivotCard d={decision} />;
   if (decision.type === "exit_route") return <ExitRouteCard d={decision} />;
   if (decision.type === "ceo_replacement") return <CeoReplacementCard d={decision} />;
+  if (decision.type === "founder_split") return <FounderSplitCard d={decision} />;
   if (decision.type === "pay_to_play") return <PayToPlayCard d={decision} />;
   return <BridgeCard d={decision} />;
 }
