@@ -10,6 +10,8 @@ import { exitProceeds, formatDollars, fundMetrics, ownershipAfterRounds } from "
 import { currentReputation } from "@/lib/reputation";
 import { snapshotPortfolioAsScenario } from "@/lib/scenario";
 import {
+  ACQUIHIRE_CHANCE,
+  ACQUIHIRE_DECLINED_QUALITY_HIT,
   ACQUISITION_CHANCE,
   BRIDGE_CHANCE,
   BRIDGE_FUNDED_QUALITY_BOOST,
@@ -17,6 +19,9 @@ import {
   CEO_REPLACED_QUALITY_BOOST,
   CEO_REPLACEMENT_CHANCE,
   DEALS_PER_YEAR,
+  FOUNDER_SPLIT_BROKERED_QUALITY,
+  FOUNDER_SPLIT_CHANCE,
+  founderSplitIgnoredOutcome,
   EXIT_ROUTE_CHANCE,
   EXIT_ROUTE_MIN_POST,
   FUND_SECONDARY_CHANCE,
@@ -42,6 +47,7 @@ import {
   buildBridgeRequest,
   buildExitRoute,
   buildFundSecondaryOffer,
+  buildAcquihireOffer,
   founderWalkRisk,
   maybePayToPlay,
   maybeTermConcession,
@@ -50,6 +56,7 @@ import {
   rollMarket,
   rollsReferral,
   yearWindow,
+  type AcquihireOffer,
   type ExitRoutePayload,
   type FundSecondaryOffer,
   type Market,
@@ -74,6 +81,7 @@ export type ProRataPayload = {
   postMoney: number;
 };
 export type AcquisitionPayload = { offerValue: number; exitDate: string };
+export type AcquihirePayload = AcquihireOffer;
 export type BridgePayload = {
   amount: number;
   postMoney: number;
@@ -103,6 +111,8 @@ export type TermConcessionPayload = {
 export type PivotPayload = Record<string, never>;
 // Nor does the board's move on a founder-CEO.
 export type CeoReplacementPayload = Record<string, never>;
+// Nor does a co-founder split — the whole decision is whether to get involved.
+export type FounderSplitPayload = Record<string, never>;
 // ExitRoutePayload and PayToPlayPayload live in @/lib/campaign — a "use server"
 // module can only export async functions, so they aren't re-exported here.
 
@@ -135,6 +145,11 @@ const QUIET_POOL: ScenarioDef[] = [
       !ctx.state.removed && ctx.company.stage !== "PRE_SEED" && ctx.company.stage !== "SEED",
     weight: () => CEO_REPLACEMENT_CHANCE * 100,
   },
+  {
+    type: "founder_split",
+    eligible: (ctx) => !ctx.state.removed,
+    weight: () => FOUNDER_SPLIT_CHANCE * 100,
+  },
 ];
 
 const OFFER_POOL: ScenarioDef[] = [
@@ -160,6 +175,14 @@ const OFFER_POOL: ScenarioDef[] = [
       (ctx.macroShock ? 0.6 : 1) *
       ctx.state.varianceMultiplier *
       100,
+  },
+  {
+    // Only struggling companies draw a below-cost acqui-hire — a healthy
+    // company gets the normal acquisition slice above instead.
+    type: "acquihire",
+    eligible: (ctx) => !ctx.state.removed && ctx.company.performance === "down",
+    weight: (ctx) =>
+      ACQUIHIRE_CHANCE * (ctx.macroShock ? 1.4 : 1) * ctx.state.varianceMultiplier * 100,
   },
 ];
 
@@ -553,6 +576,38 @@ export async function acceptAcquisition(decisionId: string) {
   revalidatePath("/");
 }
 
+// A buyer wants the team and tech, not the business — this is the exit that
+// prices below what's usually gone in. Unlike acceptAcquisition there's no
+// good outcome here, only a less-bad one; see declineDecision's "acquihire"
+// branch for what happens if you turn it down instead.
+export async function acceptAcquihire(decisionId: string) {
+  const visitorId = await getVisitorId();
+  const decision = await prisma.decision.findUnique({ where: { id: decisionId } });
+  if (
+    !decision ||
+    decision.visitorId !== visitorId ||
+    decision.status !== "pending" ||
+    decision.type !== "acquihire"
+  )
+    return;
+  const payload: AcquihirePayload = JSON.parse(decision.payload);
+
+  await prisma.company.update({
+    where: { id: decision.companyId },
+    data: { exitValue: payload.offerValue, exitDate: new Date(payload.exitDate) },
+  });
+  await prisma.decision.update({
+    where: { id: decisionId },
+    data: { status: "resolved" },
+  });
+  await prisma.decision.updateMany({
+    where: { companyId: decision.companyId, status: "pending" },
+    data: { status: "moot" },
+  });
+  revalidatePath("/play");
+  revalidatePath("/");
+}
+
 // A buyer wants only your stake in a winner — capped return now, no more
 // power-law upside on this one. The company itself is untouched, so unlike
 // acquisition/exit_route this doesn't close out the company or its rounds.
@@ -666,6 +721,18 @@ export async function declineDecision(decisionId: string) {
       removed: dynState.removed || nextQuality < -0.5,
     });
     status = refusalStatus(dynState);
+  } else if (decision.type === "acquihire") {
+    // Turning down a buyout tends to scatter the team on its own — this
+    // isn't a founder ask, so it doesn't touch reputation, only quality
+    // (which feeds the same campaignOdds pipeline every other hit does).
+    await prisma.company.update({
+      where: { id: decision.companyId },
+      data: {
+        quality: clampQuality(
+          decision.company.quality + ACQUIHIRE_DECLINED_QUALITY_HIT
+        ),
+      },
+    });
   } else if (decision.type === "pro_rata") {
     // Sitting out a follow-on is a deliberate no too — cheap against an
     // unproven founder, pricier against one with an established track
@@ -834,6 +901,49 @@ export async function resolvePivot(decisionId: string, choice: "back" | "focus")
       (choice === "back" ? PIVOT_BACKED_VARIANCE_MULT : PIVOT_FOCUS_VARIANCE_MULT),
     trackRecord: choice === "back" ? dynState.trackRecord + 1 : dynState.trackRecord,
   });
+  await prisma.decision.update({
+    where: { id: decisionId },
+    data: { status: "resolved" },
+  });
+  revalidatePath("/play");
+  revalidatePath("/");
+}
+
+// A co-founder wants out. Brokering a clean exit (severance, real vesting) is
+// the safe, always-modestly-good call and earns trackRecord like any other
+// answered ask. Staying out of it costs nothing today but is a blind roll —
+// you never find out which founder actually carried the company until after
+// you've already picked a side by doing nothing.
+export async function resolveFounderSplit(decisionId: string, choice: "broker" | "ignore") {
+  const visitorId = await getVisitorId();
+  const decision = await prisma.decision.findUnique({
+    where: { id: decisionId },
+    include: { company: true },
+  });
+  if (
+    !decision ||
+    decision.visitorId !== visitorId ||
+    decision.status !== "pending" ||
+    decision.type !== "founder_split"
+  )
+    return;
+  if (decision.company.exitValue !== null) return;
+
+  await prisma.company.update({
+    where: { id: decision.companyId },
+    data: {
+      quality: clampQuality(
+        decision.company.quality +
+          (choice === "broker" ? FOUNDER_SPLIT_BROKERED_QUALITY : founderSplitIgnoredOutcome())
+      ),
+    },
+  });
+  if (choice === "broker") {
+    const dynState = parseDynState(decision.company.scenarioState);
+    await updateDynState(decision.companyId, decision.company.scenarioState, {
+      trackRecord: dynState.trackRecord + 1,
+    });
+  }
   await prisma.decision.update({
     where: { id: decisionId },
     data: { status: "resolved" },
@@ -1067,6 +1177,15 @@ export async function advanceYear(): Promise<YearSummary | null> {
         where: { id: d.companyId },
         data: {
           quality: clampQuality(d.company.quality + PIVOT_UNSUPPORTED_QUALITY_HIT),
+        },
+      });
+    } else if (d.type === "founder_split") {
+      // Silence is its own answer here — same blind roll as ignoring it on
+      // purpose (resolveFounderSplit's "ignore"), since you never weighed in.
+      await prisma.company.update({
+        where: { id: d.companyId },
+        data: {
+          quality: clampQuality(d.company.quality + founderSplitIgnoredOutcome()),
         },
       });
     } else if (d.type === "term_sheet") {
@@ -1325,6 +1444,19 @@ export async function advanceYear(): Promise<YearSummary | null> {
         summary.newDecisions++;
         continue; // a company mid-succession isn't fielding acquirers either
       }
+      if (picked?.type === "founder_split") {
+        await prisma.decision.create({
+          data: {
+            visitorId,
+            year,
+            type: "founder_split",
+            companyId: company.id,
+            payload: JSON.stringify({} satisfies FounderSplitPayload),
+          },
+        });
+        summary.newDecisions++;
+        continue; // a company mid-breakup isn't fielding acquirers either
+      }
     }
 
     // Anchor any offer to the latest state — including a round created just
@@ -1389,6 +1521,20 @@ export async function advanceYear(): Promise<YearSummary | null> {
           type: "acquisition",
           companyId: company.id,
           payload: JSON.stringify(offer satisfies AcquisitionPayload),
+        },
+      });
+      summary.newDecisions++;
+    }
+
+    if (offerPick?.type === "acquihire") {
+      const offer = buildAcquihireOffer(anchored, market, window);
+      await prisma.decision.create({
+        data: {
+          visitorId,
+          year,
+          type: "acquihire",
+          companyId: company.id,
+          payload: JSON.stringify(offer satisfies AcquihirePayload),
         },
       });
       summary.newDecisions++;

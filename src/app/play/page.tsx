@@ -45,6 +45,7 @@ import { SaveScenarioForm } from "@/components/SaveScenarioForm";
 import { toCompanyRows, toChartPoints } from "@/lib/portfolio-view";
 import { sectorArt } from "@/lib/sectors";
 import type {
+  AcquihirePayload,
   AcquisitionPayload,
   BridgePayload,
   FundSecondaryPayload,
@@ -624,6 +625,19 @@ export default async function PlayPage() {
         signals,
       };
     }
+    if (d.type === "acquihire") {
+      const payload = JSON.parse(d.payload) as AcquihirePayload;
+      return {
+        id: d.id,
+        type: "acquihire",
+        companyId: d.companyId,
+        companyName: d.company.name,
+        offerValue: payload.offerValue,
+        yourShare: (ownershipAfterRounds(rounds) / 100) * payload.offerValue,
+        invested: rounds.reduce((sum, r) => sum + r.yourCheck, 0),
+        signals,
+      };
+    }
     if (d.type === "fund_secondary") {
       const payload = JSON.parse(d.payload) as FundSecondaryPayload;
       return {
@@ -688,6 +702,15 @@ export default async function PlayPage() {
       return {
         id: d.id,
         type: "ceo_replacement",
+        companyId: d.companyId,
+        companyName: d.company.name,
+        signals,
+      };
+    }
+    if (d.type === "founder_split") {
+      return {
+        id: d.id,
+        type: "founder_split",
         companyId: d.companyId,
         companyName: d.company.name,
         signals,

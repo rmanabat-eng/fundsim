@@ -7,6 +7,7 @@ import {
   DEALS_PER_YEAR,
   generateDeal,
   gradeFund,
+  buildAcquihireOffer,
   buildAcquisitionOffer,
   buildBridgeRequest,
   isEstablishedFounder,
@@ -32,6 +33,9 @@ import {
   PAY_TO_PLAY_RECAP_FACTOR,
   SECONDARY_DISCOUNT,
   founderKeptOutcome,
+  founderSplitIgnoredOutcome,
+  FOUNDER_SPLIT_IGNORED_MIN,
+  FOUNDER_SPLIT_IGNORED_MAX,
   ipoResult,
   buildExitRoute,
   EXIT_ROUTE_MIN_POST,
@@ -167,6 +171,19 @@ describe("decision generators", () => {
     for (let i = 0; i < 20; i++) {
       const offer = buildAcquisitionOffer(company, "bull", window);
       expect(offer.offerValue).toBeGreaterThan(0);
+      expect(new Date(offer.exitDate).getTime()).toBeGreaterThan(
+        new Date(company.lastDate).getTime()
+      );
+    }
+  });
+
+  it("acqui-hire offers price below a normal acquisition's floor", () => {
+    for (let i = 0; i < 20; i++) {
+      const offer = buildAcquihireOffer(company, "normal", window);
+      expect(offer.offerValue).toBeGreaterThan(0);
+      // Acquisition scales postMoney by 1.5x-3x; acqui-hire by 0.25x-0.6x —
+      // the two ranges should never overlap.
+      expect(offer.offerValue).toBeLessThan(company.postMoney * 0.75);
       expect(new Date(offer.exitDate).getTime()).toBeGreaterThan(
         new Date(company.lastDate).getTime()
       );
@@ -568,6 +585,20 @@ describe("founderKeptOutcome", () => {
     }
     expect(min).toBeLessThan(0); // backing a founder can go badly
     expect(max).toBeGreaterThan(0);
+  });
+});
+
+describe("founderSplitIgnoredOutcome", () => {
+  it("stays inside its band and tilts negative on average", () => {
+    let sum = 0;
+    const n = 2000;
+    for (let i = 0; i < n; i++) {
+      const delta = founderSplitIgnoredOutcome();
+      expect(delta).toBeGreaterThanOrEqual(FOUNDER_SPLIT_IGNORED_MIN);
+      expect(delta).toBeLessThanOrEqual(FOUNDER_SPLIT_IGNORED_MAX);
+      sum += delta;
+    }
+    expect(sum / n).toBeLessThan(0); // staying out usually costs the company
   });
 });
 
