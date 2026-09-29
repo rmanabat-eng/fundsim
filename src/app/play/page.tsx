@@ -291,11 +291,6 @@ export default async function PlayPage() {
         `The priciest lesson was ${worstWriteOff.name}, which went to zero after ${formatDollars(worstWriteOff.sunk)} — a write-off that size is normal in one fund, but worth asking what the signals said going in.`
       );
     }
-    if (repDrivers.length > 0) {
-      lessons.push(
-        `Founders remember how you treated them: ${repDrivers.join(" · ")}.`
-      );
-    }
     if (metrics.dpi !== null && metrics.tvpi !== null && metrics.dpi < metrics.tvpi * 0.5) {
       lessons.push(
         `Most of this fund's value is still on paper — DPI (${formatMultiple(metrics.dpi)}) lags TVPI (${formatMultiple(metrics.tvpi)}) by a lot. Paper markups aren't cash; realized exits are what LPs can actually spend.`
