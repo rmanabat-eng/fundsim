@@ -574,11 +574,8 @@ export default async function PlayPage() {
           </div>
         </section>
 
-        <div className="mt-6 flex justify-center">
-          <SubmitToLeaderboardButton />
-        </div>
-
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <SubmitToLeaderboardButton />
           <StartCampaignButton label="🔁 Start a new fund" hasPortfolio />
           <Link
             href="/settings"
