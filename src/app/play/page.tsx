@@ -37,7 +37,7 @@ import { Toaster } from "@/components/toast";
 import { UndoInvestmentButton } from "@/components/UndoInvestmentButton";
 import { CampaignTutorial } from "@/components/CampaignTutorial";
 import { CampaignTips } from "@/components/CampaignTips";
-import { CampaignLog } from "@/components/CampaignLog";
+import { CampaignLogList } from "@/components/CampaignLog";
 import { PortfolioPanel } from "@/components/PortfolioPanel";
 import { PortfolioLogButton } from "@/components/PortfolioLogButton";
 import { HudStrip } from "@/components/HudStrip";
@@ -427,10 +427,6 @@ export default async function PlayPage() {
           />
         </div>
 
-        <div className="mt-6 flex justify-center">
-          <SubmitToLeaderboardButton />
-        </div>
-
         {positions.length > 0 && (
           <section className="mt-8">
             <h3 className="text-sm font-black uppercase tracking-widest text-white/60">
@@ -540,12 +536,27 @@ export default async function PlayPage() {
           </section>
         )}
 
-        <CampaignLog entries={finalLog} />
+        <div className="flex flex-wrap items-start gap-3 [&>details]:mt-0">
+          <details className="group mt-8">
+            <summary className="max-btn-outline inline-flex w-fit cursor-pointer select-none list-none items-center gap-2 rounded-full border-4 border-[color:var(--max-magenta)] bg-[#2d1b4e]/60 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white outline-none transition-transform focus-visible:ring-2 focus-visible:ring-[color:var(--max-cyan)] [&::-webkit-details-marker]:hidden">
+              📜 Fund log
+              <span
+                aria-hidden
+                className="text-[10px] transition-transform group-open:rotate-180"
+              >
+                ▼
+              </span>
+            </summary>
+            <div className="mt-3 w-full max-w-lg">
+              <CampaignLogList entries={finalLog} />
+            </div>
+          </details>
 
-        <PortfolioPanel
-          rows={toCompanyRows(companies)}
-          points={toChartPoints(companies)}
-        />
+          <PortfolioPanel
+            rows={toCompanyRows(companies)}
+            points={toChartPoints(companies)}
+          />
+        </div>
 
         <section
           className="max-card-flat mt-8 rounded-2xl p-5"
@@ -562,6 +573,10 @@ export default async function PlayPage() {
             <SaveScenarioForm />
           </div>
         </section>
+
+        <div className="mt-6 flex justify-center">
+          <SubmitToLeaderboardButton />
+        </div>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <StartCampaignButton label="🔁 Start a new fund" hasPortfolio />
