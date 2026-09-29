@@ -271,6 +271,37 @@ export default async function PlayPage() {
     const medals = ["🥇", "🥈", "🥉"];
     const finalLog = campaignLog(companies, game.startedAt, GAME_YEARS);
 
+    // ---- Lessons learned: a few concrete, honest takeaways instead of just
+    // a grade — reusing data already computed above rather than re-deriving it.
+    const bestPosition = positions[0];
+    const worstWriteOff = deadCompanies
+      .map((c) => ({ name: c.name, sunk: c.rounds.reduce((sum, r) => sum + r.yourCheck, 0) }))
+      .sort((a, b) => b.sunk - a.sunk)[0];
+    const lessons: string[] = [];
+    if (bestPosition && bestPosition.invested > 0) {
+      const multiple = bestPosition.value / bestPosition.invested;
+      lessons.push(
+        multiple >= 3
+          ? `Your best call was ${bestPosition.name} — ${formatMultiple(multiple)} on ${formatDollars(bestPosition.invested)}. One winner like this is what the power law is about: it doesn't take many.`
+          : `${bestPosition.name} was your top performer, but only ${formatMultiple(multiple)} — this fund never landed the outlier that VC economics depend on.`
+      );
+    }
+    if (worstWriteOff && worstWriteOff.sunk > 0) {
+      lessons.push(
+        `The priciest lesson was ${worstWriteOff.name}, which went to zero after ${formatDollars(worstWriteOff.sunk)} — a write-off that size is normal in one fund, but worth asking what the signals said going in.`
+      );
+    }
+    if (repDrivers.length > 0) {
+      lessons.push(
+        `Founders remember how you treated them: ${repDrivers.join(" · ")}.`
+      );
+    }
+    if (metrics.dpi !== null && metrics.tvpi !== null && metrics.dpi < metrics.tvpi * 0.5) {
+      lessons.push(
+        `Most of this fund's value is still on paper — DPI (${formatMultiple(metrics.dpi)}) lags TVPI (${formatMultiple(metrics.tvpi)}) by a lot. Paper markups aren't cash; realized exits are what LPs can actually spend.`
+      );
+    }
+
     return (
       <Shell year={null} market={null} ended>
         <p className="game-blink mt-8 text-center text-xs font-black uppercase tracking-[0.4em] text-white/50">
@@ -508,6 +539,24 @@ export default async function PlayPage() {
           rows={toCompanyRows(companies)}
           points={toChartPoints(companies)}
         />
+
+        {lessons.length > 0 && (
+          <section
+            className="max-card-flat mt-8 rounded-2xl p-5"
+            style={{ "--max-card-border": "var(--max-yellow)" } as React.CSSProperties}
+          >
+            <h3 className="text-sm font-black uppercase tracking-widest text-white/60">
+              📝 Lessons learned
+            </h3>
+            <ul className="mt-3 space-y-2">
+              {lessons.map((l, i) => (
+                <li key={i} className="text-sm leading-relaxed text-white/85">
+                  {l}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <section
           className="max-card-flat mt-8 rounded-2xl p-5"
