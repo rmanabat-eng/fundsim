@@ -37,7 +37,7 @@ import { Toaster } from "@/components/toast";
 import { UndoInvestmentButton } from "@/components/UndoInvestmentButton";
 import { CampaignTutorial } from "@/components/CampaignTutorial";
 import { CampaignTips } from "@/components/CampaignTips";
-import { CampaignLog } from "@/components/CampaignLog";
+import { CampaignLogList } from "@/components/CampaignLog";
 import { PortfolioPanel } from "@/components/PortfolioPanel";
 import { PortfolioLogButton } from "@/components/PortfolioLogButton";
 import { HudStrip } from "@/components/HudStrip";
@@ -271,6 +271,37 @@ export default async function PlayPage() {
     const medals = ["🥇", "🥈", "🥉"];
     const finalLog = campaignLog(companies, game.startedAt, GAME_YEARS);
 
+    // ---- Lessons learned: a few concrete, honest takeaways instead of just
+    // a grade — reusing data already computed above rather than re-deriving it.
+    const bestPosition = positions[0];
+    const worstWriteOff = deadCompanies
+      .map((c) => ({ name: c.name, sunk: c.rounds.reduce((sum, r) => sum + r.yourCheck, 0) }))
+      .sort((a, b) => b.sunk - a.sunk)[0];
+    const lessons: string[] = [];
+    if (bestPosition && bestPosition.invested > 0) {
+      const multiple = bestPosition.value / bestPosition.invested;
+      lessons.push(
+        multiple >= 3
+          ? `Your best call was ${bestPosition.name} — ${formatMultiple(multiple)} on ${formatDollars(bestPosition.invested)}. One winner like this is what the power law is about: it doesn't take many.`
+          : `${bestPosition.name} was your top performer, but only ${formatMultiple(multiple)} — this fund never landed the outlier that VC economics depend on.`
+      );
+    }
+    if (worstWriteOff && worstWriteOff.sunk > 0) {
+      lessons.push(
+        `The priciest lesson was ${worstWriteOff.name}, which went to zero after ${formatDollars(worstWriteOff.sunk)} — a write-off that size is normal in one fund, but worth asking what the signals said going in.`
+      );
+    }
+    if (repDrivers.length > 0) {
+      lessons.push(
+        `Founders remember how you treated them: ${repDrivers.join(" · ")}.`
+      );
+    }
+    if (metrics.dpi !== null && metrics.tvpi !== null && metrics.dpi < metrics.tvpi * 0.5) {
+      lessons.push(
+        `Most of this fund's value is still on paper — DPI (${formatMultiple(metrics.dpi)}) lags TVPI (${formatMultiple(metrics.tvpi)}) by a lot. Paper markups aren't cash; realized exits are what LPs can actually spend.`
+      );
+    }
+
     return (
       <Shell year={null} market={null} ended>
         <p className="game-blink mt-8 text-center text-xs font-black uppercase tracking-[0.4em] text-white/50">
@@ -303,6 +334,13 @@ export default async function PlayPage() {
               ? `You ended this run before year ${GAME_YEARS} — too early for a fair quartile grade against a full-length fund.`
               : grade!.blurb}
           </p>
+          {lessons.length > 0 && (
+            <ul className="mx-auto mt-4 max-w-2xl space-y-1.5 border-t border-current/20 pt-4 text-left text-sm leading-relaxed opacity-90">
+              {lessons.map((l, i) => (
+                <li key={i}>📝 {l}</li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div
@@ -387,10 +425,6 @@ export default async function PlayPage() {
             delay={240}
             index={4}
           />
-        </div>
-
-        <div className="mt-6 flex justify-center">
-          <SubmitToLeaderboardButton />
         </div>
 
         {positions.length > 0 && (
@@ -502,12 +536,27 @@ export default async function PlayPage() {
           </section>
         )}
 
-        <CampaignLog entries={finalLog} />
+        <div className="flex flex-wrap items-start gap-3 [&>details]:mt-0">
+          <details className="group mt-8">
+            <summary className="max-btn-outline inline-flex w-fit cursor-pointer select-none list-none items-center gap-2 rounded-full border-4 border-[color:var(--max-magenta)] bg-[#2d1b4e]/60 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white outline-none transition-transform focus-visible:ring-2 focus-visible:ring-[color:var(--max-cyan)] [&::-webkit-details-marker]:hidden">
+              📜 Fund log
+              <span
+                aria-hidden
+                className="text-[10px] transition-transform group-open:rotate-180"
+              >
+                ▼
+              </span>
+            </summary>
+            <div className="mt-3 w-full max-w-lg">
+              <CampaignLogList entries={finalLog} />
+            </div>
+          </details>
 
-        <PortfolioPanel
-          rows={toCompanyRows(companies)}
-          points={toChartPoints(companies)}
-        />
+          <PortfolioPanel
+            rows={toCompanyRows(companies)}
+            points={toChartPoints(companies)}
+          />
+        </div>
 
         <section
           className="max-card-flat mt-8 rounded-2xl p-5"
@@ -526,7 +575,11 @@ export default async function PlayPage() {
         </section>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <SubmitToLeaderboardButton />
           <StartCampaignButton label="🔁 Start a new fund" hasPortfolio />
+        </div>
+
+        <div className="mt-3 flex justify-center">
           <Link
             href="/settings"
             className="max-btn-outline rounded-full border-4 border-white/25 bg-[#2d1b4e]/60 px-4 py-2 text-sm font-bold text-white/85"
