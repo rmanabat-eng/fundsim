@@ -334,6 +334,13 @@ export default async function PlayPage() {
               ? `You ended this run before year ${GAME_YEARS} — too early for a fair quartile grade against a full-length fund.`
               : grade!.blurb}
           </p>
+          {lessons.length > 0 && (
+            <ul className="mx-auto mt-4 max-w-2xl space-y-1.5 border-t border-current/20 pt-4 text-left text-sm leading-relaxed opacity-90">
+              {lessons.map((l, i) => (
+                <li key={i}>📝 {l}</li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div
@@ -539,24 +546,6 @@ export default async function PlayPage() {
           rows={toCompanyRows(companies)}
           points={toChartPoints(companies)}
         />
-
-        {lessons.length > 0 && (
-          <section
-            className="max-card-flat mt-8 rounded-2xl p-5"
-            style={{ "--max-card-border": "var(--max-yellow)" } as React.CSSProperties}
-          >
-            <h3 className="text-sm font-black uppercase tracking-widest text-white/60">
-              📝 Lessons learned
-            </h3>
-            <ul className="mt-3 space-y-2">
-              {lessons.map((l, i) => (
-                <li key={i} className="text-sm leading-relaxed text-white/85">
-                  {l}
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
 
         <section
           className="max-card-flat mt-8 rounded-2xl p-5"
