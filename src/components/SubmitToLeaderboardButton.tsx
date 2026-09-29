@@ -33,7 +33,7 @@ export function SubmitToLeaderboardButton() {
           setSubmitted(true);
         })
       }
-      className="max-btn-outline rounded-full border-4 border-[color:var(--max-cyan)] bg-[#2d1b4e]/60 px-6 py-3 text-base font-bold uppercase tracking-wide text-[color:var(--max-cyan)] hover:bg-[color:var(--max-cyan)]/10 disabled:opacity-50"
+      className="max-btn-primary rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-r from-[color:var(--max-magenta)] via-[color:var(--max-purple)] to-[color:var(--max-cyan)] px-6 py-3 text-base font-black uppercase tracking-wide text-white disabled:opacity-50"
     >
       {pending ? "Submitting..." : "🏆 Submit to leaderboard"}
     </button>
