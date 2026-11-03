@@ -93,7 +93,7 @@ model Game {
 model LeaderboardEntry {
   id          String   @id @default(cuid())
   visitorId   String
-  gameId      String?  @unique // the run this snapshots — one entry per run; null on pre-existing rows
+  gameId      String?  @unique // the run this snapshots â€” one entry per run; null on pre-existing rows
   fundName    String
   tvpi        Float
   reputation  Float
