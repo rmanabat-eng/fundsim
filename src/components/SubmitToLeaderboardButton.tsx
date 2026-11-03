@@ -3,16 +3,13 @@
 import { useState, useTransition } from "react";
 import { submitToLeaderboard } from "@/app/play/actions";
 
-// Snapshots this ended run into LeaderboardEntry. No leaderboard UI exists
-// yet to navigate to, so this just confirms in place — same
-// useTransition-driven pattern as EndCampaignButton, minus the confirm step
-// (submitting isn't destructive, unlike ending/restarting a run).
-//
-// Known gap: nothing here stops a second submission if this scorecard is
-// reached again before being dismissed (e.g. back button) — this component
-// only tracks "submitted" for its own mounted lifetime, not durably.
-export function SubmitToLeaderboardButton() {
-  const [submitted, setSubmitted] = useState(false);
+// Snapshots this ended run into LeaderboardEntry and confirms in place —
+// same useTransition-driven pattern as EndCampaignButton, minus the confirm
+// step (submitting isn't destructive, unlike ending/restarting a run).
+// `alreadySubmitted` comes from the server, so a revisited scorecard shows
+// the confirmation instead of offering a second submit.
+export function SubmitToLeaderboardButton({ alreadySubmitted }: { alreadySubmitted: boolean }) {
+  const [submitted, setSubmitted] = useState(alreadySubmitted);
   const [pending, startTransition] = useTransition();
 
   if (submitted) {

@@ -608,3 +608,118 @@ body {
     transform: rotate(-2deg);
   }
 }
+
+/* ---- Juice: exit confetti, scorecard stamp, bad-news shake, dealt cards ---- */
+
+@keyframes confetti-fall {
+  from {
+    transform: translateY(-5vh) rotate(0);
+  }
+  to {
+    transform: translateY(105vh) rotate(var(--spin));
+  }
+}
+
+.confetti-piece {
+  animation: confetti-fall 2s cubic-bezier(0.3, 0.6, 0.6, 1) both;
+}
+
+@keyframes celebrate-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  15% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  25%,
+  85% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+.celebrate-banner {
+  animation: celebrate-pop 2.8s ease-out forwards;
+}
+
+@keyframes stamp-in {
+  0% {
+    opacity: 0;
+    transform: scale(2.2) rotate(-8deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.92) rotate(2deg);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+.stamp-in {
+  animation: stamp-in 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) backwards;
+}
+
+@keyframes bad-news {
+  0%,
+  100% {
+    transform: none;
+    background-color: transparent;
+  }
+  20% {
+    transform: translateX(-4px);
+    background-color: color-mix(in srgb, var(--max-orange) 25%, transparent);
+  }
+  40% {
+    transform: translateX(4px);
+  }
+  60% {
+    transform: translateX(-3px);
+    background-color: color-mix(in srgb, var(--max-orange) 15%, transparent);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+@keyframes deal-flip {
+  from {
+    opacity: 0;
+    transform: translateX(-40%) translateY(24px) rotateY(85deg) rotate(-8deg);
+  }
+  60% {
+    opacity: 1;
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* Slides in like any recap line, then shakes once it has landed. */
+.bad-news {
+  animation:
+    game-deal-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) backwards,
+    bad-news 0.5s ease-in-out backwards;
+}
+
+.deal-flip {
+  animation: deal-flip 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confetti-piece {
+    display: none;
+  }
+  .celebrate-banner,
+  .stamp-in,
+  .bad-news,
+  .deal-flip {
+    animation: none !important;
+  }
+}

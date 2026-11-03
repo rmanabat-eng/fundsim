@@ -1,10 +1,13 @@
 "use client";
 
-import { createContext, useContext, useState, useTransition } from "react";
+import { createContext, useContext, useState, useSyncExternalStore, useTransition } from "react";
 import { advanceYear, type YearSummary } from "@/app/play/actions";
 import { GAME_YEARS, MARKET_LABELS } from "@/lib/campaign";
-import { formatDollars } from "@/lib/fund-math";
+import { formatDollars, formatMultiple } from "@/lib/fund-math";
+import { isMuted, play, setMuted, subscribeMuted } from "@/lib/sound";
 import { toast } from "@/components/toast";
+import { celebrateExit } from "@/components/Celebration";
+import { CountUp } from "@/components/CountUp";
 
 // The turn crank. Warns about what's still on the table — advancing expires
 // every open deal and pending decision, and that pressure is the point.
@@ -60,14 +63,22 @@ export function AdvanceYearProvider({
 
   function run() {
     setConfirming(false);
+    play("advance");
     startTransition(async () => {
       const result = await advanceYear();
       setSummary(result);
+      // Each headline gets its sound as it slides in (see the stagger below).
+      result?.events.forEach((e, i) => {
+        const at = (i * EVENT_STAGGER_MS) / 1000;
+        if (e.kind === "exit") celebrateExit(e.name, e.multiple ?? 0, at);
+        else play(e.kind === "dead" ? "bad" : e.kind, at);
+      });
       // Deaths are easy to miss in a wall of results, so they also get a toast.
       if (result && result.writtenOff > 0) {
         toast(
           `${result.writtenOff} ${result.writtenOff === 1 ? "company" : "companies"} went bankrupt this year`,
-          "error"
+          "error",
+          null // the recap plays a sound per company as it appears
         );
       }
     });
@@ -104,6 +115,21 @@ function AdvanceYearTrigger() {
       className="max-btn-primary rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-r from-[color:var(--max-magenta)] via-[color:var(--max-purple)] to-[color:var(--max-cyan)] px-5 py-2.5 text-sm font-black uppercase tracking-wide text-white disabled:opacity-50"
     >
       {pending ? "Rolling..." : closing ? "🏁 Close the fund" : `⏩ Advance to year ${nextYear}`}
+    </button>
+  );
+}
+
+function MuteToggle() {
+  const muted = useSyncExternalStore(subscribeMuted, isMuted, () => false);
+  return (
+    <button
+      type="button"
+      onClick={() => setMuted(!muted)}
+      aria-pressed={!muted}
+      aria-label={muted ? "Turn sound on" : "Mute sound"}
+      className="text-lg text-white/60 hover:text-white"
+    >
+      {muted ? "🔇" : "🔊"}
     </button>
   );
 }
@@ -156,6 +182,7 @@ export function AdvanceYearBar({ extras }: { extras?: React.ReactNode }) {
                   : "Desk clear for this year"}
               </span>
               {extras}
+              <MuteToggle />
             </span>
             <AdvanceYearTrigger />
           </>
@@ -164,6 +191,14 @@ export function AdvanceYearBar({ extras }: { extras?: React.ReactNode }) {
     </div>
   );
 }
+
+const EVENT_STYLES = {
+  up: { icon: "📈", text: "text-[color:var(--max-cyan)]" },
+  down: { icon: "📉", text: "text-[color:var(--max-yellow)]" },
+  exit: { icon: "🏆", text: "text-[color:var(--max-cyan)]" },
+  dead: { icon: "💀", text: "text-[color:var(--max-orange)]" },
+} as const;
+const EVENT_STAGGER_MS = 140;
 
 export function AdvanceYearResults() {
   const { summary, pending } = useAdvanceYear();
@@ -181,6 +216,47 @@ export function AdvanceYearResults() {
         </p>
         <p className="text-sm font-semibold text-white/90">{MARKET_LABELS[summary.market]}</p>
       </div>
+
+      {summary.events.length > 0 && (
+        <ul className="mt-3 space-y-1 text-sm">
+          {summary.events.map((e, i) => (
+            <li
+              key={i}
+              className={`${e.kind === "dead" || e.kind === "down" ? "bad-news" : "game-deal-in"} flex gap-2 rounded`}
+              style={{
+                animationDelay: `${i * EVENT_STAGGER_MS}ms, ${i * EVENT_STAGGER_MS + 450}ms`,
+              }}
+            >
+              <span aria-hidden>{EVENT_STYLES[e.kind].icon}</span>
+              <span className="text-white/80">
+                <strong className={EVENT_STYLES[e.kind].text}>{e.name}</strong> {e.detail}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {summary.tvpiBefore !== null && summary.tvpiAfter !== null && (
+        <p
+          className="game-deal-in mt-3 text-sm text-white/70"
+          style={{ animationDelay: `${summary.events.length * EVENT_STAGGER_MS}ms` }}
+        >
+          Fund TVPI {formatMultiple(summary.tvpiBefore)} →{" "}
+          <strong
+            className={`font-display text-xl tabular-nums ${
+              summary.tvpiAfter >= summary.tvpiBefore
+                ? "text-[color:var(--max-cyan)]"
+                : "text-[color:var(--max-orange)]"
+            }`}
+          >
+            <CountUp
+              from={summary.tvpiBefore}
+              to={summary.tvpiAfter}
+              delay={summary.events.length * EVENT_STAGGER_MS}
+            />
+          </strong>
+        </p>
+      )}
 
       {summary.macroShock && (
         <p className="mt-3 rounded-lg border-4 border-[color:var(--max-orange)] bg-[color:var(--max-orange)]/15 px-3 py-2 text-sm font-bold text-[color:var(--max-orange)]">

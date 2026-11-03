@@ -3,10 +3,16 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getVisitorId } from "@/lib/visitor";
-import { STAGES } from "@/lib/constants";
+import { STAGE_LABELS, STAGES } from "@/lib/constants";
 import { getSettings } from "@/lib/settings";
 import { rollYearEvent } from "@/lib/simulate";
-import { exitProceeds, formatDollars, fundMetrics, ownershipAfterRounds } from "@/lib/fund-math";
+import {
+  exitProceeds,
+  formatDollars,
+  fundMetrics,
+  managementFees,
+  ownershipAfterRounds,
+} from "@/lib/fund-math";
 import { currentReputation } from "@/lib/reputation";
 import { snapshotPortfolioAsScenario } from "@/lib/scenario";
 import {
@@ -196,7 +202,8 @@ async function deployed(visitorId: string): Promise<number> {
 
 async function remainingCapital(visitorId: string): Promise<number> {
   const settings = await getSettings();
-  return settings.fundSize - (await deployed(visitorId));
+  // Lifetime fees are set aside up front — they're owed whether or not you invest.
+  return settings.fundSize - managementFees(settings.fundSize, GAME_YEARS) - (await deployed(visitorId));
 }
 
 function clampQuality(q: number): number {
@@ -354,9 +361,14 @@ export async function submitToLeaderboard() {
   const metrics = fundMetrics(companies); // reuse — don't recompute TVPI
   const { rep } = await currentReputation(visitorId); // reuse — don't recompute reputation
 
-  await prisma.leaderboardEntry.create({
-    data: {
+  // gameId is unique: a second submit of the same run (back button, double
+  // click) is a no-op rather than a duplicate row.
+  await prisma.leaderboardEntry.upsert({
+    where: { gameId: game.id },
+    update: {},
+    create: {
       visitorId,
+      gameId: game.id,
       fundName: game.name,
       tvpi: metrics.tvpi ?? 0, // no capital deployed — no realized multiple to report
       reputation: rep.score,
@@ -1138,6 +1150,17 @@ export type YearSummary = {
   newDecisions: number;
   macroShock: boolean; // this year's whole portfolio was reweighted toward distress
   reservesScarce: boolean; // this year's fresh asks outrun what's left to deploy
+  // Per-company headlines and the TVPI swing, for the animated year recap.
+  events: YearEvent[];
+  tvpiBefore: number | null;
+  tvpiAfter: number | null;
+};
+
+export type YearEvent = {
+  name: string;
+  kind: "up" | "down" | "exit" | "dead";
+  detail: string;
+  multiple?: number; // exits only: proceeds ÷ what the fund put in
 };
 
 // A macro shock hits ~1 year in 10 and temporarily reweights every company's
@@ -1153,6 +1176,11 @@ export async function advanceYear(): Promise<YearSummary | null> {
   const visitorId = await getVisitorId();
   const game = await prisma.game.findUnique({ where: { visitorId } });
   if (!game || game.status !== "active") return null;
+
+  // Read before expiries book any rounds, so the recap's swing covers the whole turn.
+  const tvpiBefore = fundMetrics(
+    await prisma.company.findMany({ where: { visitorId }, include: { rounds: true } })
+  ).tvpi;
 
   // Anything you didn't act on is gone. Unanswered bridges count as refusals.
   const expiredDeals = await prisma.deal.updateMany({
@@ -1245,6 +1273,9 @@ export async function advanceYear(): Promise<YearSummary | null> {
       newDecisions: 0,
       macroShock: false,
       reservesScarce: false,
+      events: [],
+      tvpiBefore: null,
+      tvpiAfter: null,
     };
   }
 
@@ -1267,6 +1298,9 @@ export async function advanceYear(): Promise<YearSummary | null> {
     newDecisions: 0,
     macroShock,
     reservesScarce: false,
+    events: [],
+    tvpiBefore,
+    tvpiAfter: null,
   };
 
   const companies = await prisma.company.findMany({
@@ -1374,6 +1408,12 @@ export async function advanceYear(): Promise<YearSummary | null> {
       });
       summary.raised++;
       summary.newDecisions++;
+      const step = event.postMoney / latest.postMoney;
+      summary.events.push({
+        name: company.name,
+        kind: step >= 1 ? "up" : "down",
+        detail: `${STAGE_LABELS[event.stage as (typeof STAGES)[number]]} at ${formatDollars(event.postMoney)} (${step >= 1 ? "up" : "down"} ${Math.abs(Math.round((step - 1) * 100))}%)`,
+      });
     } else if (event.kind === "exit" || event.kind === "writeOff") {
       const exitValue = event.kind === "exit" ? event.exitValue : 0;
       await prisma.company.update({
@@ -1381,10 +1421,19 @@ export async function advanceYear(): Promise<YearSummary | null> {
         data: { exitValue, exitDate: new Date(event.exitDate) },
       });
       if (event.kind === "exit") {
+        const proceeds = exitProceeds(company.rounds, exitValue);
         summary.exited++;
-        summary.distributions += exitProceeds(company.rounds, exitValue);
+        summary.distributions += proceeds;
+        const invested = company.rounds.reduce((sum, r) => sum + r.yourCheck, 0);
+        summary.events.push({
+          name: company.name,
+          kind: "exit",
+          detail: `exited at ${formatDollars(exitValue)} — ${formatDollars(proceeds)} back to the fund`,
+          multiple: invested > 0 ? proceeds / invested : 0,
+        });
       } else {
         summary.writtenOff++;
+        summary.events.push({ name: company.name, kind: "dead", detail: "shut down" });
       }
       continue; // exited companies get no offers
     } else {
@@ -1554,6 +1603,9 @@ export async function advanceYear(): Promise<YearSummary | null> {
   // then on it's pro-ratas, bridges, founder calls, and exits only.
   if (year <= INVESTMENT_PERIOD_YEARS) await dealFlow(visitorId, year);
 
+  summary.tvpiAfter = fundMetrics(
+    await prisma.company.findMany({ where: { visitorId }, include: { rounds: true } })
+  ).tvpi;
   revalidatePath("/play");
   revalidatePath("/");
   return summary;

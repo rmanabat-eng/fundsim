@@ -9,6 +9,9 @@ import {
   formatMultiple,
   formatPercent,
   fundMetrics,
+  CARRY_RATE,
+  managementFees,
+  netTvpi,
   ownershipAfterRounds,
 } from "@/lib/fund-math";
 import {
@@ -21,6 +24,8 @@ import {
 } from "@/lib/campaign";
 import { currentReputation } from "@/lib/reputation";
 import { DealCard, type DealView } from "@/components/DealCard";
+import { Celebration } from "@/components/Celebration";
+import { CountUp, Ticker } from "@/components/CountUp";
 import { DecisionCard, type DecisionView } from "@/components/DecisionCard";
 import { StartCampaignButton } from "@/components/StartCampaignButton";
 import { FundNamePrompt } from "@/components/FundNamePrompt";
@@ -162,7 +167,8 @@ export default async function PlayPage() {
   ]);
 
   const metrics = fundMetrics(companies);
-  const remaining = settings.fundSize - metrics.deployed;
+  const lifetimeFees = managementFees(settings.fundSize, GAME_YEARS);
+  const remaining = settings.fundSize - lifetimeFees - metrics.deployed;
 
   // ---- No campaign yet: the title screen ----
   if (!game || (game.status === "ended" && game.dismissed)) {
@@ -198,6 +204,10 @@ export default async function PlayPage() {
               {
                 icon: "🧭",
                 text: "Founders will also call for advice: which term sheet to sign, whether to pivot. Your answer moves their odds — and your reputation.",
+              },
+              {
+                icon: "💼",
+                text: `Like a real fund, you charge "2 and 20": ${formatDollars(lifetimeFees)} of the fund goes to management fees, so you only have ${formatDollars(settings.fundSize - lifetimeFees)} to invest — and you keep 20% of any profit as carry.`,
               },
               {
                 icon: "🏁",
@@ -270,6 +280,8 @@ export default async function PlayPage() {
     const writeOffs = deadCompanies.length;
     const medals = ["🥇", "🥈", "🥉"];
     const finalLog = campaignLog(companies, game.startedAt, GAME_YEARS);
+    const alreadySubmitted =
+      (await prisma.leaderboardEntry.count({ where: { gameId: game.id } })) > 0;
 
     // ---- Lessons learned: a few concrete, honest takeaways instead of just
     // a grade — reusing data already computed above rather than re-deriving it.
@@ -277,6 +289,10 @@ export default async function PlayPage() {
     const worstWriteOff = deadCompanies
       .map((c) => ({ name: c.name, sunk: c.rounds.reduce((sum, r) => sum + r.yourCheck, 0) }))
       .sort((a, b) => b.sunk - a.sunk)[0];
+    // What LPs actually got: fees accrue for every year the fund ran.
+    const totalValue = metrics.portfolioValue + metrics.distributions;
+    const feesPaid = managementFees(settings.fundSize, game.year);
+    const net = netTvpi(totalValue, metrics.deployed, feesPaid);
     const lessons: string[] = [];
     if (bestPosition && bestPosition.invested > 0) {
       const multiple = bestPosition.value / bestPosition.invested;
@@ -289,6 +305,12 @@ export default async function PlayPage() {
     if (worstWriteOff && worstWriteOff.sunk > 0) {
       lessons.push(
         `The priciest lesson was ${worstWriteOff.name}, which went to zero after ${formatDollars(worstWriteOff.sunk)} — a write-off that size is normal in one fund, but worth asking what the signals said going in.`
+      );
+    }
+    if (net !== null && metrics.tvpi !== null) {
+      const carry = Math.max(0, totalValue - metrics.deployed - feesPaid) * CARRY_RATE;
+      lessons.push(
+        `Your LPs saw ${formatMultiple(net)} net, not ${formatMultiple(metrics.tvpi)} — ${formatDollars(feesPaid)} went to management fees${carry > 0 ? ` and ${formatDollars(carry)} to your carry` : ", and there was no profit to take carry on"}. Gross is your skill; net is what they'll re-up on.`
       );
     }
     if (metrics.dpi !== null && metrics.tvpi !== null && metrics.dpi < metrics.tvpi * 0.5) {
@@ -316,21 +338,41 @@ export default async function PlayPage() {
           <p className="mt-2 text-sm font-bold uppercase tracking-wide opacity-70">
             Fund closed{" "}
             {earlyClose ? `early at year ${game.year}` : `after ${GAME_YEARS} years`} —{" "}
-            {metrics.tvpi === null ? "no capital deployed" : formatMultiple(metrics.tvpi)}{" "}
+            {/* The reveal: gross ticks up, then net, then the grade stamps down. */}
+            {metrics.tvpi === null ? (
+              "no capital deployed"
+            ) : (
+              <CountUp from={0} to={metrics.tvpi} delay={300} />
+            )}{" "}
             TVPI
+            {net !== null && (
+              <>
+                {" · "}
+                <CountUp from={0} to={net} delay={1300} /> net to LPs
+              </>
+            )}
           </p>
           {/* The one hero moment that gets the poster face — everything else
               on the scorecard stays on the calmer display font. */}
-          <h2 className="mt-1 font-bungee text-4xl font-normal uppercase">
+          <h2
+            className="stamp-in mt-1 font-bungee text-4xl font-normal uppercase"
+            style={{ animationDelay: "2300ms" }}
+          >
             {earlyClose ? "Early close" : grade!.label}
           </h2>
-          <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed">
+          <p
+            className="game-deal-in mx-auto mt-2 max-w-2xl text-sm leading-relaxed"
+            style={{ animationDelay: "2700ms" }}
+          >
             {earlyClose
               ? `You ended this run before year ${GAME_YEARS} — too early for a fair quartile grade against a full-length fund.`
               : grade!.blurb}
           </p>
           {lessons.length > 0 && (
-            <ul className="mx-auto mt-4 max-w-2xl space-y-1.5 border-t border-current/20 pt-4 text-left text-sm leading-relaxed opacity-90">
+            <ul
+              className="game-deal-in mx-auto mt-4 max-w-2xl space-y-1.5 border-t border-current/20 pt-4 text-left text-sm leading-relaxed opacity-90"
+              style={{ animationDelay: "2900ms" }}
+            >
               {lessons.map((l, i) => (
                 <li key={i}>📝 {l}</li>
               ))}
@@ -570,7 +612,7 @@ export default async function PlayPage() {
         </section>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <SubmitToLeaderboardButton />
+          <SubmitToLeaderboardButton alreadySubmitted={alreadySubmitted} />
           <StartCampaignButton label="🔁 Start a new fund" hasPortfolio />
         </div>
 
@@ -852,8 +894,8 @@ export default async function PlayPage() {
           {
             icon: "💰",
             label: "Dry powder",
-            value: formatDollars(remaining),
-            hint: "Capital you haven't deployed yet. Every check — first, follow-on, or bridge — comes out of this, and exits don't refill it.",
+            value: <Ticker value={remaining} format="dollars" />,
+            hint: "Capital you haven't deployed yet, after setting aside the fund's lifetime management fees. Every check — first, follow-on, or bridge — comes out of this, and exits don't refill it.",
           },
           {
             icon: "🏢",
@@ -864,13 +906,15 @@ export default async function PlayPage() {
           {
             icon: "📈",
             label: "Portfolio value",
-            value: formatDollars(metrics.portfolioValue + metrics.distributions),
+            value: (
+              <Ticker value={metrics.portfolioValue + metrics.distributions} format="dollars" />
+            ),
             hint: "Active stakes marked at each company's latest post-money valuation, plus cash already returned by exits.",
           },
           {
             icon: "🏆",
             label: "TVPI",
-            value: metrics.tvpi === null ? "—" : formatMultiple(metrics.tvpi),
+            value: metrics.tvpi === null ? "—" : <Ticker value={metrics.tvpi} format="multiple" />,
             hint: "Total Value to Paid-In: (paper value + cash back) ÷ capital deployed. The headline multiple LPs grade a fund by.",
           },
           {
@@ -950,14 +994,14 @@ export default async function PlayPage() {
             )}
           </p>
         ) : (
-          <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="mt-3 grid grid-cols-1 gap-4 [perspective:1200px] md:grid-cols-2">
             {dealViews.map((d, i) => (
               <div
                 key={d.id}
-                className="game-deal-in"
-                style={{ animationDelay: `${i * 90}ms` }}
+                className="deal-flip"
+                style={{ animationDelay: `${i * 120}ms` }}
               >
-                <DealCard deal={d} />
+                <DealCard deal={d} index={i} />
               </div>
             ))}
           </div>
@@ -1159,6 +1203,7 @@ function Shell({
       </header>
       <main className="relative mx-auto max-w-5xl px-6 pb-8 pt-3">{children}</main>
       <Toaster />
+      <Celebration />
     </div>
   );
 }

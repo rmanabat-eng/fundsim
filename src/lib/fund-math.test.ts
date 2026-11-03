@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   fundMetrics,
+  managementFees,
+  netTvpi,
   ownershipPercent,
   ownershipAfterRounds,
   ownershipTimeline,
@@ -298,5 +300,23 @@ describe("formatters", () => {
   it("formats multiples and percents to two decimals", () => {
     expect(formatMultiple(2)).toBe("2.00×");
     expect(formatPercent(3.125)).toBe("3.13%");
+  });
+});
+
+describe("netTvpi", () => {
+  const fees = managementFees(10_000_000, 10); // 2M over a 10-year fund
+
+  it("charges fees and carry on a winning fund", () => {
+    // LPs paid 8M + 2M; 30M back → 20M profit, 4M carry → 26M / 10M
+    expect(fees).toBe(2_000_000);
+    expect(netTvpi(30_000_000, 8_000_000, fees)).toBeCloseTo(2.6);
+  });
+
+  it("takes no carry when LPs don't get their money back", () => {
+    expect(netTvpi(6_000_000, 8_000_000, fees)).toBeCloseTo(0.6);
+  });
+
+  it("is null with nothing paid in", () => {
+    expect(netTvpi(0, 0, 0)).toBeNull();
   });
 });
