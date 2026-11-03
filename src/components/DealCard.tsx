@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { investInDeal, passDeal } from "@/app/play/actions";
 import { formatDollars } from "@/lib/fund-math";
 import { StageBadge } from "@/components/StageBadge";
@@ -8,6 +8,7 @@ import { Term } from "@/components/Term";
 import { toast } from "@/components/toast";
 import { sectorArt } from "@/lib/sectors";
 import { prefersReducedMotion } from "@/lib/motion";
+import { play } from "@/lib/sound";
 
 const CHECK_STEP = 25_000;
 
@@ -32,7 +33,13 @@ export type DealView = {
 
 // A pitch card: the numbers, the signals, and a decision. The signals are
 // the whole game — some of them (noisily) predict how the company does.
-export function DealCard({ deal }: { deal: DealView }) {
+// `index` is the card's place in the dealt hand: it staggers the flip sound
+// to match the page's staggered deal-flip animation.
+export function DealCard({ deal, index = 0 }: { deal: DealView; index?: number }) {
+  // Mount only: index shifts when a card ahead of this one is played, and
+  // that shouldn't re-deal it.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => play("deal", index * 0.12), []);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   // Which exit motion is playing, if any — held locally so the animation

@@ -1,11 +1,13 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useTransition } from "react";
+import { createContext, useContext, useState, useSyncExternalStore, useTransition } from "react";
 import { advanceYear, type YearSummary } from "@/app/play/actions";
 import { GAME_YEARS, MARKET_LABELS } from "@/lib/campaign";
 import { formatDollars, formatMultiple } from "@/lib/fund-math";
-import { prefersReducedMotion } from "@/lib/motion";
+import { isMuted, play, setMuted, subscribeMuted } from "@/lib/sound";
 import { toast } from "@/components/toast";
+import { celebrateExit } from "@/components/Celebration";
+import { CountUp } from "@/components/CountUp";
 
 // The turn crank. Warns about what's still on the table — advancing expires
 // every open deal and pending decision, and that pressure is the point.
@@ -61,14 +63,22 @@ export function AdvanceYearProvider({
 
   function run() {
     setConfirming(false);
+    play("advance");
     startTransition(async () => {
       const result = await advanceYear();
       setSummary(result);
+      // Each headline gets its sound as it slides in (see the stagger below).
+      result?.events.forEach((e, i) => {
+        const at = (i * EVENT_STAGGER_MS) / 1000;
+        if (e.kind === "exit") celebrateExit(e.name, e.multiple ?? 0, at);
+        else play(e.kind === "dead" ? "bad" : e.kind, at);
+      });
       // Deaths are easy to miss in a wall of results, so they also get a toast.
       if (result && result.writtenOff > 0) {
         toast(
           `${result.writtenOff} ${result.writtenOff === 1 ? "company" : "companies"} went bankrupt this year`,
-          "error"
+          "error",
+          null // the recap plays a sound per company as it appears
         );
       }
     });
@@ -105,6 +115,21 @@ function AdvanceYearTrigger() {
       className="max-btn-primary rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-r from-[color:var(--max-magenta)] via-[color:var(--max-purple)] to-[color:var(--max-cyan)] px-5 py-2.5 text-sm font-black uppercase tracking-wide text-white disabled:opacity-50"
     >
       {pending ? "Rolling..." : closing ? "🏁 Close the fund" : `⏩ Advance to year ${nextYear}`}
+    </button>
+  );
+}
+
+function MuteToggle() {
+  const muted = useSyncExternalStore(subscribeMuted, isMuted, () => false);
+  return (
+    <button
+      type="button"
+      onClick={() => setMuted(!muted)}
+      aria-pressed={!muted}
+      aria-label={muted ? "Turn sound on" : "Mute sound"}
+      className="text-lg text-white/60 hover:text-white"
+    >
+      {muted ? "🔇" : "🔊"}
     </button>
   );
 }
@@ -157,6 +182,7 @@ export function AdvanceYearBar({ extras }: { extras?: React.ReactNode }) {
                   : "Desk clear for this year"}
               </span>
               {extras}
+              <MuteToggle />
             </span>
             <AdvanceYearTrigger />
           </>
@@ -173,26 +199,6 @@ const EVENT_STYLES = {
   dead: { icon: "💀", text: "text-[color:var(--max-orange)]" },
 } as const;
 const EVENT_STAGGER_MS = 140;
-
-// Ticks a multiple from `from` to `to` once the event headlines have landed,
-// so the fund-level number moves after you've seen why it moved.
-function CountUp({ from, to, delay }: { from: number; to: number; delay: number }) {
-  // Only ever mounted after a client-side advance, so reading matchMedia here is safe.
-  const [value, setValue] = useState(() => (prefersReducedMotion() ? to : from));
-  useEffect(() => {
-    if (prefersReducedMotion()) return;
-    let frame = 0;
-    const start = performance.now() + delay;
-    const tick = (now: number) => {
-      const t = Math.min(Math.max((now - start) / 900, 0), 1);
-      setValue(from + (to - from) * (1 - (1 - t) ** 3)); // ease-out cubic
-      if (t < 1) frame = requestAnimationFrame(tick);
-    };
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [from, to, delay]);
-  return <>{formatMultiple(value)}</>;
-}
 
 export function AdvanceYearResults() {
   const { summary, pending } = useAdvanceYear();
@@ -216,8 +222,10 @@ export function AdvanceYearResults() {
           {summary.events.map((e, i) => (
             <li
               key={i}
-              className="game-deal-in flex gap-2"
-              style={{ animationDelay: `${i * EVENT_STAGGER_MS}ms` }}
+              className={`${e.kind === "dead" || e.kind === "down" ? "bad-news" : "game-deal-in"} flex gap-2 rounded`}
+              style={{
+                animationDelay: `${i * EVENT_STAGGER_MS}ms, ${i * EVENT_STAGGER_MS + 450}ms`,
+              }}
             >
               <span aria-hidden>{EVENT_STYLES[e.kind].icon}</span>
               <span className="text-white/80">

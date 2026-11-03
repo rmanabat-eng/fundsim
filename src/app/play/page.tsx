@@ -24,6 +24,8 @@ import {
 } from "@/lib/campaign";
 import { currentReputation } from "@/lib/reputation";
 import { DealCard, type DealView } from "@/components/DealCard";
+import { Celebration } from "@/components/Celebration";
+import { CountUp, Ticker } from "@/components/CountUp";
 import { DecisionCard, type DecisionView } from "@/components/DecisionCard";
 import { StartCampaignButton } from "@/components/StartCampaignButton";
 import { FundNamePrompt } from "@/components/FundNamePrompt";
@@ -336,21 +338,41 @@ export default async function PlayPage() {
           <p className="mt-2 text-sm font-bold uppercase tracking-wide opacity-70">
             Fund closed{" "}
             {earlyClose ? `early at year ${game.year}` : `after ${GAME_YEARS} years`} —{" "}
-            {metrics.tvpi === null ? "no capital deployed" : formatMultiple(metrics.tvpi)}{" "}
-            TVPI{net !== null && ` · ${formatMultiple(net)} net to LPs`}
+            {/* The reveal: gross ticks up, then net, then the grade stamps down. */}
+            {metrics.tvpi === null ? (
+              "no capital deployed"
+            ) : (
+              <CountUp from={0} to={metrics.tvpi} delay={300} />
+            )}{" "}
+            TVPI
+            {net !== null && (
+              <>
+                {" · "}
+                <CountUp from={0} to={net} delay={1300} /> net to LPs
+              </>
+            )}
           </p>
           {/* The one hero moment that gets the poster face — everything else
               on the scorecard stays on the calmer display font. */}
-          <h2 className="mt-1 font-bungee text-4xl font-normal uppercase">
+          <h2
+            className="stamp-in mt-1 font-bungee text-4xl font-normal uppercase"
+            style={{ animationDelay: "2300ms" }}
+          >
             {earlyClose ? "Early close" : grade!.label}
           </h2>
-          <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed">
+          <p
+            className="game-deal-in mx-auto mt-2 max-w-2xl text-sm leading-relaxed"
+            style={{ animationDelay: "2700ms" }}
+          >
             {earlyClose
               ? `You ended this run before year ${GAME_YEARS} — too early for a fair quartile grade against a full-length fund.`
               : grade!.blurb}
           </p>
           {lessons.length > 0 && (
-            <ul className="mx-auto mt-4 max-w-2xl space-y-1.5 border-t border-current/20 pt-4 text-left text-sm leading-relaxed opacity-90">
+            <ul
+              className="game-deal-in mx-auto mt-4 max-w-2xl space-y-1.5 border-t border-current/20 pt-4 text-left text-sm leading-relaxed opacity-90"
+              style={{ animationDelay: "2900ms" }}
+            >
               {lessons.map((l, i) => (
                 <li key={i}>📝 {l}</li>
               ))}
@@ -872,7 +894,7 @@ export default async function PlayPage() {
           {
             icon: "💰",
             label: "Dry powder",
-            value: formatDollars(remaining),
+            value: <Ticker value={remaining} format="dollars" />,
             hint: "Capital you haven't deployed yet, after setting aside the fund's lifetime management fees. Every check — first, follow-on, or bridge — comes out of this, and exits don't refill it.",
           },
           {
@@ -884,13 +906,15 @@ export default async function PlayPage() {
           {
             icon: "📈",
             label: "Portfolio value",
-            value: formatDollars(metrics.portfolioValue + metrics.distributions),
+            value: (
+              <Ticker value={metrics.portfolioValue + metrics.distributions} format="dollars" />
+            ),
             hint: "Active stakes marked at each company's latest post-money valuation, plus cash already returned by exits.",
           },
           {
             icon: "🏆",
             label: "TVPI",
-            value: metrics.tvpi === null ? "—" : formatMultiple(metrics.tvpi),
+            value: metrics.tvpi === null ? "—" : <Ticker value={metrics.tvpi} format="multiple" />,
             hint: "Total Value to Paid-In: (paper value + cash back) ÷ capital deployed. The headline multiple LPs grade a fund by.",
           },
           {
@@ -970,14 +994,14 @@ export default async function PlayPage() {
             )}
           </p>
         ) : (
-          <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="mt-3 grid grid-cols-1 gap-4 [perspective:1200px] md:grid-cols-2">
             {dealViews.map((d, i) => (
               <div
                 key={d.id}
-                className="game-deal-in"
-                style={{ animationDelay: `${i * 90}ms` }}
+                className="deal-flip"
+                style={{ animationDelay: `${i * 120}ms` }}
               >
-                <DealCard deal={d} />
+                <DealCard deal={d} index={i} />
               </div>
             ))}
           </div>
@@ -1179,6 +1203,7 @@ function Shell({
       </header>
       <main className="relative mx-auto max-w-5xl px-6 pb-8 pt-3">{children}</main>
       <Toaster />
+      <Celebration />
     </div>
   );
 }

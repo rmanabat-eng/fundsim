@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { play, type Sfx } from "@/lib/sound";
 
 // A tiny toast system. The store lives at module scope so a toast fired from a
 // card that's about to unmount (its deal/decision leaves the list on the next
@@ -34,7 +35,13 @@ function dismiss(id: number) {
   emit();
 }
 
-export function toast(message: string, tone: ToastTone = "success") {
+const toneSfx: Record<ToastTone, Sfx> = { success: "invest", info: "info", error: "bad" };
+
+// `sfx` overrides the tone's default sound; null keeps the toast silent when
+// the caller already played something more specific.
+export function toast(message: string, tone: ToastTone = "success", sfx?: Sfx | null) {
+  const sound = sfx === undefined ? toneSfx[tone] : sfx;
+  if (sound) play(sound);
   const id = nextId++;
   toasts = [...toasts, { id, message, tone }];
   emit();

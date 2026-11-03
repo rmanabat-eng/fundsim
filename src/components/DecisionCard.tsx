@@ -21,6 +21,7 @@ import { formatDollars, formatPercent } from "@/lib/fund-math";
 import { StageBadge } from "@/components/StageBadge";
 import { inputClasses } from "@/components/RoundFields";
 import { Term } from "@/components/Term";
+import { celebrateExit } from "@/components/Celebration";
 import { toast } from "@/components/toast";
 import { prefersReducedMotion } from "@/lib/motion";
 import { withRepDelta, repSuffix } from "@/lib/decision-reveal";
@@ -686,7 +687,8 @@ function AcquisitionCard({
     startTransition(async () => {
       if (!reduced) await new Promise((r) => setTimeout(r, ACCEPT_EXIT_MS));
       const { delta } = await withRepDelta(() => acceptAcquisition(d.id));
-      toast(`Took the exit on ${d.companyName} — ${formatDollars(d.yourShare)}${repSuffix(delta)}`);
+      toast(`Took the exit on ${d.companyName} — ${formatDollars(d.yourShare)}${repSuffix(delta)}`, "success", null);
+      celebrateExit(d.companyName, multiple);
     });
   }
 
@@ -767,7 +769,8 @@ function AcquihireCard({
     startTransition(async () => {
       if (!reduced) await new Promise((r) => setTimeout(r, ACCEPT_EXIT_MS));
       const { delta } = await withRepDelta(() => acceptAcquihire(d.id));
-      toast(`Took the acqui-hire on ${d.companyName} — ${formatDollars(d.yourShare)}${repSuffix(delta)}`);
+      toast(`Took the acqui-hire on ${d.companyName} — ${formatDollars(d.yourShare)}${repSuffix(delta)}`, "success", null);
+      celebrateExit(d.companyName, multiple);
     });
   }
 
@@ -847,7 +850,8 @@ function FundSecondaryCard({
     startTransition(async () => {
       if (!reduced) await new Promise((r) => setTimeout(r, FUND_EXIT_MS));
       const { delta } = await withRepDelta(() => acceptFundSecondary(d.id));
-      toast(`Sold your stake in ${d.companyName} — ${formatDollars(d.yourShare)}${repSuffix(delta)}`);
+      toast(`Sold your stake in ${d.companyName} — ${formatDollars(d.yourShare)}${repSuffix(delta)}`, "success", null);
+      celebrateExit(d.companyName, multiple);
     });
   }
 
@@ -1321,7 +1325,8 @@ function ExitRouteCard({ d }: { d: Extract<DecisionView, { type: "exit_route" }>
         setExiting(null);
         setError(res.error);
       } else {
-        toast(`${d.companyName}: ${label}${repSuffix(delta)}`);
+        toast(`${d.companyName}: ${label}${repSuffix(delta)}`, "success", null);
+        celebrateExit(d.companyName, 0); // the IPO's price isn't known here, so just the fanfare
       }
     });
   }

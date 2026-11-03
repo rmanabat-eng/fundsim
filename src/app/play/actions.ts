@@ -1160,6 +1160,7 @@ export type YearEvent = {
   name: string;
   kind: "up" | "down" | "exit" | "dead";
   detail: string;
+  multiple?: number; // exits only: proceeds ÷ what the fund put in
 };
 
 // A macro shock hits ~1 year in 10 and temporarily reweights every company's
@@ -1423,10 +1424,12 @@ export async function advanceYear(): Promise<YearSummary | null> {
         const proceeds = exitProceeds(company.rounds, exitValue);
         summary.exited++;
         summary.distributions += proceeds;
+        const invested = company.rounds.reduce((sum, r) => sum + r.yourCheck, 0);
         summary.events.push({
           name: company.name,
           kind: "exit",
           detail: `exited at ${formatDollars(exitValue)} — ${formatDollars(proceeds)} back to the fund`,
+          multiple: invested > 0 ? proceeds / invested : 0,
         });
       } else {
         summary.writtenOff++;
