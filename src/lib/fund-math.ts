@@ -262,6 +262,26 @@ export function fundMetrics(companies: FundCompany[]): FundMetrics {
   };
 }
 
+// The classic "2 and 20": the GP draws 2% of committed capital a year to run
+// the fund, and keeps 20% of profits once LPs have their money back.
+export const MANAGEMENT_FEE_RATE = 0.02;
+export const CARRY_RATE = 0.2;
+
+// Fees are charged on the whole commitment, deployed or not, so they come
+// out of what you can invest.
+export function managementFees(fundSize: number, years: number): number {
+  return fundSize * MANAGEMENT_FEE_RATE * years;
+}
+
+// TVPI as LPs see it: they paid in the checks plus the fees, and get the
+// fund's value back minus the GP's carry on any profit.
+export function netTvpi(totalValue: number, deployed: number, fees: number): number | null {
+  const paidIn = deployed + fees;
+  if (paidIn <= 0) return null;
+  const carry = CARRY_RATE * Math.max(0, totalValue - paidIn);
+  return (totalValue - carry) / paidIn;
+}
+
 // One company's IRR, marking an active stake as of today — or the latest
 // dated event on the company if rounds are future-dated, so IRR never
 // discounts backwards. Lives here (not in a component) because the "as of"

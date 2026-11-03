@@ -1,9 +1,10 @@
 "use client";
 
-import { createContext, useContext, useState, useTransition } from "react";
+import { createContext, useContext, useEffect, useState, useTransition } from "react";
 import { advanceYear, type YearSummary } from "@/app/play/actions";
 import { GAME_YEARS, MARKET_LABELS } from "@/lib/campaign";
-import { formatDollars } from "@/lib/fund-math";
+import { formatDollars, formatMultiple } from "@/lib/fund-math";
+import { prefersReducedMotion } from "@/lib/motion";
 import { toast } from "@/components/toast";
 
 // The turn crank. Warns about what's still on the table — advancing expires
@@ -165,6 +166,34 @@ export function AdvanceYearBar({ extras }: { extras?: React.ReactNode }) {
   );
 }
 
+const EVENT_STYLES = {
+  up: { icon: "📈", text: "text-[color:var(--max-cyan)]" },
+  down: { icon: "📉", text: "text-[color:var(--max-yellow)]" },
+  exit: { icon: "🏆", text: "text-[color:var(--max-cyan)]" },
+  dead: { icon: "💀", text: "text-[color:var(--max-orange)]" },
+} as const;
+const EVENT_STAGGER_MS = 140;
+
+// Ticks a multiple from `from` to `to` once the event headlines have landed,
+// so the fund-level number moves after you've seen why it moved.
+function CountUp({ from, to, delay }: { from: number; to: number; delay: number }) {
+  // Only ever mounted after a client-side advance, so reading matchMedia here is safe.
+  const [value, setValue] = useState(() => (prefersReducedMotion() ? to : from));
+  useEffect(() => {
+    if (prefersReducedMotion()) return;
+    let frame = 0;
+    const start = performance.now() + delay;
+    const tick = (now: number) => {
+      const t = Math.min(Math.max((now - start) / 900, 0), 1);
+      setValue(from + (to - from) * (1 - (1 - t) ** 3)); // ease-out cubic
+      if (t < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [from, to, delay]);
+  return <>{formatMultiple(value)}</>;
+}
+
 export function AdvanceYearResults() {
   const { summary, pending } = useAdvanceYear();
   if (!summary || pending || summary.closed) return null;
@@ -181,6 +210,45 @@ export function AdvanceYearResults() {
         </p>
         <p className="text-sm font-semibold text-white/90">{MARKET_LABELS[summary.market]}</p>
       </div>
+
+      {summary.events.length > 0 && (
+        <ul className="mt-3 space-y-1 text-sm">
+          {summary.events.map((e, i) => (
+            <li
+              key={i}
+              className="game-deal-in flex gap-2"
+              style={{ animationDelay: `${i * EVENT_STAGGER_MS}ms` }}
+            >
+              <span aria-hidden>{EVENT_STYLES[e.kind].icon}</span>
+              <span className="text-white/80">
+                <strong className={EVENT_STYLES[e.kind].text}>{e.name}</strong> {e.detail}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {summary.tvpiBefore !== null && summary.tvpiAfter !== null && (
+        <p
+          className="game-deal-in mt-3 text-sm text-white/70"
+          style={{ animationDelay: `${summary.events.length * EVENT_STAGGER_MS}ms` }}
+        >
+          Fund TVPI {formatMultiple(summary.tvpiBefore)} →{" "}
+          <strong
+            className={`font-display text-xl tabular-nums ${
+              summary.tvpiAfter >= summary.tvpiBefore
+                ? "text-[color:var(--max-cyan)]"
+                : "text-[color:var(--max-orange)]"
+            }`}
+          >
+            <CountUp
+              from={summary.tvpiBefore}
+              to={summary.tvpiAfter}
+              delay={summary.events.length * EVENT_STAGGER_MS}
+            />
+          </strong>
+        </p>
+      )}
 
       {summary.macroShock && (
         <p className="mt-3 rounded-lg border-4 border-[color:var(--max-orange)] bg-[color:var(--max-orange)]/15 px-3 py-2 text-sm font-bold text-[color:var(--max-orange)]">
