@@ -3,7 +3,7 @@
 // sweep (or, with `noise`, a band-passed noise burst) under a quick attack
 // and exponential decay. Muting persists per browser in localStorage.
 
-export type Sfx = "invest" | "exit" | "bad" | "info" | "up" | "down" | "advance" | "deal";
+export type Sfx = "invest" | "exit" | "bad" | "info" | "up" | "down" | "advance" | "deal" | "finale" | "gameover";
 
 type Note = {
   at?: number; // seconds after play()
@@ -47,6 +47,25 @@ const SOUNDS: Record<Sfx, Note[]> = {
   advance: [{ freq: 200, to: 900, dur: 0.25, type: "sawtooth", gain: 0.04 }],
   // card snap
   deal: [{ freq: 5000, dur: 0.03, gain: 0.3, noise: true }],
+  // fund closed: G–C–E pickup, then a held C-major chord over a low thump
+  finale: [
+    { freq: 392, dur: 0.1, type: "triangle", gain: 0.12 },
+    { at: 0.1, freq: 523, dur: 0.1, type: "triangle", gain: 0.12 },
+    { at: 0.2, freq: 659, dur: 0.1, type: "triangle", gain: 0.12 },
+    { at: 0.32, freq: 120, to: 50, dur: 0.3, type: "sine", gain: 0.3 },
+    { at: 0.32, freq: 523, dur: 1.4, type: "triangle", gain: 0.1 },
+    { at: 0.32, freq: 659, dur: 1.4, type: "triangle", gain: 0.08 },
+    { at: 0.32, freq: 784, dur: 1.4, type: "triangle", gain: 0.08 },
+    { at: 0.32, freq: 1047, dur: 1.4, type: "square", gain: 0.03 },
+  ],
+  // fund closed as a Ghost: chiptune run falling G5 → C4
+  gameover: [784, 659, 523, 392, 330, 262].map((freq, i) => ({
+    at: i * 0.1,
+    freq,
+    dur: i === 5 ? 0.6 : 0.12,
+    type: "square" as const,
+    gain: 0.05,
+  })),
 };
 
 const MUTE_KEY = "fundsim:muted";

@@ -1,8 +1,15 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { formatMultiple } from "@/lib/fund-math";
-import { play } from "@/lib/sound";
+import { play, type Sfx } from "@/lib/sound";
+
+// Plays once on mount, e.g. the scorecard's grade stamp. A reload has no user
+// activation yet, so revisiting a finished fund stays quiet.
+export function PlaySfx({ sfx, delay = 0 }: { sfx: Sfx; delay?: number }) {
+  useEffect(() => play(sfx, delay), [sfx, delay]);
+  return null;
+}
 
 // Exit celebration: every exit gets the fanfare, and a real winner (5×+)
 // also gets a banner and a confetti burst. Module-scope store like toast, so

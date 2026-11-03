@@ -24,7 +24,7 @@ import {
 } from "@/lib/campaign";
 import { currentReputation } from "@/lib/reputation";
 import { DealCard, type DealView } from "@/components/DealCard";
-import { Celebration } from "@/components/Celebration";
+import { Celebration, PlaySfx } from "@/components/Celebration";
 import { CountUp, Ticker } from "@/components/CountUp";
 import { DecisionCard, type DecisionView } from "@/components/DecisionCard";
 import { StartCampaignButton } from "@/components/StartCampaignButton";
@@ -360,6 +360,7 @@ export default async function PlayPage() {
           >
             {earlyClose ? "Early close" : grade!.label}
           </h2>
+          <PlaySfx sfx={!earlyClose && grade!.tone === "bad" ? "gameover" : "finale"} delay={2.2} />
           <p
             className="game-deal-in mx-auto mt-2 max-w-2xl text-sm leading-relaxed"
             style={{ animationDelay: "2700ms" }}
