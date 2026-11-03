@@ -1,7 +1,16 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useSyncExternalStore, useTransition } from "react";
 import { updateFundName } from "@/app/play/actions";
+
+// sessionStorage has no change event within a tab, so dismiss() notifies.
+const listeners = new Set<() => void>();
+function subscribe(onChange: () => void) {
+  listeners.add(onChange);
+  return () => {
+    listeners.delete(onChange);
+  };
+}
 
 // A one-time nudge to name the fund, shown right after a fresh campaign
 // starts (year 1, still on the default name). Modeled on CampaignTutorial's
@@ -11,17 +20,18 @@ import { updateFundName } from "@/app/play/actions";
 // a hard refresh is an accepted edge case.
 export function FundNamePrompt({ gameId }: { gameId: string }) {
   const STORAGE_KEY = `fundsim-fund-name-prompted-${gameId}`;
-  const [dismissed, setDismissed] = useState(true);
+  // Server snapshot is "dismissed" so nothing renders until the client checks.
+  const dismissed = useSyncExternalStore(
+    subscribe,
+    () => window.sessionStorage.getItem(STORAGE_KEY) === "1",
+    () => true
+  );
   const [name, setName] = useState("");
   const [pending, startTransition] = useTransition();
 
-  useEffect(() => {
-    setDismissed(window.sessionStorage.getItem(STORAGE_KEY) === "1");
-  }, []);
-
   function dismiss() {
     window.sessionStorage.setItem(STORAGE_KEY, "1");
-    setDismissed(true);
+    for (const l of listeners) l();
   }
 
   function save() {
