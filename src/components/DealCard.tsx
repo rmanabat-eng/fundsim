@@ -34,8 +34,17 @@ export type DealView = {
 // A pitch card: the numbers, the signals, and a decision. The signals are
 // the whole game — some of them (noisily) predict how the company does.
 // `index` is the card's place in the dealt hand: it staggers the flip sound
-// to match the page's staggered deal-flip animation.
-export function DealCard({ deal, index = 0 }: { deal: DealView; index?: number }) {
+// to match the page's staggered deal-flip animation. `budget` is the fund's
+// remaining dry powder; the slider never goes past it.
+export function DealCard({
+  deal,
+  index = 0,
+  budget,
+}: {
+  deal: DealView;
+  index?: number;
+  budget: number;
+}) {
   // Mount only: index shifts when a card ahead of this one is played, and
   // that shouldn't re-deal it.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -52,7 +61,14 @@ export function DealCard({ deal, index = 0 }: { deal: DealView; index?: number }
     Math.round((deal.raised * 0.2) / CHECK_STEP) * CHECK_STEP,
     CHECK_STEP
   );
-  const [check, setCheck] = useState(defaultCheck);
+  // Capped by the round and by what's left in the fund, whole steps only —
+  // the server rejects anything over either. Derived rather than clamped in
+  // state, so it re-caps when another card spends money and the page
+  // revalidates with a smaller budget.
+  const maxCheck = Math.min(deal.raised, Math.floor(budget / CHECK_STEP) * CHECK_STEP);
+  const outOfMoney = maxCheck < CHECK_STEP;
+  const [picked, setCheck] = useState(defaultCheck);
+  const check = Math.min(picked, Math.max(maxCheck, CHECK_STEP));
 
   const ownership = (check / deal.postMoney) * 100;
   const art = sectorArt(deal.sector);
@@ -191,32 +207,45 @@ export function DealCard({ deal, index = 0 }: { deal: DealView; index?: number }
               <div className="flex items-baseline justify-between text-sm">
                 <span className="text-white/60">Your check</span>
                 <span className="font-semibold tabular-nums text-white">
-                  {formatDollars(check)}{" "}
-                  <span className="font-normal text-white/60">
-                    · {ownership.toFixed(2)}%
-                  </span>
+                  {outOfMoney ? (
+                    "—"
+                  ) : (
+                    <>
+                      {formatDollars(check)}{" "}
+                      <span className="font-normal text-white/60">
+                        · {ownership.toFixed(2)}%
+                      </span>
+                    </>
+                  )}
                 </span>
               </div>
               <input
                 name="check"
                 type="range"
                 min={CHECK_STEP}
-                max={deal.raised}
+                max={Math.max(maxCheck, CHECK_STEP)}
                 step={CHECK_STEP}
                 value={check}
+                disabled={outOfMoney}
                 onChange={(e) => setCheck(Number(e.target.value))}
                 className="w-full accent-[color:var(--max-magenta)]"
                 aria-label="Check size"
               />
               <div className="flex justify-between text-xs text-white/40">
                 <span>{formatDollars(CHECK_STEP)}</span>
-                <span>{formatDollars(deal.raised)} (lead it)</span>
+                <span>
+                  {outOfMoney
+                    ? "Out of dry powder"
+                    : maxCheck < deal.raised
+                      ? `${formatDollars(maxCheck)} (all you have left)`
+                      : `${formatDollars(deal.raised)} (lead it)`}
+                </span>
               </div>
             </div>
             <div className="mt-1 flex items-center gap-2">
               <button
                 type="submit"
-                disabled={pending}
+                disabled={pending || outOfMoney}
                 className="max-btn-primary shrink-0 rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-r from-[color:var(--max-magenta)] via-[color:var(--max-purple)] to-[color:var(--max-cyan)] px-4 py-2 text-sm font-black uppercase tracking-wide text-white disabled:opacity-50"
               >
                 {pending ? "Wiring..." : "💸 Invest"}
