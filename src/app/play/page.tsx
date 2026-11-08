@@ -958,7 +958,7 @@ export default async function PlayPage() {
                 className="game-deal-in"
                 style={{ animationDelay: `${i * 90}ms` }}
               >
-                <DecisionCard decision={d} />
+                <DecisionCard decision={d} budget={remaining} />
               </div>
             ))}
           </div>
@@ -1012,7 +1012,7 @@ export default async function PlayPage() {
                 className="group/deal deal-flip relative w-full shrink-0 snap-center md:w-auto"
                 style={{ animationDelay: `${i * 120}ms` }}
               >
-                <DealCard deal={d} index={i} />
+                <DealCard deal={d} index={i} budget={remaining} />
                 <SwipeArrow dir="prev" />
                 <SwipeArrow dir="next" />
               </div>

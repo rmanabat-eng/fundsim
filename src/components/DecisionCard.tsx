@@ -528,10 +528,19 @@ function PitchNotes({ signals }: { signals: string[] }) {
   );
 }
 
-function ProRataCard({ d }: { d: Extract<DecisionView, { type: "pro_rata" }> }) {
+function ProRataCard({
+  d,
+  budget,
+}: {
+  d: Extract<DecisionView, { type: "pro_rata" }>;
+  budget: number;
+}) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [check, setCheck] = useState(String(d.proRataCheck));
+  // Never more than the round or the fund's remaining dry powder — the
+  // spinner stops there and typed amounts are pulled back to it.
+  const cap = Math.max(0, Math.min(d.raised, budget));
+  const [check, setCheck] = useState(String(Math.min(d.proRataCheck, cap)));
   const [exiting, setExiting] = useState<"fund" | "decline" | null>(null);
 
   const checkNumber = Number(check);
@@ -635,10 +644,12 @@ function ProRataCard({ d }: { d: Extract<DecisionView, { type: "pro_rata" }> }) 
             name="check"
             type="number"
             min={0}
-            max={d.raised}
+            max={cap}
             step={25000}
             value={check}
-            onChange={(e) => setCheck(e.target.value)}
+            onChange={(e) =>
+              setCheck(Number(e.target.value) > cap ? String(cap) : e.target.value)
+            }
             className={inputClasses}
             aria-label="Follow-on check"
           />
@@ -655,6 +666,12 @@ function ProRataCard({ d }: { d: Extract<DecisionView, { type: "pro_rata" }> }) 
           Sit out
         </button>
       </form>
+      {d.proRataCheck > cap && (
+        <p className="text-xs text-[color:var(--max-yellow)]">
+          Only {formatDollars(cap)} left to deploy — not enough for your full{" "}
+          {formatDollars(d.proRataCheck)} pro-rata.
+        </p>
+      )}
       {bought > 0 && (
         <p className="text-xs text-white/60">
           {formatDollars(checkNumber)} buys back {bought.toFixed(2)} points →{" "}
@@ -1572,8 +1589,10 @@ function PayToPlayCard({ d }: { d: Extract<DecisionView, { type: "pay_to_play" }
   );
 }
 
-export function DecisionCard({ decision }: { decision: DecisionView }) {
-  if (decision.type === "pro_rata") return <ProRataCard d={decision} />;
+// `budget` is the fund's remaining dry powder, for the one decision with a
+// free-form amount (pro-rata); the rest ask for fixed sums the server checks.
+export function DecisionCard({ decision, budget }: { decision: DecisionView; budget: number }) {
+  if (decision.type === "pro_rata") return <ProRataCard d={decision} budget={budget} />;
   if (decision.type === "acquisition") return <AcquisitionCard d={decision} />;
   if (decision.type === "acquihire") return <AcquihireCard d={decision} />;
   if (decision.type === "fund_secondary") return <FundSecondaryCard d={decision} />;
