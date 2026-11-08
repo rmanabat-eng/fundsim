@@ -8,6 +8,7 @@ import { isMuted, play, setMuted, subscribeMuted } from "@/lib/sound";
 import { toast } from "@/components/toast";
 import { celebrateExit } from "@/components/Celebration";
 import { CountUp } from "@/components/CountUp";
+import { CampaignTips } from "@/components/CampaignTips";
 
 // The turn crank. Warns about what's still on the table — advancing expires
 // every open deal and pending decision, and that pressure is the point.
@@ -182,7 +183,13 @@ export function AdvanceYearBar({ extras }: { extras?: React.ReactNode }) {
                   : "Desk clear for this year"}
               </span>
               {extras}
-              <MuteToggle />
+              {/* Phones: icon-only Tips + sound float just above the bar's
+                  top edge on the right, so they don't add a half-empty row
+                  inside it. sm+: inline as before. */}
+              <span className="absolute bottom-full right-4 mb-3 flex items-center gap-3 rounded-full bg-[#151528]/90 px-3 py-1.5 ring-1 ring-white/15 backdrop-blur-sm sm:static sm:m-0 sm:gap-4 sm:bg-transparent sm:p-0 sm:ring-0 sm:backdrop-blur-none">
+                <CampaignTips />
+                <MuteToggle />
+              </span>
             </span>
             <AdvanceYearTrigger />
           </>
