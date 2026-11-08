@@ -16,6 +16,9 @@ type Step = {
   // player needs to click (the spotlighted deal's Invest), so the card
   // itself never ends up sitting on top of it.
   cardCorner?: boolean;
+  // Appended to body below the md breakpoint only, where the deals are a
+  // one-at-a-time swipe row instead of a grid showing them all.
+  phoneNote?: string;
 };
 
 const STEPS: Step[] = [
@@ -43,6 +46,7 @@ const STEPS: Step[] = [
     target: "deal-signals",
     title: "🔎 Read the signals",
     body: "Every pitch shows four clues. Some genuinely predict success, some are noise, some are red flags — and the link is deliberately fuzzy, so a great-looking pitch still busts sometimes. The patterns only show up across several runs.",
+    phoneNote: "Swipe or tap ‹ › to see this year's other pitches.",
   },
   {
     // data-tour repeats across every deal card, so this rings whichever one
@@ -331,7 +335,13 @@ export function CampaignTutorial({ gameId }: { gameId: string }) {
           Step {displayIndex} of {displayTotal}
         </p>
         <h2 className="mt-1 text-lg font-black text-white">{step.title}</h2>
-        <p className="mt-2 text-sm leading-relaxed text-white/70">{step.body}</p>
+        <p className="mt-2 text-sm leading-relaxed text-white/70">
+          {step.body}
+          {/* 768 = Tailwind's md, where the deal row turns back into a grid. */}
+          {step.phoneNote && vw < 768 && (
+            <strong className="text-white/90"> {step.phoneNote}</strong>
+          )}
+        </p>
 
         <div className="mt-4 flex items-center justify-between gap-2">
           <button
