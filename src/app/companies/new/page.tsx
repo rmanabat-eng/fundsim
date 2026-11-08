@@ -1,7 +1,9 @@
 import { StartupPicker } from "@/components/StartupPicker";
 import { createCompany } from "@/app/actions";
+import { requireSandbox } from "@/lib/sandbox";
 
-export default function NewCompanyPage() {
+export default async function NewCompanyPage() {
+  await requireSandbox();
   return (
     <div className="max-hero relative min-h-screen bg-[#0d0d1a]">
       <div aria-hidden className="max-pattern-dots pointer-events-none fixed inset-0" />

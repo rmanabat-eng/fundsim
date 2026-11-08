@@ -352,7 +352,10 @@ export async function dismissScorecard() {
 export async function submitToLeaderboard() {
   const visitorId = await getVisitorId();
   const game = await prisma.game.findUnique({ where: { visitorId } });
-  if (!game || game.status !== "ended") return; // guard: only ended runs can submit
+  // Only ended runs can submit, and not once the scorecard was left: that
+  // unlocks the sandbox (src/lib/sandbox.ts), so the portfolio may have been
+  // hand-edited since.
+  if (!game || game.status !== "ended" || game.dismissed) return;
 
   const companies = await prisma.company.findMany({
     where: { visitorId },

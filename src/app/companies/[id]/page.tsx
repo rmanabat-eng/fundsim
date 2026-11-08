@@ -15,6 +15,7 @@ import {
 } from "@/lib/fund-math";
 import { DeleteRoundButton } from "@/components/DeleteRoundButton";
 import { UndoExitButton } from "@/components/UndoExitButton";
+import { campaignLock } from "@/lib/sandbox";
 import { StakeSparkline } from "@/components/StakeSparkline";
 import { StatCard } from "@/components/StatCard";
 
@@ -33,6 +34,8 @@ export default async function CompanyPage({
   });
 
   if (!company || company.visitorId !== visitorId) notFound();
+  // Campaign companies are read-only while the run holds the portfolio.
+  const locked = (await campaignLock()).portfolio;
 
   const pitchNotes: string[] = company.deal
     ? (JSON.parse(company.deal.signals) as string[])
@@ -118,6 +121,7 @@ export default async function CompanyPage({
               )}{" "}
               The cap table is frozen.
             </p>
+            {!locked && (
             <div className="flex items-center gap-4">
               <Link
                 href={`/companies/${company.id}/exit`}
@@ -127,6 +131,7 @@ export default async function CompanyPage({
               </Link>
               <UndoExitButton companyId={company.id} />
             </div>
+            )}
           </div>
         )}
 
@@ -222,7 +227,7 @@ export default async function CompanyPage({
             Funding rounds
           </h2>
           <div className="flex items-center gap-3">
-            {!exited && (
+            {!exited && !locked && (
               <Link
                 href={`/companies/${company.id}/exit`}
                 className="max-btn-outline rounded-full border-4 border-white/25 bg-[#2d1b4e]/60 px-4 py-2 text-sm font-bold text-white/85"
@@ -230,7 +235,7 @@ export default async function CompanyPage({
                 Record exit
               </Link>
             )}
-            {!exited && (
+            {!exited && !locked && (
               <Link
                 href={`/companies/${company.id}/rounds/new`}
                 className="max-btn-primary rounded-full border-4 border-[color:var(--max-yellow)] bg-gradient-to-r from-[color:var(--max-magenta)] via-[color:var(--max-purple)] to-[color:var(--max-cyan)] px-4 py-2 text-sm font-black uppercase tracking-wide text-white"
@@ -319,7 +324,7 @@ export default async function CompanyPage({
                       )}
                     </td>
                     <td className="py-3 px-4">
-                      {!exited && (
+                      {!exited && !locked && (
                         <div className="flex items-center gap-3 justify-end">
                           <Link
                             href={`/companies/${company.id}/rounds/${round.id}/edit`}

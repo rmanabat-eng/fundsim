@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getVisitorId } from "@/lib/visitor";
 import { formatDollars } from "@/lib/fund-math";
 import { getSettings } from "@/lib/settings";
-import { GAME_YEARS } from "@/lib/campaign";
+import { campaignHoldsPortfolio, GAME_YEARS } from "@/lib/campaign";
 import { Term } from "@/components/Term";
 
 // The mechanics the sim teaches, as chips — each explains itself on hover/focus.
@@ -142,12 +142,16 @@ export default async function Home() {
                 >
                   {campaignCta}
                 </Link>
-                <Link
-                  href="/settings"
-                  className="max-btn-outline inline-flex items-center gap-2 rounded-full border-4 border-[color:var(--max-magenta)] bg-[#2d1b4e]/60 px-8 py-[18px] text-sm font-black uppercase tracking-[0.06em] text-white"
-                >
-                  ⚙ Settings
-                </Link>
+                {/* Settings and the dashboard sandbox are locked during a run
+                    (src/lib/sandbox.ts), so don't offer links that bounce. */}
+                {game?.status !== "active" && (
+                  <Link
+                    href="/settings"
+                    className="max-btn-outline inline-flex items-center gap-2 rounded-full border-4 border-[color:var(--max-magenta)] bg-[#2d1b4e]/60 px-8 py-[18px] text-sm font-black uppercase tracking-[0.06em] text-white"
+                  >
+                    ⚙ Settings
+                  </Link>
+                )}
                 <Link
                   href="/scenarios"
                   className="max-btn-outline inline-flex items-center gap-2 rounded-full border-4 border-[color:var(--max-cyan)] bg-[#2d1b4e]/60 px-8 py-[18px] text-sm font-black uppercase tracking-[0.06em] text-white"
@@ -258,9 +262,11 @@ export default async function Home() {
             <Link href="/guide" className="hover:text-white">
               📖 Learning guide
             </Link>
-            <Link href="/dashboard" className="hover:text-white">
-              📊 Fund dashboard
-            </Link>
+            {!campaignHoldsPortfolio(game) && (
+              <Link href="/dashboard" className="hover:text-white">
+                📊 Fund dashboard
+              </Link>
+            )}
             <Link href="/leaderboard" className="hover:text-white">
               🏆 Public leaderboard
             </Link>

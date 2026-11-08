@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { FACT_POOL, SENTIMENT_WEIGHT } from "@/lib/fact-card";
 import {
+  campaignHoldsPortfolio,
   campaignOdds,
   dateInWindow,
   dealQualityNoise,
@@ -627,5 +628,14 @@ describe("reputation — ousting founders", () => {
     expect(reputation({ ...nobody, foundersOusted: 2 }).score).toBeLessThan(
       reputation({ ...nobody, foundersOusted: 1 }).score
     );
+  });
+});
+
+describe("campaignHoldsPortfolio", () => {
+  it("locks the sandbox from the first year until an ended scorecard is left", () => {
+    expect(campaignHoldsPortfolio(null)).toBe(false);
+    expect(campaignHoldsPortfolio({ status: "active", dismissed: false })).toBe(true);
+    expect(campaignHoldsPortfolio({ status: "ended", dismissed: false })).toBe(true);
+    expect(campaignHoldsPortfolio({ status: "ended", dismissed: true })).toBe(false);
   });
 });

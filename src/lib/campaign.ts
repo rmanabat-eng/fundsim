@@ -13,6 +13,17 @@ export const DEALS_PER_YEAR = 4;
 // deal fresh pitches; years 6-10 are pure portfolio management.
 export const INVESTMENT_PERIOD_YEARS = 5;
 
+// Whether a campaign still owns the visitor's portfolio: a run in progress,
+// or an ended one whose scorecard (and leaderboard submit) is still up.
+// Same rule the home and play pages use for "no campaign": no game, or an
+// ended run whose scorecard was left. While it holds, sandbox edits are off
+// so a graded run can't be hand-edited.
+export function campaignHoldsPortfolio(
+  game: { status: string; dismissed: boolean } | null
+): boolean {
+  return !!game && !(game.status === "ended" && game.dismissed);
+}
+
 export type Market = "bull" | "normal" | "bear";
 
 export const MARKET_LABELS: Record<Market, string> = {

@@ -3,12 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { getVisitorId } from "@/lib/visitor";
 import { RoundForm } from "@/components/RoundForm";
 import { updateRound } from "@/app/actions";
+import { requireSandbox } from "@/lib/sandbox";
 
 export default async function EditRoundPage({
   params,
 }: {
   params: Promise<{ id: string; roundId: string }>;
 }) {
+  await requireSandbox();
   const { id, roundId } = await params;
   const visitorId = await getVisitorId();
   const round = await prisma.round.findUnique({
