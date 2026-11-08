@@ -715,6 +715,22 @@ body {
   animation: deal-flip 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 
+/* Mobile "swipe for the next deal" arrow. Animates `transform`, which
+   composes with Tailwind v4's separate `translate` property used to centre it. */
+@keyframes swipe-nudge {
+  0%,
+  100% {
+    transform: none;
+  }
+  50% {
+    transform: translateX(5px);
+  }
+}
+
+.swipe-nudge {
+  animation: swipe-nudge 1.4s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .confetti-piece {
     display: none;
@@ -722,7 +738,8 @@ body {
   .celebrate-banner,
   .stamp-in,
   .bad-news,
-  .deal-flip {
+  .deal-flip,
+  .swipe-nudge {
     animation: none !important;
   }
 }

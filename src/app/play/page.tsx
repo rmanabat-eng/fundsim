@@ -969,6 +969,9 @@ export default async function PlayPage() {
         <h2 className="text-sm font-black uppercase tracking-widest text-white/60">
           🃏 This year&apos;s deal flow{" "}
           <span className="text-white/40">(Year {game.year})</span>
+          {dealViews.length > 1 && (
+            <span className="text-white/40 md:hidden"> · {dealViews.length} pitches</span>
+          )}
         </h2>
         {dealViews.length === 0 ? (
           <p className="mt-4 rounded-2xl border-4 border-dashed border-[color:var(--max-cyan)] p-6 text-center text-sm text-white/60">
@@ -995,14 +998,25 @@ export default async function PlayPage() {
             )}
           </p>
         ) : (
-          <div className="mt-3 grid grid-cols-1 gap-4 [perspective:1200px] md:grid-cols-2">
+          // Phones: one full-width card at a time in a native snap-scroll row;
+          // gap-12 keeps the next card fully off-screen, and an arrow on every
+          // card but the last says "swipe". md+: the two-column grid. py-3
+          // leaves room for the hover lift and pop shadow, which
+          // overflow-x-auto would otherwise clip.
+          <div className="-mx-6 mt-0 flex snap-x snap-mandatory gap-12 overflow-x-auto px-6 py-3 [perspective:1200px] [scrollbar-width:none] md:mx-0 md:mt-3 md:grid md:grid-cols-2 md:gap-4 md:overflow-visible md:p-0">
             {dealViews.map((d, i) => (
               <div
                 key={d.id}
-                className="deal-flip"
+                className="group/deal deal-flip relative w-full shrink-0 snap-center md:w-auto"
                 style={{ animationDelay: `${i * 120}ms` }}
               >
                 <DealCard deal={d} index={i} />
+                <span
+                  aria-hidden
+                  className="swipe-nudge pointer-events-none absolute right-0 top-1/2 z-10 grid h-10 w-10 -translate-y-1/2 translate-x-1/2 place-items-center rounded-full bg-white/15 text-xl font-black text-white/80 backdrop-blur-sm group-last/deal:hidden md:hidden"
+                >
+                  ›
+                </span>
               </div>
             ))}
           </div>
