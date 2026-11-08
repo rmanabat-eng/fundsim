@@ -24,6 +24,7 @@ import {
 } from "@/lib/campaign";
 import { currentReputation } from "@/lib/reputation";
 import { DealCard, type DealView } from "@/components/DealCard";
+import { SwipeArrow } from "@/components/SwipeArrow";
 import { Celebration, PlaySfx } from "@/components/Celebration";
 import { CountUp, Ticker } from "@/components/CountUp";
 import { DecisionCard, type DecisionView } from "@/components/DecisionCard";
@@ -998,8 +999,10 @@ export default async function PlayPage() {
           </p>
         ) : (
           // Phones: one full-width card at a time in a native snap-scroll row;
-          // gap-12 keeps the next card fully off-screen, and an arrow on every
-          // card but the last says "swipe". md+: the two-column grid. py-3
+          // gap-12 keeps the next card fully off-screen, and arrows on each
+          // side (none past the first or last card) say "swipe" and also
+          // step through the cards when tapped. md+: the
+          // two-column grid. py-3
           // leaves room for the hover lift and pop shadow, which
           // overflow-x-auto would otherwise clip.
           <div className="-mx-6 mt-0 flex snap-x snap-mandatory gap-12 overflow-x-auto px-6 py-3 [perspective:1200px] [scrollbar-width:none] md:mx-0 md:mt-3 md:grid md:grid-cols-2 md:gap-4 md:overflow-visible md:p-0">
@@ -1010,12 +1013,8 @@ export default async function PlayPage() {
                 style={{ animationDelay: `${i * 120}ms` }}
               >
                 <DealCard deal={d} index={i} />
-                <span
-                  aria-hidden
-                  className="swipe-nudge pointer-events-none absolute right-0 top-1/2 z-10 grid h-10 w-10 -translate-y-1/2 translate-x-1/2 place-items-center rounded-full bg-white/15 text-xl font-black text-white/80 backdrop-blur-sm group-last/deal:hidden md:hidden"
-                >
-                  ›
-                </span>
+                <SwipeArrow dir="prev" />
+                <SwipeArrow dir="next" />
               </div>
             ))}
           </div>

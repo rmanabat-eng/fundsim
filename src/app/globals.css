@@ -715,15 +715,16 @@ body {
   animation: deal-flip 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 
-/* Mobile "swipe for the next deal" arrow. Animates `transform`, which
-   composes with Tailwind v4's separate `translate` property used to centre it. */
+/* Mobile "swipe for more deals" arrows. Animates `transform`, which
+   composes with Tailwind v4's separate `translate` property used to centre
+   them. --nudge-x sets the direction: the left arrow passes -5px. */
 @keyframes swipe-nudge {
   0%,
   100% {
     transform: none;
   }
   50% {
-    transform: translateX(5px);
+    transform: translateX(var(--nudge-x, 5px));
   }
 }
 
