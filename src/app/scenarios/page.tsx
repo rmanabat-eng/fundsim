@@ -13,6 +13,7 @@ import {
 } from "@/lib/fund-math";
 import { SaveScenarioForm } from "@/components/SaveScenarioForm";
 import { ScenarioActions } from "@/components/ScenarioActions";
+import { campaignLock } from "@/lib/sandbox";
 
 const cell = "py-3 px-4 text-white/75";
 
@@ -34,13 +35,14 @@ function MetricCells({ m, count }: { m: FundMetrics; count: number }) {
 
 export default async function ScenariosPage() {
   const visitorId = await getVisitorId();
-  const [scenarios, companies, settings] = await Promise.all([
+  const [scenarios, companies, settings, lock] = await Promise.all([
     prisma.scenario.findMany({ where: { visitorId }, orderBy: { createdAt: "desc" } }),
     prisma.company.findMany({
       where: { visitorId },
       include: { rounds: { orderBy: { date: "asc" } } },
     }),
     getSettings(),
+    campaignLock(),
   ]);
 
   const current = fundMetrics(companies);
@@ -143,7 +145,7 @@ export default async function ScenariosPage() {
                   <td className={cell}>{formatDollars(r.fundSize)}</td>
                   <MetricCells m={r.metrics} count={r.count} />
                   <td className="py-3 px-4">
-                    <ScenarioActions id={r.id} />
+                    <ScenarioActions id={r.id} canLoad={!lock.portfolio} />
                   </td>
                 </tr>
               ))}

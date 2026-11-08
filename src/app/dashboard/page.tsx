@@ -16,8 +16,10 @@ import { SummaryBar } from "@/components/SummaryBar";
 import { CompanyTable, type CompanyRow } from "@/components/CompanyTable";
 import { ClearAllButton } from "@/components/ClearAllButton";
 import { SimulateYearButton } from "@/components/SimulateYearButton";
+import { requireSandbox } from "@/lib/sandbox";
 
 export default async function DashboardPage() {
+  await requireSandbox();
   const visitorId = await getVisitorId();
   const [companies, settings, game] = await Promise.all([
     prisma.company.findMany({

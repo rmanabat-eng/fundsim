@@ -3,7 +3,9 @@
 import { useState, useTransition } from "react";
 import { loadScenario, deleteScenario } from "@/app/actions";
 
-export function ScenarioActions({ id }: { id: string }) {
+// canLoad is false while a campaign holds the portfolio (src/lib/sandbox.ts):
+// loading would replace a graded run.
+export function ScenarioActions({ id, canLoad }: { id: string; canLoad: boolean }) {
   const [confirming, setConfirming] = useState<"load" | "delete" | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -38,12 +40,14 @@ export function ScenarioActions({ id }: { id: string }) {
 
   return (
     <div className="flex items-center gap-3 justify-end">
-      <button
-        onClick={() => setConfirming("load")}
-        className="text-xs font-bold text-[color:var(--max-cyan)] hover:underline"
-      >
-        Load
-      </button>
+      {canLoad && (
+        <button
+          onClick={() => setConfirming("load")}
+          className="text-xs font-bold text-[color:var(--max-cyan)] hover:underline"
+        >
+          Load
+        </button>
+      )}
       <button
         onClick={() => setConfirming("delete")}
         className="text-xs font-bold text-[color:var(--max-orange)] hover:underline"

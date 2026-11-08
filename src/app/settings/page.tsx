@@ -1,8 +1,13 @@
 import Link from "next/link";
 import { getSettings } from "@/lib/settings";
 import { SettingsForm } from "@/components/SettingsForm";
+import { redirect } from "next/navigation";
+import { campaignLock } from "@/lib/sandbox";
 
 export default async function SettingsPage() {
+  // Changing fund size mid-run would move dry powder; ended runs can edit
+  // for the next fund (see src/lib/sandbox.ts).
+  if ((await campaignLock()).settings) redirect("/play");
   const settings = await getSettings();
 
   return (

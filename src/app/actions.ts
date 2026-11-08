@@ -9,6 +9,7 @@ import { getSettings } from "@/lib/settings";
 import { rollYearEvent } from "@/lib/simulate";
 import { exitProceeds } from "@/lib/fund-math";
 import { snapshotPortfolioAsScenario, type ScenarioData } from "@/lib/scenario";
+import { campaignLock, SANDBOX_LOCKED } from "@/lib/sandbox";
 
 export type FormState = { error: string } | null;
 
@@ -79,6 +80,7 @@ export async function createCompany(
   _prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
+  if ((await campaignLock()).portfolio) return { error: SANDBOX_LOCKED };
   const visitorId = await getVisitorId();
   const name = String(formData.get("companyName") ?? "").trim();
   const sector = String(formData.get("sector") ?? "");
@@ -122,6 +124,7 @@ export async function addRound(
   _prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
+  if ((await campaignLock()).portfolio) return { error: SANDBOX_LOCKED };
   const visitorId = await getVisitorId();
   const company = await prisma.company.findUnique({ where: { id: companyId } });
   // Wrong visitor and nonexistent company look identical here — both a
@@ -155,6 +158,7 @@ export async function updateRound(
   _prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
+  if ((await campaignLock()).portfolio) return { error: SANDBOX_LOCKED };
   const visitorId = await getVisitorId();
   const round = await prisma.round.findUnique({
     where: { id: roundId },
@@ -199,6 +203,7 @@ export async function updateCompany(
   _prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
+  if ((await campaignLock()).portfolio) return { error: SANDBOX_LOCKED };
   const visitorId = await getVisitorId();
   const name = String(formData.get("companyName") ?? "").trim();
   const sector = String(formData.get("sector") ?? "");
@@ -225,6 +230,7 @@ export async function recordExit(
   _prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
+  if ((await campaignLock()).portfolio) return { error: SANDBOX_LOCKED };
   const visitorId = await getVisitorId();
   const company = await prisma.company.findUnique({
     where: { id: companyId },
@@ -257,6 +263,7 @@ export async function recordExit(
 }
 
 export async function undoExit(companyId: string) {
+  if ((await campaignLock()).portfolio) return;
   const visitorId = await getVisitorId();
   await prisma.company.updateMany({
     where: { id: companyId, visitorId },
@@ -267,6 +274,7 @@ export async function undoExit(companyId: string) {
 }
 
 export async function deleteRound(roundId: string, companyId: string) {
+  if ((await campaignLock()).portfolio) return;
   const visitorId = await getVisitorId();
   const round = await prisma.round.findUnique({ where: { id: roundId } });
   if (!round || round.visitorId !== visitorId) return;
@@ -286,12 +294,14 @@ export async function deleteRound(roundId: string, companyId: string) {
 }
 
 export async function deleteCompany(id: string) {
+  if ((await campaignLock()).portfolio) return;
   const visitorId = await getVisitorId();
   await prisma.company.deleteMany({ where: { id, visitorId } });
   revalidatePath("/");
 }
 
 export async function deleteAllCompanies() {
+  if ((await campaignLock()).portfolio) return;
   const visitorId = await getVisitorId();
   await prisma.company.deleteMany({ where: { visitorId } });
   revalidatePath("/");
@@ -301,6 +311,7 @@ export async function updateSettings(
   _prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
+  if ((await campaignLock()).settings) return { error: SANDBOX_LOCKED };
   const visitorId = await getVisitorId();
   const fundSize = Number(formData.get("fundSize"));
   const maxCompanies = Number(formData.get("maxCompanies"));
@@ -352,6 +363,7 @@ export async function saveScenario(
 
 // Replaces the current portfolio and settings with the snapshot.
 export async function loadScenario(id: string) {
+  if ((await campaignLock()).portfolio) return;
   const visitorId = await getVisitorId();
   const scenario = await prisma.scenario.findUnique({ where: { id } });
   if (!scenario || scenario.visitorId !== visitorId) return;
@@ -407,6 +419,7 @@ export type SimulationSummary = {
 // a raise, an exit, a shutdown, or a quiet year. Simulated rounds never
 // spend the fund's money (yourCheck = 0) — follow on by editing the round.
 export async function simulateYear(): Promise<SimulationSummary> {
+  if ((await campaignLock()).portfolio) throw new Error(SANDBOX_LOCKED);
   const visitorId = await getVisitorId();
   const companies = await prisma.company.findMany({
     where: { visitorId },
