@@ -1,4 +1,5 @@
-import { formatDollars, formatMultiple, formatPercent } from "@/lib/fund-math";
+import { GAME_YEARS } from "@/lib/campaign";
+import { formatDollars, formatMultiple, formatPercent, managementFees } from "@/lib/fund-math";
 import { HudStrip } from "@/components/HudStrip";
 
 export function SummaryBar({
@@ -18,8 +19,10 @@ export function SummaryBar({
   fundSize: number;
   maxCompanies: number;
 }) {
-  const remaining = fundSize - deployed;
-  const pctDeployed = (deployed / fundSize) * 100;
+  // Same basis as the campaign's "Dry powder": lifetime fees come off the top.
+  const investable = fundSize - managementFees(fundSize, GAME_YEARS);
+  const remaining = investable - deployed;
+  const pctDeployed = (deployed / investable) * 100;
   const tvpi = deployed > 0 ? (portfolioValue + distributions) / deployed : null;
   const dpi = deployed > 0 ? distributions / deployed : null;
 
@@ -35,7 +38,7 @@ export function SummaryBar({
       icon: "💰",
       label: "Remaining capital",
       value: formatDollars(remaining),
-      hint: "Fund size minus deployed. Exits don't refill it — in a real fund, distributions go back to the LPs.",
+      hint: `Fund size minus ${formatDollars(managementFees(fundSize, GAME_YEARS))} in lifetime management fees, minus deployed. Exits don't refill it — in a real fund, distributions go back to the LPs.`,
     },
     {
       icon: "🏢",
