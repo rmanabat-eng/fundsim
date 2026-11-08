@@ -115,7 +115,7 @@ function Stat({
   const border = STAT_BORDERS[index % STAT_BORDERS.length];
   return (
     <div
-      className="max-card-flat group game-deal-in relative flex items-center gap-3 rounded-2xl p-3 hover:z-30 focus-within:z-30"
+      className="max-card-flat group game-deal-in relative flex flex-col items-start gap-2 rounded-2xl p-3 sm:flex-row sm:items-center sm:gap-3 hover:z-30 focus-within:z-30"
       style={{ animationDelay: `${delay}ms`, "--max-card-border": border } as React.CSSProperties}
     >
       <span
