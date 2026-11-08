@@ -105,9 +105,9 @@ export function CampaignTips() {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Tips for playing"
-        className="whitespace-nowrap text-xs font-bold uppercase tracking-widest text-white/60 hover:text-white"
+        className="whitespace-nowrap text-lg font-bold uppercase tracking-widest text-white/60 hover:text-white sm:text-xs"
       >
-        💡 Tips
+        💡<span className="hidden sm:inline"> Tips</span>
       </button>
 
       {open &&

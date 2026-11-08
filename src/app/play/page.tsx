@@ -41,7 +41,6 @@ import {
 import { Toaster } from "@/components/toast";
 import { UndoInvestmentButton } from "@/components/UndoInvestmentButton";
 import { CampaignTutorial } from "@/components/CampaignTutorial";
-import { CampaignTips } from "@/components/CampaignTips";
 import { CampaignLogList } from "@/components/CampaignLog";
 import { PortfolioPanel } from "@/components/PortfolioPanel";
 import { PortfolioLogButton } from "@/components/PortfolioLogButton";
@@ -1034,14 +1033,11 @@ export default async function PlayPage() {
       </Shell>
       <AdvanceYearBar
         extras={
-          <>
-            <CampaignTips />
-            <PortfolioLogButton
-              rows={toCompanyRows(companies)}
-              logEntries={logEntries}
-              points={toChartPoints(companies)}
-            />
-          </>
+          <PortfolioLogButton
+            rows={toCompanyRows(companies)}
+            logEntries={logEntries}
+            points={toChartPoints(companies)}
+          />
         }
       />
     </AdvanceYearProvider>
