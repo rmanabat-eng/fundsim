@@ -5,7 +5,8 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { inputClasses, labelClasses } from "@/components/RoundFields";
 import { updateSettings } from "@/app/actions";
-import { formatDollars } from "@/lib/fund-math";
+import { GAME_YEARS } from "@/lib/campaign";
+import { formatDollars, managementFees, MANAGEMENT_FEE_RATE } from "@/lib/fund-math";
 
 const FUND_SIZE_PRESETS = [5_000_000, 10_000_000, 25_000_000, 50_000_000, 100_000_000];
 const MAX_COMPANIES_PRESETS = [5, 10, 15, 20, 30];
@@ -25,7 +26,7 @@ function PresetField({
 }: {
   name: string;
   label: string;
-  hint?: string;
+  hint?: (value: number) => React.ReactNode;
   presets: number[];
   format: (n: number) => string;
   defaultValue: number;
@@ -89,7 +90,7 @@ function PresetField({
       ) : (
         <input type="hidden" name={name} value={value} />
       )}
-      {hint && <p className="mt-1 text-xs text-white/40">{hint}</p>}
+      {hint && <p className="mt-1 text-xs text-white/40">{hint(value)}</p>}
     </div>
   );
 }
@@ -112,7 +113,18 @@ export function SettingsForm({
       <PresetField
         name="fundSize"
         label="Fund size (USD) — total committed capital"
-        hint="Can't go below what you've already deployed."
+        // Spelled out at the moment of choosing, so the smaller "dry powder"
+        // number in the campaign isn't a surprise later.
+        hint={(size) => (
+          <>
+            {formatDollars(size)} committed − {formatDollars(managementFees(size, GAME_YEARS))}{" "}
+            management fees ({MANAGEMENT_FEE_RATE * 100}%/yr × {GAME_YEARS} yrs) ={" "}
+            <strong className="text-white/80">
+              {formatDollars(size - managementFees(size, GAME_YEARS))} to invest
+            </strong>
+            . Can&apos;t go below what you&apos;ve already deployed.
+          </>
+        )}
         presets={FUND_SIZE_PRESETS}
         format={formatDollars}
         defaultValue={fundSize}
