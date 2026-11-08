@@ -11,10 +11,10 @@ type Step = {
   title: string;
   body: string;
   waitFor?: "invest" | "portfolio-open"; // gates the step on a real action instead of Next
-  // Pin the coach card to a screen corner instead of the usual
-  // below/above-the-spotlight placement — for a target near a button the
-  // player needs to click (the spotlighted deal's Invest), so the card
-  // itself never ends up sitting on top of it.
+  // Pin the coach card to a screen corner (top or bottom, opposite the
+  // target) instead of the usual below/above-the-spotlight placement — for a
+  // target near a button the player needs to click (the spotlighted deal's
+  // Invest), so the card itself never ends up sitting on top of it.
   cardCorner?: boolean;
 };
 
@@ -316,11 +316,14 @@ export function CampaignTutorial({ gameId }: { gameId: string }) {
           {
             "--max-card-border": "var(--max-magenta)",
             ...(step.cardCorner
-              ? // Cleared of the sticky advance bar (fixed to the same
-                // bottom edge), not just the margin — independent of where
-                // the spotlighted card ends up, so it never lands on top of
-                // the Invest button just below the ring.
-                { bottom: 90, right: margin + 16 }
+              ? // Pinned to whichever half of the screen the target isn't in,
+                // so it never lands on the slider or the Invest/Pass buttons.
+                // On a phone the deal sits near the page bottom and can't
+                // scroll to centre, so a fixed bottom pin covered them. The
+                // bottom pin clears the sticky advance bar, not just the margin.
+                rect && rect.top + rect.height / 2 > vh / 2
+                ? { top: margin, right: margin + 16 }
+                : { bottom: 90, right: margin + 16 }
               : rect
                 ? { top, left }
                 : { top: "50%", left: "50%", transform: "translate(-50%, -50%)" }),
