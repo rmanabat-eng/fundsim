@@ -53,6 +53,27 @@ export const DEFAULT_ODDS: YearOdds = {
   valuationScale: 1,
 };
 
+// How much of the company new investors buy in a priced round. Real rounds
+// mostly sell 15–25%; sizing the raise from the valuation (instead of drawing
+// both independently) keeps deals from selling 75% of a company at once.
+export const ROUND_DILUTION: [number, number] = [0.12, 0.25];
+
+// Up-round step-up on the last post-money, by the stage being raised FROM.
+// Early companies can double or triple between rounds; mature ones grow
+// slower. Stages stop at Series C, so later raises keep the smallest range
+// instead of compounding at early-stage rates into the billions.
+export const STEP_UP: Record<(typeof STAGES)[number], [number, number]> = {
+  PRE_SEED: [2, 3.5],
+  SEED: [2, 3.5],
+  SERIES_A: [1.8, 3],
+  SERIES_B: [1.5, 2.5],
+  SERIES_C: [1.2, 2],
+};
+
+export function stepUpRange(stage: string): [number, number] {
+  return STEP_UP[stage as (typeof STAGES)[number]] ?? STEP_UP.SERIES_C;
+}
+
 function randomBetween(min: number, max: number, roundTo: number): number {
   const raw = min + Math.random() * (max - min);
   return Math.round(raw / roundTo) * roundTo;
@@ -98,16 +119,20 @@ export function rollYearEvent(
     // Next round: usually a markup, occasionally a down round.
     const stageIndex = STAGES.indexOf(company.stage as (typeof STAGES)[number]);
     const stage = STAGES[Math.min(stageIndex + 1, STAGES.length - 1)];
+    const [lo, hi] = stepUpRange(company.stage);
     const multiplier =
       (Math.random() < odds.downRoundChance
         ? 0.5 + Math.random() * 0.4
-        : 1.5 + Math.random() * 2.5) * odds.valuationScale;
+        : lo + Math.random() * (hi - lo)) * odds.valuationScale;
     const postMoney = Math.max(
       Math.round((company.postMoney * multiplier) / 500_000) * 500_000,
       1_000_000
     );
     const raised = Math.min(
-      Math.max(randomBetween(postMoney * 0.15, postMoney * 0.3, 100_000), 100_000),
+      Math.max(
+        randomBetween(postMoney * ROUND_DILUTION[0], postMoney * ROUND_DILUTION[1], 100_000),
+        100_000
+      ),
       postMoney - 500_000
     );
     return {

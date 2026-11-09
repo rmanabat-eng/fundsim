@@ -132,7 +132,9 @@ export function rollMarket(): Market {
 // opposite to everyone at once.
 export function campaignOdds(quality: number, market: Market): YearOdds {
   const marketShift = {
-    bull: { die: -0.03, raise: 0.1, exit: 0.05, down: -0.1, scale: 1.35 },
+    // Bull scale stays modest: it multiplies every step-up and exit, so it
+    // compounds across a hot run of years.
+    bull: { die: -0.03, raise: 0.1, exit: 0.05, down: -0.1, scale: 1.2 },
     normal: { die: 0, raise: 0, exit: 0, down: 0, scale: 1 },
     bear: { die: 0.08, raise: -0.15, exit: -0.05, down: 0.3, scale: 0.65 },
   }[market];
