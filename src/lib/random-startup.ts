@@ -1,4 +1,5 @@
 import { SECTORS, STAGES } from "@/lib/constants";
+import { ROUND_DILUTION, stepUpRange } from "@/lib/simulate";
 
 type Sector = (typeof SECTORS)[number];
 type RealisticDescription = { what: string; who: string };
@@ -237,15 +238,17 @@ const NAME_SUFFIXES = [
 // Only generate stages a fund would enter at.
 const ENTRY_STAGES = ["PRE_SEED", "SEED", "SERIES_A"] as const;
 
-// Plausible deal ranges per stage:
-// [min post, max post, min check, max check, min raised, max raised]
+// Plausible deal ranges per stage: [min post, max post, min check, max check].
+// The amount raised isn't drawn separately — it's the post-money times a
+// realistic dilution (ROUND_DILUTION), so a round never sells most of the
+// company.
 const STAGE_RANGES: Record<
   (typeof ENTRY_STAGES)[number],
-  [number, number, number, number, number, number]
+  [number, number, number, number]
 > = {
-  PRE_SEED: [2_000_000, 8_000_000, 50_000, 250_000, 500_000, 1_500_000],
-  SEED: [8_000_000, 30_000_000, 200_000, 750_000, 2_000_000, 6_000_000],
-  SERIES_A: [25_000_000, 80_000_000, 500_000, 1_500_000, 8_000_000, 18_000_000],
+  PRE_SEED: [2_000_000, 8_000_000, 50_000, 250_000],
+  SEED: [8_000_000, 30_000_000, 200_000, 750_000],
+  SERIES_A: [25_000_000, 80_000_000, 500_000, 1_500_000],
 };
 
 function pick<T>(arr: readonly T[]): T {
@@ -265,12 +268,15 @@ export function generateRandomStartup() {
   }
 
   const stage = pick(ENTRY_STAGES);
-  const [minPost, maxPost, minCheck, maxCheck, minRaised, maxRaised] =
-    STAGE_RANGES[stage];
+  const [minPost, maxPost, minCheck, maxCheck] = STAGE_RANGES[stage];
   const postMoneyValuation = randomBetween(minPost, maxPost, 500_000);
   const checkSize = randomBetween(minCheck, maxCheck, 25_000);
   const raised = Math.max(
-    randomBetween(minRaised, maxRaised, 100_000),
+    randomBetween(
+      postMoneyValuation * ROUND_DILUTION[0],
+      postMoneyValuation * ROUND_DILUTION[1],
+      50_000
+    ),
     checkSize
   );
 
@@ -304,17 +310,22 @@ export function generateRandomFollowOn(latest: {
   const stageIndex = STAGES.indexOf(latest.stage as (typeof STAGES)[number]);
   const stage = STAGES[Math.min(stageIndex + 1, STAGES.length - 1)];
 
-  // 1 in 5 rounds is a down round (0.5×–0.9×); the rest mark up 1.5×–4×.
+  // 1 in 5 rounds is a down round (0.5×–0.9×); the rest mark up by the
+  // stage's step-up range (smaller as the company matures — see STEP_UP).
+  const [lo, hi] = stepUpRange(latest.stage);
   const multiplier =
-    Math.random() < 0.2 ? 0.5 + Math.random() * 0.4 : 1.5 + Math.random() * 2.5;
+    Math.random() < 0.2 ? 0.5 + Math.random() * 0.4 : lo + Math.random() * (hi - lo);
   const postMoney = Math.max(
     Math.round((latest.postMoney * multiplier) / 500_000) * 500_000,
     1_000_000
   );
 
-  // New investors typically buy 15–30% of the company in a round.
+  // New investors buy ROUND_DILUTION of the company in a round.
   const raised = Math.min(
-    Math.max(randomBetween(postMoney * 0.15, postMoney * 0.3, 100_000), 100_000),
+    Math.max(
+      randomBetween(postMoney * ROUND_DILUTION[0], postMoney * ROUND_DILUTION[1], 100_000),
+      100_000
+    ),
     postMoney - 500_000
   );
 
