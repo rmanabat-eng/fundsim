@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore, useTransition } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import {
   acceptAcquihire,
@@ -21,6 +21,7 @@ import { formatDollars, formatPercent } from "@/lib/fund-math";
 import { StageBadge } from "@/components/StageBadge";
 import { inputClasses } from "@/components/RoundFields";
 import { Term } from "@/components/Term";
+import { FirstTimeNote } from "@/components/FirstTimeNote";
 import { celebrateExit } from "@/components/Celebration";
 import { toast } from "@/components/toast";
 import { prefersReducedMotion } from "@/lib/motion";
@@ -496,42 +497,6 @@ const FIRST_TIME: Record<string, string> = {
     "A struggling company is raising money on harsh terms: investors who don't put in more get punished.",
 };
 
-// Same storage-as-external-store approach as CampaignTutorial's seen flag, so
-// the server render (treated as "seen") hydrates cleanly.
-function subscribeStorage(onChange: () => void) {
-  window.addEventListener("storage", onChange);
-  return () => window.removeEventListener("storage", onChange);
-}
-
-function FirstTimeNote({ stamp }: { stamp: string }) {
-  const key = `fundsim-decision-seen-${stamp}`;
-  const seen = useSyncExternalStore(
-    subscribeStorage,
-    () => window.localStorage.getItem(key) === "1",
-    () => true
-  );
-  if (seen || !FIRST_TIME[stamp]) return null;
-  return (
-    <div className="max-chip-box mt-3 rounded-lg px-3 py-2 text-xs leading-relaxed text-white/80">
-      <span className="font-black uppercase tracking-widest text-[color:var(--max-cyan)]">
-        👋 New:
-      </span>{" "}
-      {FIRST_TIME[stamp]}{" "}
-      <button
-        type="button"
-        onClick={() => {
-          window.localStorage.setItem(key, "1");
-          // "storage" only fires in other tabs on its own; nudge this one.
-          window.dispatchEvent(new Event("storage"));
-        }}
-        className="font-bold text-white underline underline-offset-2"
-      >
-        Got it
-      </button>
-    </div>
-  );
-}
-
 function DecisionShell({
   stamp,
   exitStyle,
@@ -551,7 +516,7 @@ function DecisionShell({
       style={{ ...cardStyle, ...exitStyle } as React.CSSProperties}
     >
       <EventStamp label={stamp} />
-      <FirstTimeNote stamp={stamp} />
+      {FIRST_TIME[stamp] && <FirstTimeNote id={stamp}>{FIRST_TIME[stamp]}</FirstTimeNote>}
       <div className="mt-3 space-y-3">{children}</div>
     </div>
   );

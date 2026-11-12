@@ -10,7 +10,7 @@ type Step = {
   target: string | null; // data-tour value; null renders centered
   title: string;
   body: string;
-  waitFor?: "invest" | "portfolio-open"; // gates the step on a real action instead of Next
+  waitFor?: "invest"; // gates the step on a real action instead of Next
   // Pin the coach card to a screen corner (top or bottom, opposite the
   // target) instead of the usual below/above-the-spotlight placement — for a
   // target near a button the player needs to click (the spotlighted deal's
@@ -25,66 +25,34 @@ const STEPS: Step[] = [
   {
     target: null,
     title: "👋 You run the fund",
-    body: "You run this fund for 10 years: invest in startups, support your winners, and get graded like a real venture capitalist at the end. Quick tour of your desk?",
-  },
-  {
-    target: "year-pips",
-    title: "⏳ The 10-year clock",
-    body: "One pip per year. New pitches only come in years 1–5. After that you can't back new companies — you just look after the ones you own.",
-  },
-  {
-    target: "market",
-    title: "🌤️ This year's weather",
-    body: "The market mood shifts each year. In a good (bull) market, companies are worth more and sell for more. In a bad (bear) market, prices fall and weak companies die faster. Everyone gets the same weather — you just play it.",
-  },
-  {
-    target: "hud",
-    title: "📊 Your fund at a glance",
-    body: "Dry powder is the money you have left to invest — it never refills, even when a company is sold. Reputation is what founders think of you. Any label with a dotted underline explains itself when you hover or tap it.",
+    body: "You have 10 years to invest in startups and grow the fund. New pitches only come in years 1–5, so pace yourself.",
   },
   {
     target: "deal-signals",
-    title: "🔎 Read the signals",
-    body: "Every pitch shows four clues. Some really do predict success, some mean nothing, some are warnings — and none are certain, so a great-looking pitch still fails sometimes. The patterns only show up over several games.",
+    title: "🔎 Read the clues",
+    body: "Each pitch shows four clues: some good, some bad, some meaningless. None are certain, so even a great-looking pitch can fail.",
     phoneNote: "Swipe or tap ‹ › to see this year's other pitches.",
   },
   {
     // data-tour repeats across every deal card, so this rings whichever one
-    // rendered first — fine for showing what the slider looks like. The
-    // card is corner-pinned (not the usual spot right below the ring) so it
-    // doesn't sit on that card's Invest button underneath.
-    target: "deal-check",
-    cardCorner: true,
-    title: "💸 Size your check",
-    body: "Drag to choose how much to invest. The percentage is the share of the company you'd own — your check ÷ the company's value. Bigger checks mean a bigger share but fewer companies, and you only get one fund.",
-  },
-  {
+    // rendered first. The card is corner-pinned (not the usual spot right
+    // below the ring) so it doesn't sit on the slider or Invest button.
     target: "deal-invest",
     cardCorner: true,
-    title: "👉 Your turn",
-    body: "Look at this deal and hit Invest — any check size is fine. I'll pick it up the moment you do.",
+    title: "💸 Make your first investment",
+    body: "Drag the slider to choose how much to invest — the percentage is the share of the company you'd own. Then hit Invest.",
     waitFor: "invest",
   },
   {
-    target: "portfolio-button",
-    title: "📁 Your portfolio, any time",
-    body: "Go ahead and click it — take a look at the Snapshot, History, and Chart tabs. Close it whenever you're done; I'll be here.",
-    waitFor: "portfolio-open",
-  },
-  {
-    target: "bar-status",
-    title: "📋 What's still open",
-    body: "Deals open and decisions pending — this is what's still on your desk for the year. Advancing expires anything left here, so check it before you roll.",
+    // After the investment, not before: the number it explains just moved.
+    target: "hud",
+    title: "📊 Your fund at a glance",
+    body: "Dry powder is the money you have left to invest — it drops with every check and never refills. Hover or tap any dotted-underline label to see what it means.",
   },
   {
     target: "advance-year",
-    title: "⏩ Roll the year",
-    body: "When you're done, advance. A year passes: companies raise more money, get sold, or die. Anything you left unanswered expires — and ignoring founders costs you more reputation than saying no.",
-  },
-  {
-    target: null,
-    title: "🚀 That's the game",
-    body: "Invest carefully, save some money for your winners' later rounds, and answer every request. Good luck — you can read the full strategy guide any time from the home page.",
+    title: "⏩ Advance the year",
+    body: "When you're done, advance: companies raise money, get sold, or die. Anything left unanswered expires, and ignoring founders costs reputation. The full guide is on the home page.",
   },
 ];
 
@@ -102,9 +70,8 @@ function prefersReducedMotion() {
   );
 }
 
-// Whether a step's target actually rendered this year. The first and last
-// steps (target: null) are always eligible, which is also what guarantees
-// the search loop below terminates.
+// Whether a step's target actually rendered this year. The search loop below
+// stops at either end of STEPS regardless, so it always terminates.
 function stepEligible(s: Step): boolean {
   return s.target === null || !!document.querySelector(`[data-tour="${s.target}"]`);
 }
@@ -228,10 +195,6 @@ export function CampaignTutorial({ gameId }: { gameId: string }) {
   // overlapping listener registrations (e.g. React Strict Mode's dev-mode
   // double effect-invocation) and advance the index by two, skipping the
   // very step this was gating toward.
-  const WAIT_EVENTS = {
-    invest: "fundsim:invested",
-    "portfolio-open": "fundsim:portfolio-opened",
-  } as const;
   const advancedRef = useRef(false);
   useEffect(() => {
     advancedRef.current = false;
@@ -249,9 +212,8 @@ export function CampaignTutorial({ gameId }: { gameId: string }) {
       // the stale DOM and gets silently filtered out again.
       window.setTimeout(next, 200);
     }
-    const eventName = WAIT_EVENTS[step.waitFor];
-    window.addEventListener(eventName, onAction);
-    return () => window.removeEventListener(eventName, onAction);
+    window.addEventListener("fundsim:invested", onAction);
+    return () => window.removeEventListener("fundsim:invested", onAction);
   }, [status, step, next]);
 
   useEffect(() => {
@@ -366,9 +328,7 @@ export function CampaignTutorial({ gameId }: { gameId: string }) {
             )}
             {step.waitFor ? (
               <span className="game-blink rounded-full border-2 border-dashed border-white/25 px-3 py-1.5 text-xs font-bold text-white/50">
-                {step.waitFor === "invest"
-                  ? "Waiting for you to invest…"
-                  : "Waiting for you to open it…"}
+                Waiting for you to invest…
               </span>
             ) : (
               <button
