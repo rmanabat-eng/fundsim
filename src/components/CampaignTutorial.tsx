@@ -24,28 +24,28 @@ type Step = {
 const STEPS: Step[] = [
   {
     target: null,
-    title: "👋 You're the GP",
-    body: "You run this fund for 10 years: write checks, back your winners, and get graded like a real venture capitalist at the end. Quick tour of your desk?",
+    title: "👋 You run the fund",
+    body: "You run this fund for 10 years: invest in startups, support your winners, and get graded like a real venture capitalist at the end. Quick tour of your desk?",
   },
   {
     target: "year-pips",
     title: "⏳ The 10-year clock",
-    body: "One pip per year. New pitches only come during years 1–5 — the investment period. After that the checkbook closes to new names and you just manage what you own.",
+    body: "One pip per year. New pitches only come in years 1–5. After that you can't back new companies — you just look after the ones you own.",
   },
   {
     target: "market",
     title: "🌤️ This year's weather",
-    body: "The market mood shifts each year. Bull markets lift valuations and exits; bear markets push them down and kill weak companies faster. Same weather for everyone — you just play it.",
+    body: "The market mood shifts each year. In a good (bull) market, companies are worth more and sell for more. In a bad (bear) market, prices fall and weak companies die faster. Everyone gets the same weather — you just play it.",
   },
   {
     target: "hud",
     title: "📊 Your fund at a glance",
-    body: "Dry powder is what's left to deploy — exits don't refill it. Reputation tracks how founders talk about you. Any label with a dotted underline explains itself when you hover or tab to it.",
+    body: "Dry powder is the money you have left to invest — it never refills, even when a company is sold. Reputation is what founders think of you. Any label with a dotted underline explains itself when you hover or tap it.",
   },
   {
     target: "deal-signals",
     title: "🔎 Read the signals",
-    body: "Every pitch shows four clues. Some genuinely predict success, some are noise, some are red flags — and the link is deliberately fuzzy, so a great-looking pitch still busts sometimes. The patterns only show up across several runs.",
+    body: "Every pitch shows four clues. Some really do predict success, some mean nothing, some are warnings — and none are certain, so a great-looking pitch still fails sometimes. The patterns only show up over several games.",
     phoneNote: "Swipe or tap ‹ › to see this year's other pitches.",
   },
   {
@@ -56,7 +56,7 @@ const STEPS: Step[] = [
     target: "deal-check",
     cardCorner: true,
     title: "💸 Size your check",
-    body: "Drag to set your check. The percentage is what that buys you — your check ÷ the post-money valuation. Bigger checks mean more ownership but fewer bets, and you only get one fund.",
+    body: "Drag to choose how much to invest. The percentage is the share of the company you'd own — your check ÷ the company's value. Bigger checks mean a bigger share but fewer companies, and you only get one fund.",
   },
   {
     target: "deal-invest",
@@ -79,12 +79,12 @@ const STEPS: Step[] = [
   {
     target: "advance-year",
     title: "⏩ Roll the year",
-    body: "When you're done, advance. The world rolls: companies raise, exit, or die. Anything you left unanswered expires — and ignoring founders costs you reputation, more than a straight no would.",
+    body: "When you're done, advance. A year passes: companies raise more money, get sold, or die. Anything you left unanswered expires — and ignoring founders costs you more reputation than saying no.",
   },
   {
     target: null,
     title: "🚀 That's the game",
-    body: "Deploy carefully, keep some powder dry for follow-ons, and answer your desk. Good luck — you can read the full strategy guide any time from the home page.",
+    body: "Invest carefully, save some money for your winners' later rounds, and answer every request. Good luck — you can read the full strategy guide any time from the home page.",
   },
 ];
 

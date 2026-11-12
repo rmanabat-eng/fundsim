@@ -13,6 +13,7 @@ import {
   managementFees,
   netTvpi,
   ownershipAfterRounds,
+  tvpiHint,
 } from "@/lib/fund-math";
 import {
   GAME_YEARS,
@@ -193,7 +194,7 @@ export default async function PlayPage() {
             {[
               {
                 icon: "🃏",
-                text: `Years 1–${INVESTMENT_PERIOD_YEARS} are the investment period: fresh pitches every year, with signals that (noisily) hint at how each company does. After that, the checkbook closes for new names — just like a real fund.`,
+                text: `Years 1–${INVESTMENT_PERIOD_YEARS} are when you invest: new pitches every year, each with clues that hint (imperfectly) at how the company will do. After that you can't back new companies — just like a real fund.`,
               },
               {
                 icon: "⏳",
@@ -201,19 +202,19 @@ export default async function PlayPage() {
               },
               {
                 icon: "📈",
-                text: "Portfolio companies will raise again (fund your pro-rata or get diluted), field acquisition offers (cash now vs. the power law), and run out of money (bridge them — or don't).",
+                text: "Companies you back will raise more money (invest again or watch your share shrink), get offers to be bought (sure cash now vs. a bigger win later), and run out of money (rescue them — or don't).",
               },
               {
                 icon: "🧭",
-                text: "Founders will also call for advice: which term sheet to sign, whether to pivot. Your answer moves their odds — and your reputation.",
+                text: "Founders will also ask for advice: which investor's offer to take, whether to change direction. Your answer changes their chances — and your reputation.",
               },
               {
                 icon: "💼",
-                text: `Like a real fund, you charge "2 and 20": ${formatDollars(lifetimeFees)} of the fund goes to management fees, so you only have ${formatDollars(settings.fundSize - lifetimeFees)} to invest — and you keep 20% of any profit as carry.`,
+                text: `Like a real fund, you charge fees ("2 and 20"): ${formatDollars(lifetimeFees)} of the fund pays for running it, so you have ${formatDollars(settings.fundSize - lifetimeFees)} to invest — and you keep 20% of any profit (called carry).`,
               },
               {
                 icon: "🏁",
-                text: `After year ${GAME_YEARS} the fund closes and your TVPI gets graded against real venture benchmarks.`,
+                text: `After year ${GAME_YEARS} the fund closes and you're graded on how many times you multiplied the money (your TVPI), compared with real venture funds.`,
               },
             ].map((f, i) => (
               <div
@@ -426,7 +427,7 @@ export default async function PlayPage() {
             label="Deployed"
             value={formatDollars(metrics.deployed)}
             accent="from-indigo-400 to-indigo-600"
-            hint="Every check you wrote across the fund's life — first checks, follow-ons, and bridges."
+            hint="All the money you invested over the fund's life — first checks, later rounds, and rescues."
             index={0}
           />
           <Stat
@@ -434,7 +435,7 @@ export default async function PlayPage() {
             label="Distributions"
             value={formatDollars(metrics.distributions)}
             accent="from-emerald-400 to-teal-600"
-            hint="Cash actually returned by exits: your ownership × the exit valuation, summed. The only money LPs can spend."
+            hint="Cash that actually came back when companies were sold or went public. It's the only money the fund's backers can spend."
             delay={60}
             index={1}
           />
@@ -443,7 +444,7 @@ export default async function PlayPage() {
             label="DPI (cash back)"
             value={metrics.dpi === null ? "—" : formatMultiple(metrics.dpi)}
             accent="from-amber-400 to-orange-600"
-            hint="Distributions to Paid-In: cash returned ÷ capital deployed. The realized multiple — “you can't eat TVPI.”"
+            hint="Cash you got back for every $1 you invested. 1.0× means you have your money back; anything above is real profit. (DPI: Distributions to Paid-In.)"
             delay={120}
             index={2}
           />
@@ -452,7 +453,7 @@ export default async function PlayPage() {
             label="TVPI"
             value={metrics.tvpi === null ? "—" : formatMultiple(metrics.tvpi)}
             accent="from-violet-400 to-fuchsia-600"
-            hint="Total Value to Paid-In: (paper value + cash back) ÷ capital deployed. The headline multiple LPs grade a fund by."
+            hint={`${tvpiHint(metrics.tvpi, metrics.dpi)} Your grade is based on this.`}
             delay={180}
             index={3}
           />
@@ -461,7 +462,7 @@ export default async function PlayPage() {
             label="IRR"
             value={metrics.irr === null ? "—" : formatPercent(metrics.irr * 100)}
             accent="from-rose-400 to-pink-600"
-            hint="Internal rate of return: the annualized rate implied by your dated cash flows. Unlike multiples, it rewards getting money back fast."
+            hint="Your yearly rate of return, like an interest rate on the money you invested. Getting money back sooner raises it — a quick 2× can beat a slow 3×. (IRR: internal rate of return.)"
             delay={240}
             index={4}
           />
@@ -897,13 +898,13 @@ export default async function PlayPage() {
             icon: "💰",
             label: "Dry powder",
             value: <Ticker value={remaining} format="dollars" />,
-            hint: "Capital you haven't deployed yet, after setting aside the fund's lifetime management fees. Every check — first, follow-on, or bridge — comes out of this, and exits don't refill it.",
+            hint: "Money you still have left to invest (fees are already set aside). Every check comes out of it, and it never refills — cash from a sale goes back to the fund's backers, not into new deals.",
           },
           {
             icon: "🏢",
             label: "Companies backed",
             value: `${companies.length} of ${settings.maxCompanies}`,
-            hint: "Portfolio companies you've written checks into, out of the fund's cap. When it's full, new deals bounce — pace yourself.",
+            hint: "How many companies you've invested in, out of the most your fund can hold. Once it's full you can't back new ones — pace yourself.",
           },
           {
             icon: "📈",
@@ -911,19 +912,19 @@ export default async function PlayPage() {
             value: (
               <Ticker value={metrics.portfolioValue + metrics.distributions} format="dollars" />
             ),
-            hint: "Active stakes marked at each company's latest post-money valuation, plus cash already returned by exits.",
+            hint: "What your shares are worth at each company's latest price, plus cash you've already got back. Mostly paper value — it isn't real money until a company is sold or goes public.",
           },
           {
             icon: "🏆",
             label: "TVPI",
             value: metrics.tvpi === null ? "—" : <Ticker value={metrics.tvpi} format="multiple" />,
-            hint: "Total Value to Paid-In: (paper value + cash back) ÷ capital deployed. The headline multiple LPs grade a fund by.",
+            hint: `${tvpiHint(metrics.tvpi, metrics.dpi)} Your final grade is based on this.`,
           },
           {
             icon: REP_EMOJI[rep.tone],
             label: "Reputation",
             value: `${rep.score}/100`,
-            hint: "How founders talk about you. Funding bridges and answering follow-ons builds it; a quick no barely costs; ghosting costs the most.",
+            hint: "What founders think of you. Helping when they ask raises it; a clear no costs little; not answering at all costs the most.",
           },
         ]}
       />

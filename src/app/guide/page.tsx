@@ -87,42 +87,46 @@ export default function GuidePage() {
             <li>
               <span className={em}>Read the signals, not the vibes.</span> Each pitch
               shows three bullet points. Some genuinely predict success, some are
-              noise, some are red flags — and the link is deliberately noisy, so a
-              great-looking pitch still busts sometimes. Patterns only emerge across
-              runs.
+              mean nothing, some are warnings — and none are certain, so a
+              great-looking pitch still fails sometimes. Patterns only show up
+              over several games.
             </li>
             <li>
               <span className={em}>Pace yourself through year{" "}
               {INVESTMENT_PERIOD_YEARS}.</span> New pitches only come during the
-              investment period (years 1–{INVESTMENT_PERIOD_YEARS}). After that the
-              checkbook closes to new names and it&apos;s pure portfolio management —
+              investment period (years 1–{INVESTMENT_PERIOD_YEARS}). After that you
+              can&apos;t back new companies, only look after the ones you own —
               so don&apos;t spend everything in year 1, and don&apos;t reach year{" "}
               {INVESTMENT_PERIOD_YEARS} with a half-empty portfolio.
             </li>
             <li>
-              <span className={em}>Keep reserves for follow-ons.</span> Your winners
-              will raise again and dilute you unless you defend your pro-rata. Real
-              funds hold back roughly half their capital for exactly this.
+              <span className={em}>Save money for later rounds.</span> Your winners
+              will raise more money, and your share shrinks each time unless you
+              invest again (the amount that keeps your share is called your
+              pro-rata). Real funds hold back roughly half their money for exactly
+              this.
             </li>
             <li>
-              <span className={em}>Answer your desk.</span> Decisions expire when the
+              <span className={em}>Answer every request.</span> Decisions expire when the
               year rolls, and silence is the worst answer — see reputation below.
             </li>
             <li>
-              <span className={em}>Play it again.</span> One run is a single sample of
-              a very random process. The lessons are in the pattern across runs, not
-              in any one fund.
+              <span className={em}>Play it again.</span> One game is mostly luck. The
+              lessons are in what keeps happening across several games, not in any
+              one fund.
             </li>
           </ol>
         </section>
 
         <section className={card} style={{ "--max-card-border": "var(--max-orange)" } as React.CSSProperties}>
-          <h2 className={h2}>Lesson 1 — The power law</h2>
+          <h2 className={h2}>Lesson 1 — A few big winners pay for everything</h2>
           <p className={p}>
             At the end of a fund, look at where the returns came from. Expect roughly
             a third of your companies dead and, almost always, one or two positions
-            worth more than everything else combined. That skew is the defining fact
-            of venture capital: returns don&apos;t average out, they concentrate.
+            worth more than everything else combined. This is called the{" "}
+            <span className={em}>power law</span>, and it&apos;s the defining fact
+            of venture capital: returns don&apos;t average out, they pile up in a
+            few winners.
             It&apos;s why VCs ask &quot;could this one return the whole fund?&quot;
             instead of &quot;is this one safe?&quot; — and why taking a quick 3×
             acquisition can quietly cost you the fund.
@@ -130,37 +134,42 @@ export default function GuidePage() {
         </section>
 
         <section className={card} style={{ "--max-card-border": "var(--max-purple)" } as React.CSSProperties}>
-          <h2 className={h2}>Lesson 2 — Dilution is a bill that comes due</h2>
+          <h2 className={h2}>Lesson 2 — Your share shrinks unless you pay to keep it</h2>
           <p className={p}>
-            Watch your ownership in a hot company shrink round after round — 2.5% →
-            2.0% → 1.6% — every time you sit out. The follow-on card prices the
-            counterfactual for you: it shows what defending your stake costs at the
-            new, higher valuation. Keeping ownership isn&apos;t free; that&apos;s what
-            reserves are for. If you deployed everything in first checks, the game
-            will show you exactly why that hurts.
+            Every time a company raises money it creates new shares, so the share
+            you own gets smaller — 2.5% → 2.0% → 1.6% — unless you invest again.
+            This is called <span className={em}>dilution</span>. The follow-on card
+            shows what keeping your share costs at the new, higher price. Keeping
+            it isn&apos;t free; that&apos;s what saving money for later rounds is
+            for. If you spent everything on first checks, the game will show you
+            exactly why that hurts.
           </p>
         </section>
 
         <section className={card} style={{ "--max-card-border": "var(--max-magenta)" } as React.CSSProperties}>
-          <h2 className={h2}>Lesson 3 — TVPI is paper, DPI is cash</h2>
+          <h2 className={h2}>Lesson 3 — Paper value isn&apos;t cash</h2>
           <p className={p}>
-            After markups, your <span className={em}>TVPI</span> may look great while{" "}
-            <span className={em}>DPI</span> sits near zero. Paper wealth arrives years
-            before cash does — nothing is real until companies exit. The gap between
-            those two numbers is what a real LP would grill a fund manager about
-            (&quot;you can&apos;t eat TVPI&quot;).
+            <span className={em}>TVPI</span> counts everything your fund is worth
+            per $1 invested, including shares you still hold.{" "}
+            <span className={em}>DPI</span>{" "}
+            counts only the cash you&apos;ve
+            actually got back. When your companies&apos; prices rise, TVPI can look
+            great while DPI sits near zero: nothing is real money until a company
+            is sold or goes public. That gap is what a fund&apos;s backers (called
+            LPs) grill a fund manager about — &quot;you can&apos;t eat TVPI&quot;.
           </p>
         </section>
 
         <section className={card} style={{ "--max-card-border": "var(--max-cyan)" } as React.CSSProperties}>
-          <h2 className={h2}>Lesson 4 — Time matters: IRR and the J-curve</h2>
+          <h2 className={h2}>Lesson 4 — Losses come early, wins come late</h2>
           <p className={p}>
-            Watch the fund chart year by year. Write-offs hit immediately; markups
-            take years — so total value dips below deployed capital before (hopefully)
-            climbing past it. That dip-then-recover shape is the{" "}
-            <span className={em}>J-curve</span> every young fund lives through. And
-            notice how an early, modest exit props up IRR more than a bigger exit
-            years later would: multiples ignore time, IRR doesn&apos;t.
+            Watch the fund chart year by year. Failures show up right away;
+            successes take years — so your fund is worth less than you invested
+            before (hopefully) climbing past it. That dip-then-recover shape is
+            the <span className={em}>J-curve</span> every young fund lives through.
+            Speed matters too: <span className={em}>IRR</span> is your yearly rate
+            of return, so a small early sale can lift it more than a bigger sale
+            years later.
           </p>
         </section>
 
@@ -172,8 +181,8 @@ export default function GuidePage() {
             down and kills weak companies faster. Every fund that year gets the same
             weather — which is why fund <em>vintage</em> is a real thing in venture,
             and why comparing two funds from different years is mostly comparing their
-            luck. What you control is how much dry powder you still have when the
-            weather turns.
+            luck. What you control is how much money you still have left to invest
+            when the weather turns.
           </p>
         </section>
 
@@ -185,8 +194,10 @@ export default function GuidePage() {
             (+3) builds credit; a deliberate no costs almost nothing (−2). But letting
             a decision expire unanswered is −10, and ignoring a pitch is −4 —{" "}
             <span className={em}>silence is far more expensive than rejection</span>.
-            That&apos;s the real lesson: in a business where the best deals are shown
-            to you by choice, being reliably responsive <em>is</em> deal flow.
+            Negotiating has a price too: push a founder for a lower price and win,
+            and you gain +4; push and they walk away, and you lose 8. That&apos;s
+            the real lesson: founders choose who sees their best deals, so being
+            someone who always answers is how you get shown them.
           </p>
         </section>
 
@@ -220,8 +231,9 @@ export default function GuidePage() {
           </ul>
           <p className={p}>
             Note how demanding that scale is. &quot;Doubling your money&quot; over ten
-            years is a <em>below-median</em> venture fund — because LPs take this risk
-            for outliers, not savings-account returns.
+            years is a <em>below-average</em> venture fund — because the people who
+            put money into funds take this risk for huge wins, not savings-account
+            returns.
           </p>
         </section>
 

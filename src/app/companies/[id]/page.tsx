@@ -140,7 +140,7 @@ export default async function CompanyPage({
             label="Your ownership"
             value={formatPercent(currentOwnership)}
             gradient="from-indigo-500 to-indigo-600"
-            hint="Your slice of the company after every round: each check buys check ÷ post-money, and each round you sit out dilutes what you had."
+            hint="The share of this company you own. Each check buys check ÷ the company's value, and each round you skip shrinks your share a little."
           />
           <StatCard
             label="Total invested"
@@ -161,15 +161,15 @@ export default async function CompanyPage({
             gradient="from-sky-500 to-cyan-600"
             hint={
               exited
-                ? "Cash returned at exit: your ownership × the exit valuation. The multiple is proceeds ÷ invested."
-                : "Your ownership × the latest post-money valuation — paper value, marked to the last round. The multiple is value ÷ invested."
+                ? "Cash you got back when the company was sold: your share × the sale price. The multiple is how many times your money that is."
+                : "Your share × the company's latest price. Paper value until the company is sold. The multiple is how many times your money that is."
             }
           />
           <StatCard
             label="Latest valuation"
             value={formatDollars(latest.postMoney)}
             gradient="from-emerald-500 to-teal-600"
-            hint="The company's post-money valuation from its most recent round — what the whole company was last priced at."
+            hint="What the whole company was priced at in its most recent round, counting the money it raised (its post-money valuation)."
           />
           <StatCard
             label="Rounds"
@@ -181,7 +181,7 @@ export default async function CompanyPage({
             label="IRR"
             value={totalLoss ? "−100%" : irr === null ? "—" : formatPercent(irr * 100)}
             gradient="from-rose-500 to-pink-600"
-            hint="Annualized internal rate of return on this position's dated cash flows. Unlike the multiple, it rewards speed: a quick 2× can beat a slow 3×."
+            hint="Your yearly rate of return on this company, like an interest rate on the money you put in. Speed counts: a quick 2× can beat a slow 3×. (IRR: internal rate of return.)"
           />
         </div>
 
@@ -355,7 +355,8 @@ export default async function CompanyPage({
             How dilution works here
           </h2>
           <p className="mt-3 text-sm text-white/75 leading-relaxed">
-            When {company.name} raises a new round, the new investors&apos; money buys
+            When {company.name}{" "}
+            raises a new round, the new investors&apos; money buys
             newly created shares — so everyone who invested before owns a smaller slice
             of a (hopefully) more valuable company. Your stake gets multiplied by
             (post-money − raised) ÷ post-money each round. Writing a follow-on check adds

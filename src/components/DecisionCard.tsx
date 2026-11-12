@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useSyncExternalStore, useTransition } from "react";
 import Link from "next/link";
 import {
   acceptAcquihire,
@@ -467,6 +467,71 @@ function EventStamp({ label }: { label: string }) {
 // its exitStyle: inline, so it reliably wins over the hover glow/stamp
 // rules regardless of lingering :hover state. Empty ({}) whenever nothing
 // is resolving, so the merge is a no-op most of the time.
+// One plain sentence per decision type (keyed by its stamp), shown until the
+// player dismisses it once — so a rare card like pay-to-play arriving in year
+// 6 still gets an introduction, without the tutorial front-loading all twelve.
+const FIRST_TIME: Record<string, string> = {
+  "Follow-on":
+    "A company you own part of is raising more money. Invest again to keep your share, or skip it and own a bit less.",
+  "Exit offer":
+    "Someone wants to buy the whole company. Say yes and you get cash for your shares — and this investment is over.",
+  "Acqui-hire":
+    "A struggling company has a small offer for its team. Taking it gets a little of your money back and ends the investment.",
+  "Offer for your shares":
+    "Someone wants to buy just your shares. You get cash now and give up any later gains.",
+  SOS: "A company you backed is about to run out of money and is asking you to rescue it.",
+  "Two offers":
+    "A company you backed is choosing between two investors. You don't put in money — you only advise which offer to take.",
+  Negotiation:
+    "A company you backed wants you to invest again, and the terms are still open. Accept them, or ask for a better deal.",
+  Crossroads:
+    "A founder wants your advice on a big change of direction. No money involved — your answer changes the company's chances.",
+  "Founder split":
+    "The founders are breaking up and want your help. No money involved — your answer changes the company's chances.",
+  "Exit strategy":
+    "A successful company is ready to turn shares into cash. You vote on how, and each way pays differently.",
+  "Board vote":
+    "The board is deciding whether to replace the CEO, and yours is the deciding vote. No money involved.",
+  "Pay-to-play":
+    "A struggling company is raising money on harsh terms: investors who don't put in more get punished.",
+};
+
+// Same storage-as-external-store approach as CampaignTutorial's seen flag, so
+// the server render (treated as "seen") hydrates cleanly.
+function subscribeStorage(onChange: () => void) {
+  window.addEventListener("storage", onChange);
+  return () => window.removeEventListener("storage", onChange);
+}
+
+function FirstTimeNote({ stamp }: { stamp: string }) {
+  const key = `fundsim-decision-seen-${stamp}`;
+  const seen = useSyncExternalStore(
+    subscribeStorage,
+    () => window.localStorage.getItem(key) === "1",
+    () => true
+  );
+  if (seen || !FIRST_TIME[stamp]) return null;
+  return (
+    <div className="max-chip-box mt-3 rounded-lg px-3 py-2 text-xs leading-relaxed text-white/80">
+      <span className="font-black uppercase tracking-widest text-[color:var(--max-cyan)]">
+        👋 New:
+      </span>{" "}
+      {FIRST_TIME[stamp]}{" "}
+      <button
+        type="button"
+        onClick={() => {
+          window.localStorage.setItem(key, "1");
+          // "storage" only fires in other tabs on its own; nudge this one.
+          window.dispatchEvent(new Event("storage"));
+        }}
+        className="font-bold text-white underline underline-offset-2"
+      >
+        Got it
+      </button>
+    </div>
+  );
+}
+
 function DecisionShell({
   stamp,
   exitStyle,
@@ -486,6 +551,7 @@ function DecisionShell({
       style={{ ...cardStyle, ...exitStyle } as React.CSSProperties}
     >
       <EventStamp label={stamp} />
+      <FirstTimeNote stamp={stamp} />
       <div className="mt-3 space-y-3">{children}</div>
     </div>
   );
@@ -1155,7 +1221,8 @@ function TermConcessionCard({
     >
       <p className="text-sm text-white/85">
         🤝 <CompanyName id={d.companyId} name={d.companyName} /> is raising a{" "}
-        <StageBadge stage={d.stage} /> of {formatDollars(d.raised)} and wants you
+        <StageBadge stage={d.stage} /> of {formatDollars(d.raised)}{" "}
+        and wants you
         to invest. Accept the founder&apos;s terms as they are, or push back
         before you sign.
       </p>
@@ -1168,7 +1235,8 @@ function TermConcessionCard({
         </p>
         <p className="mt-0.5 text-white/70">
           The founder values the company at {formatDollars(d.postMoney)}. Push
-          for {formatDollars(d.heldPostMoney)} and the same money buys you a
+          for {formatDollars(d.heldPostMoney)}{" "}
+          and the same money buys you a
           bigger share — but founders care a lot about price, and there&apos;s
           about a {Math.round(d.walkRisk * 100)}% chance this one{" "}
           <Term def="The founder takes the money from someone else. You don't invest, you lose reputation, and this deal never comes back.">
@@ -1598,7 +1666,8 @@ function PayToPlayCard({ d }: { d: Extract<DecisionView, { type: "pay_to_play" }
       </div>
 
       <p className="text-sm text-white/70">
-        You own {formatPercent(d.ownedNow)} today. Paying means putting more
+        You own {formatPercent(d.ownedNow)}{" "}
+        today. Paying means putting more
         money into a company that&apos;s struggling. Not paying means giving up
         part of what you already own.
       </p>

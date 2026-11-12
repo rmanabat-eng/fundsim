@@ -315,6 +315,14 @@ export function formatMultiple(value: number): string {
   return `${value.toFixed(2)}×`;
 }
 
+// The TVPI tooltip, in the player's own numbers once there are any.
+export function tvpiHint(tvpi: number | null, dpi: number | null): string {
+  const name = "(TVPI: Total Value to Paid-In.)";
+  if (tvpi === null || dpi === null)
+    return `What every $1 you invested is worth now, counting cash you got back and shares you still hold. 2.0× means you've doubled it. ${name}`;
+  return `For every $1 you've invested you now have $${tvpi.toFixed(2)}: $${dpi.toFixed(2)} back in cash and $${(tvpi - dpi).toFixed(2)} still on paper. ${name}`;
+}
+
 export function formatPercent(value: number): string {
   return `${value.toFixed(2)}%`;
 }

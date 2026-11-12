@@ -23,11 +23,11 @@ const GROUPS: Group[] = [
     tips: [
       {
         lead: "Weigh the whole card",
-        body: "Noise outweighs any single signal. Net the good against the bad.",
+        body: "No single clue decides it. Add up the good and the bad.",
       },
       {
         lead: "Founders matter most",
-        body: "A proven team is the biggest plus; feuding co-founders the biggest minus.",
+        body: "A proven team is the best sign; co-founders who fight is the worst.",
       },
       {
         lead: "A pass is free, silence isn't",
@@ -43,16 +43,16 @@ const GROUPS: Group[] = [
         body: `About ${DEALS_PER_YEAR} pitches a year, and none after year ${INVESTMENT_PERIOD_YEARS}.`,
       },
       {
-        lead: "Hold reserves",
-        body: "Defending your ownership costs more at every markup.",
+        lead: "Save money for later rounds",
+        body: "Keeping your share of a winner costs more every time its price goes up.",
       },
       {
-        lead: "Take enough bets",
-        body: "One winner usually pays for the fund — you need shots at it.",
+        lead: "Back enough companies",
+        body: "One big winner usually pays for the whole fund — you need enough chances to find it.",
       },
       {
-        lead: "Dry powder wins downturns",
-        body: "Bear years price cheap; bull years exit rich.",
+        lead: "Keep cash for bad years",
+        body: "In a bad market, deals are cheaper. In a good one, companies sell for more.",
       },
     ],
   },
@@ -60,16 +60,20 @@ const GROUPS: Group[] = [
     heading: "⚡ Working your desk",
     tips: [
       {
-        lead: "Top-tier lead beats a high price",
-        body: "A strong lead lifts the company's odds every year after.",
+        lead: "Famous investor beats highest bidder",
+        body: "A top investor's help improves the company's chances every year after.",
       },
       {
-        lead: "Bridges cut both ways",
-        body: "Refusing hurts them and you — but don't bridge every casualty.",
+        lead: "Rescues cut both ways",
+        body: "Refusing hurts the company and your reputation — but don't rescue every failing one.",
       },
       {
-        lead: "Backing a pivot is the risky play",
-        body: "Urging focus is the small, safe nudge.",
+        lead: "Backing a pivot is a gamble",
+        body: "It can go much better or much worse. Urging focus is the safe, small gain.",
+      },
+      {
+        lead: "Pushing on price is risky",
+        body: "A lower price buys you more, but the founder may walk away. Offering a smaller check is safe.",
       },
       {
         lead: "Undo works until you advance",
@@ -81,16 +85,16 @@ const GROUPS: Group[] = [
     heading: "🏁 Playing for the grade",
     tips: [
       {
-        lead: "Doubling your money is below median",
-        body: `2.5× is top quartile at year ${GAME_YEARS}; under 1× means you lost money.`,
+        lead: "Doubling your money isn't enough",
+        body: `2.5× puts you in the top quarter of funds at year ${GAME_YEARS}; under 1× means you lost money.`,
       },
       {
-        lead: "Don't sell the fund-maker",
-        body: "A 3× exit still loses you the run.",
+        lead: "Don't sell your best company early",
+        body: "A quick 3× feels good, but your biggest winner is what makes the fund.",
       },
       {
-        lead: "One run is one sample",
-        body: "There's a lot of luck in a single fund. Replay to see the pattern.",
+        lead: "One game is mostly luck",
+        body: "Play again to see what really works.",
       },
     ],
   },
