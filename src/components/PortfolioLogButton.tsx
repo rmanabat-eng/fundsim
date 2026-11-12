@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import type { CompanyRow } from "@/components/CompanyTable";
 import { CampaignLogList } from "@/components/CampaignLog";
+import { FirstTimeNote } from "@/components/FirstTimeNote";
 import { FundChart, type FundChartPoint } from "@/components/FundChart";
 import type { CampaignLogEntry } from "@/lib/campaign";
 import { STAGE_LABELS } from "@/lib/constants";
@@ -49,12 +50,7 @@ export function PortfolioLogButton({
       <button
         type="button"
         data-tour="portfolio-button"
-        onClick={() => {
-          setOpen(true);
-          // The tutorial's gated "go open your portfolio" step listens for
-          // this to advance itself instead of requiring a Next click.
-          window.dispatchEvent(new Event("fundsim:portfolio-opened"));
-        }}
+        onClick={() => setOpen(true)}
         aria-label="Portfolio log"
         className="whitespace-nowrap text-xs font-bold uppercase tracking-widest text-white/60 hover:text-white"
       >
@@ -90,6 +86,12 @@ export function PortfolioLogButton({
                   ×
                 </button>
               </div>
+
+              <FirstTimeNote id="portfolio">
+                Everything you&apos;ve invested in lives here. Snapshot is where
+                things stand now, History is what happened along the way, and
+                Chart is your fund&apos;s value over time.
+              </FirstTimeNote>
 
               <div className="mt-3 flex gap-1 border-b-2 border-white/10">
                 {(["snapshot", "history", "chart"] as const).map((t) => (

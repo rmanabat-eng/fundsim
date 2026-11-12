@@ -9,6 +9,7 @@ import { toast } from "@/components/toast";
 import { celebrateExit } from "@/components/Celebration";
 import { CountUp } from "@/components/CountUp";
 import { CampaignTips } from "@/components/CampaignTips";
+import { FirstTimeNote } from "@/components/FirstTimeNote";
 
 // The turn crank. Warns about what's still on the table — advancing expires
 // every open deal and pending decision, and that pressure is the point.
@@ -223,6 +224,11 @@ export function AdvanceYearResults() {
         </p>
         <p className="text-sm font-semibold text-white/90">{MARKET_LABELS[summary.market]}</p>
       </div>
+      <FirstTimeNote id="market">
+        The market mood changes every year. In a good (bull) year companies are
+        worth more and sell for more; in a bad (bear) year prices fall and weak
+        companies die faster. Every fund gets the same weather.
+      </FirstTimeNote>
 
       {summary.events.length > 0 && (
         <ul className="mt-3 space-y-1 text-sm">
