@@ -13,6 +13,7 @@ import {
   buildBridgeRequest,
   isEstablishedFounder,
   maybeTermSheet,
+  termConcessionCheck,
   pivotOutcome,
   PIVOT_BACKED_MAX,
   campaignLog,
@@ -198,6 +199,16 @@ describe("decision generators", () => {
       expect(bridge.postMoney).toBeGreaterThan(bridge.amount);
       expect(bridge.stage).toBe("SEED"); // bridges don't advance the stage
     }
+  });
+});
+
+describe("termConcessionCheck", () => {
+  it("asks for 20% of the round in $25k steps, capped at dry powder", () => {
+    expect(termConcessionCheck(5_000_000, 10_000_000)).toBe(1_000_000);
+    expect(termConcessionCheck(4_250_000, 10_000_000)).toBe(850_000);
+    expect(termConcessionCheck(5_000_000, 610_000)).toBe(600_000);
+    expect(termConcessionCheck(5_000_000, 10_000)).toBe(0);
+    expect(termConcessionCheck(5_000_000, -1)).toBe(0);
   });
 });
 

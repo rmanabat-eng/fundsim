@@ -84,12 +84,13 @@ export type DecisionView =
   | (Common & {
       type: "term_concession";
       stage: string;
-      raised: number; // conceding funds this
-      heldRaised: number; // your smaller check if you hold the soft term
-      postMoney: number; // conceding locks this in
-      heldPostMoney: number; // the better price if you hold the hard term and it lands
-      ownedConceded: number; // your % if you concede valuation
-      ownedHeldValuation: number; // your % if you hold valuation and it lands
+      raised: number; // the whole round
+      postMoney: number; // the founder's price
+      heldPostMoney: number; // the lower price if you push and it lands
+      check: number; // what the founder asks you to invest
+      heldCheck: number; // your smaller check if you push on amount
+      ownedNow: number; // your % before the round
+      walkRisk: number; // chance the founder walks if you push on price
     })
   | (Common & {
       type: "pivot";
@@ -584,9 +585,9 @@ function ProRataCard({
   return (
     <DecisionShell stamp="Follow-on" exitStyle={commitDeclineExitStyle(exiting)}>
       <p className="text-sm text-white/85">
-        📈 <CompanyName id={d.companyId} name={d.companyName} /> is raising a{" "}
-        <StageBadge stage={d.stage} />: {formatDollars(d.raised)} at a{" "}
-        {formatDollars(d.postMoney)} post-money.
+        📈 <CompanyName id={d.companyId} name={d.companyName} /> is raising more
+        money: a <StageBadge stage={d.stage} /> of {formatDollars(d.raised)} that
+        values the company at {formatDollars(d.postMoney)}.
       </p>
 
       <PitchNotes signals={d.signals} />
@@ -606,7 +607,7 @@ function ProRataCard({
         </div>
         <div className="max-chip-box rounded-lg px-3 py-2">
           <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
-            Defend it
+            Keep your share
           </p>
           <p className="mt-0.5 font-bold text-white">
             {formatPercent(d.ownedBefore)}
@@ -619,13 +620,16 @@ function ProRataCard({
       </div>
 
       <p className="text-sm text-white/70">
-        Your {formatPercent(d.ownedBefore)} is being{" "}
-        <Term def="New rounds create new shares, so everyone who doesn't buy in owns a smaller slice: your stake × (post-money − raised) ÷ post-money.">
-          diluted
+        The company is making new shares for the new investors, so your{" "}
+        {formatPercent(d.ownedBefore)} slice{" "}
+        <Term def="This is called dilution. Your shares don't go away — there are just more shares in total, so yours are a smaller part of the company.">
+          shrinks
         </Term>{" "}
-        unless you{" "}
-        <Term def="Funding your pro-rata means investing enough of the new round to keep your ownership percentage where it was.">
-          fund your pro-rata
+        to {formatPercent(d.ownedNow)} unless you buy some too.{" "}
+        {formatDollars(d.proRataCheck)} keeps your share where it was — that
+        amount is called your{" "}
+        <Term def="Your right, as an existing investor, to put money into a new round so your percentage doesn't shrink.">
+          pro-rata
         </Term>
         .
       </p>
@@ -674,8 +678,9 @@ function ProRataCard({
       )}
       {bought > 0 && (
         <p className="text-xs text-white/60">
-          {formatDollars(checkNumber)} buys back {bought.toFixed(2)} points →{" "}
-          {formatPercent(d.ownedNow + bought)} after the round.
+          {formatDollars(checkNumber)} buys {bought.toFixed(2)}% more of the
+          company — you&apos;d own {formatPercent(d.ownedNow + bought)} after the
+          round.
         </p>
       )}
       {error && (
@@ -730,7 +735,7 @@ function AcquisitionCard({
 
       <div className="max-chip-box rounded-lg px-3 py-2">
         <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
-          Your stake returns
+          You&apos;d get
         </p>
         <p className="mt-0.5 text-base font-black text-white">
           {formatDollars(d.yourShare)}
@@ -742,17 +747,19 @@ function AcquisitionCard({
         </p>
         {d.invested > 0 && (
           <p className="text-xs text-white/60">
-            on {formatDollars(d.invested)} invested
+            for the {formatDollars(d.invested)} you put in
           </p>
         )}
       </div>
 
       <p className="text-sm text-white/70">
-        Cash now, or hold for{" "}
-        <Term def="In venture, a handful of huge winners return more than everything else combined. Selling a potential winner early caps the outcome that pays for the whole fund.">
-          the power law
+        Take the sure cash now, or hold and hope it grows into something much
+        bigger? Most of a fund&apos;s profit comes from{" "}
+        <Term def="This is called the power law: a few huge winners earn more than all your other investments combined. Selling a future giant early gives up the win that pays for the whole fund.">
+          one or two huge winners
         </Term>
-        ? Declined offers don&apos;t come back — and neither do dead companies.
+        , so selling one early is costly. But this offer won&apos;t come back, and
+        the company could still fail.
       </p>
 
       <DecisionActions>
@@ -814,7 +821,7 @@ function AcquihireCard({
 
       <div className="max-chip-box rounded-lg px-3 py-2">
         <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
-          Your stake returns
+          You&apos;d get
         </p>
         <p className="mt-0.5 text-base font-black text-white">
           {formatDollars(d.yourShare)}
@@ -826,16 +833,15 @@ function AcquihireCard({
         </p>
         {d.invested > 0 && (
           <p className="text-xs text-white/60">
-            on {formatDollars(d.invested)} invested
+            for the {formatDollars(d.invested)} you put in
           </p>
         )}
       </div>
 
       <p className="text-sm text-white/70">
-        This isn&apos;t a winner cashing out — it&apos;s a below-cost exit that
-        ends the bleeding. Holding out keeps the position alive on paper, but
-        a team just told no to a buyout rarely stays together long enough to
-        prove you right.
+        This is a rescue, not a win — you&apos;d likely get back less than you
+        put in. If you hold, the company keeps going, but a team that just lost
+        its buyout offer often falls apart before it can prove you right.
       </p>
 
       <DecisionActions>
@@ -883,18 +889,19 @@ function FundSecondaryCard({
   }
 
   return (
-    <DecisionShell stamp="Secondary offer" exitStyle={commitDeclineExitStyle(exiting)}>
+    <DecisionShell stamp="Offer for your shares" exitStyle={commitDeclineExitStyle(exiting)}>
       <p className="text-sm text-white/85">
-        💰 A buyer wants only your stake in{" "}
-        <CompanyName id={d.companyId} name={d.companyName} /> — {formatDollars(d.offerValue)}
-        , the company itself carries on without you.
+        💰 Another investor wants to buy your shares in{" "}
+        <CompanyName id={d.companyId} name={d.companyName} />, at a price that
+        values the whole company at {formatDollars(d.offerValue)}. The company
+        keeps going — you&apos;d just no longer own a piece of it.
       </p>
 
       <PitchNotes signals={d.signals} />
 
       <div className="max-chip-box rounded-lg px-3 py-2">
         <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
-          Your stake returns
+          You&apos;d get
         </p>
         <p className="mt-0.5 text-base font-black text-white">
           {formatDollars(d.yourShare)}
@@ -906,17 +913,17 @@ function FundSecondaryCard({
         </p>
         {d.invested > 0 && (
           <p className="text-xs text-white/60">
-            on {formatDollars(d.invested)} invested
+            for the {formatDollars(d.invested)} you put in
           </p>
         )}
       </div>
 
       <p className="text-sm text-white/70">
-        A capped return today, or hold your position for{" "}
-        <Term def="In venture, a handful of huge winners return more than everything else combined. Selling a potential winner early caps the outcome that pays for the whole fund.">
-          the power law
-        </Term>
-        .
+        Sure cash today, or keep your shares in case this becomes one of the{" "}
+        <Term def="This is called the power law: a few huge winners earn more than all your other investments combined. Selling a future giant early gives up the win that pays for the whole fund.">
+          huge winners
+        </Term>{" "}
+        that pay for the whole fund?
       </p>
 
       <DecisionActions>
@@ -968,15 +975,11 @@ function BridgeCard({ d }: { d: Extract<DecisionView, { type: "bridge" }> }) {
     <DecisionShell stamp="SOS" exitStyle={bridgeExitStyle(exiting)}>
       <p className="text-sm text-white/85">
         🆘 <CompanyName id={d.companyId} name={d.companyName} /> is nearly out of
-        cash and asking you for a {formatDollars(d.amount)}{" "}
-        <Term def="A small round at flat-to-down pricing meant to keep a struggling company alive until it can raise properly. Insiders fund it — or nobody does.">
+        cash and asking you for {formatDollars(d.amount)} to keep going — a{" "}
+        <Term def="A small emergency round that keeps a struggling company alive until it can raise money properly. Usually only its existing investors will pay for one.">
           bridge
-        </Term>{" "}
-        at a{" "}
-        <Term def="The company's valuation with the new money already counted in. Your ownership is simply your check ÷ post-money.">
-          {formatDollars(d.postMoney)} post-money
         </Term>
-        .
+        . The deal values the company at {formatDollars(d.postMoney)}.
       </p>
 
       <PitchNotes signals={d.signals} />
@@ -994,8 +997,9 @@ function BridgeCard({ d }: { d: Extract<DecisionView, { type: "bridge" }> }) {
       </div>
 
       <p className="text-sm text-white/70">
-        Fund it and they get runway to recover. Refuse and they probably
-        don&apos;t make it — but bridges to nowhere are how funds bleed out.
+        Fund it and they get time to recover. Refuse and they probably shut
+        down. But rescuing every struggling company is a fast way to run out of
+        money.
       </p>
 
       <DecisionActions>
@@ -1027,7 +1031,7 @@ function TermSheetCard({ d }: { d: Extract<DecisionView, { type: "term_sheet" }>
     startTransition(async () => {
       if (!reduced) await new Promise((r) => setTimeout(r, TOP_TIER_EXIT_MS));
       const { delta } = await withRepDelta(() => resolveTermSheet(d.id, "top_tier"));
-      toast(`Advised ${d.companyName}: signed the top-tier lead${repSuffix(delta)}`);
+      toast(`Advised ${d.companyName}: took the famous investor${repSuffix(delta)}`);
     });
   }
 
@@ -1042,11 +1046,15 @@ function TermSheetCard({ d }: { d: Extract<DecisionView, { type: "term_sheet" }>
   }
 
   return (
-    <DecisionShell stamp="Term sheets" exitStyle={termSheetExitStyle(exiting)}>
+    <DecisionShell stamp="Two offers" exitStyle={termSheetExitStyle(exiting)}>
       <p className="text-sm text-white/85">
-        🖊️ <CompanyName id={d.companyId} name={d.companyName} /> has two term sheets
-        for its <StageBadge stage={d.stage} />, both raising{" "}
-        {formatDollars(d.raised)} — and the founder is asking you which to sign.
+        🖊️ Two investors want to fund the <StageBadge stage={d.stage} /> at{" "}
+        <CompanyName id={d.companyId} name={d.companyName} />. Both{" "}
+        <Term def="An investor's written offer is called a term sheet: how much they'll invest and what they think the company is worth.">
+          offers
+        </Term>{" "}
+        put in {formatDollars(d.raised)}, and the founder is asking you which one
+        to take.
       </p>
 
       <PitchNotes signals={d.signals} />
@@ -1055,42 +1063,41 @@ function TermSheetCard({ d }: { d: Extract<DecisionView, { type: "term_sheet" }>
       <div className="grid grid-cols-2 gap-2 text-sm">
         <div className="max-chip-box rounded-lg px-3 py-2">
           <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
-            🏦 Top-tier lead
+            🏦 Famous investor
           </p>
           <p className="mt-0.5 font-bold text-white">
-            {formatDollars(d.topTierPost)}{" "}
-            <Term def="The company's valuation with the new money already counted in. A lower post-money means the same check buys more of the company — everyone gets diluted more.">
-              post
-            </Term>
+            values it at {formatDollars(d.topTierPost)}
           </p>
           <p className="text-xs text-white/60">
-            you&apos;d hold {formatPercent(d.ownedTopTier)}
+            you&apos;d own {formatPercent(d.ownedTopTier)}
           </p>
         </div>
         <div className="max-chip-box rounded-lg px-3 py-2">
           <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
-            🎈 Hype fund
+            🎈 Highest bidder
           </p>
           <p className="mt-0.5 font-bold text-white">
-            {formatDollars(d.highPricePost)} post
+            values it at {formatDollars(d.highPricePost)}
           </p>
           <p className="text-xs text-white/60">
-            you&apos;d hold {formatPercent(d.ownedHighPrice)}
+            you&apos;d own {formatPercent(d.ownedHighPrice)}
           </p>
         </div>
       </div>
 
       <p className="text-sm text-white/70">
-        Price is one round&apos;s vanity;{" "}
-        <Term def="A strong lead investor helps recruit, opens doors, and anchors the next round. That support shifts the company's odds every year after — worth more than a flattering valuation.">
-          the partner compounds
-        </Term>
-        . The higher price keeps more ownership and a bigger paper mark today.
+        The famous investor offers a lower price, but{" "}
+        <Term def="A top investor helps hire, makes introductions, and makes the next round easier to raise. That improves the company's chances every year after.">
+          their help
+        </Term>{" "}
+        makes the company more likely to succeed. The highest bidder leaves you
+        with a bigger share that looks more valuable today — and that&apos;s all
+        they bring.
       </p>
 
       <DecisionActions>
         <button type="button" disabled={pending} onClick={signTopTier} className={primaryButton}>
-          {pending ? "Advising..." : "🏦 Sign the top-tier lead"}
+          {pending ? "Advising..." : "🏦 Take the famous investor"}
         </button>
         <button type="button" disabled={pending} onClick={takeHighPrice} className={secondaryButton}>
           🎈 Take the higher price
@@ -1117,20 +1124,29 @@ function TermConcessionCard({
     if (!reduced) setExiting(true);
     startTransition(async () => {
       if (!reduced) await new Promise((r) => setTimeout(r, CONCESSION_EXIT_MS));
-      const { delta } = await withRepDelta(() =>
+      const { result, delta } = await withRepDelta(() =>
         resolveTermConcession(d.id, { holdValuation, holdAmount })
       );
-      toast(
-        (holdValuation
-          ? `Held firm on valuation with ${d.companyName} — the founder may walk`
-          : `Sent terms to ${d.companyName}`) + repSuffix(delta)
-      );
+      if (result?.walked)
+        toast(`The founder of ${d.companyName} walked away — no deal${repSuffix(delta)}`, "error");
+      else
+        toast(
+          (check > 0
+            ? `Invested ${formatDollars(check)} in ${d.companyName}${holdValuation ? " at the lower price" : ""}`
+            : `${d.companyName} closed its round without you`) + repSuffix(delta)
+        );
     });
   }
 
+  // What the two checkboxes add up to: the rest of the round shrinks your
+  // old slice, then your own check buys some back at the agreed price.
+  const post = holdValuation ? d.heldPostMoney : d.postMoney;
+  const check = holdAmount ? d.heldCheck : d.check;
+  const owned = (d.ownedNow * (post - d.raised)) / post + (check / post) * 100;
+
   return (
     <DecisionShell
-      stamp="Term concession"
+      stamp="Negotiation"
       exitStyle={
         exiting
           ? { animation: `decision-exit-pulse ${CONCESSION_EXIT_MS}ms ease-out forwards` }
@@ -1138,28 +1154,25 @@ function TermConcessionCard({
       }
     >
       <p className="text-sm text-white/85">
-        🤝 <CompanyName id={d.companyId} name={d.companyName} /> is closing its{" "}
-        <StageBadge stage={d.stage} /> and wants your terms before signing. Hold
-        firm for the better number, or concede to keep the deal moving.
+        🤝 <CompanyName id={d.companyId} name={d.companyName} /> is raising a{" "}
+        <StageBadge stage={d.stage} /> of {formatDollars(d.raised)} and wants you
+        to invest. Accept the founder&apos;s terms as they are, or push back
+        before you sign.
       </p>
 
       <PitchNotes signals={d.signals} />
 
       <div className="max-chip-box rounded-lg px-3 py-2 text-sm">
         <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
-          💰 Valuation — hard term
+          💰 The price
         </p>
         <p className="mt-0.5 text-white/70">
-          Concede: {formatDollars(d.postMoney)} post, you&apos;d hold{" "}
-          {formatPercent(d.ownedConceded)}. Hold firm:{" "}
-          {formatDollars(d.heldPostMoney)} post, you&apos;d hold{" "}
-          {formatPercent(d.ownedHeldValuation)} — holding firm means less{" "}
-          <Term def="Dilution: a higher post-money valuation means the same check buys a smaller slice of the company — that's what shrinks the founder's stake here, not yours.">
-            dilution
-          </Term>{" "}
-          for the founder, but{" "}
-          <Term def="Holding firm risks the founder walking away entirely. Losing them here is final: no resurfacing, no second chance on this deal.">
-            the founder might walk
+          The founder values the company at {formatDollars(d.postMoney)}. Push
+          for {formatDollars(d.heldPostMoney)} and the same money buys you a
+          bigger share — but founders care a lot about price, and there&apos;s
+          about a {Math.round(d.walkRisk * 100)}% chance this one{" "}
+          <Term def="The founder takes the money from someone else. You don't invest, you lose reputation, and this deal never comes back.">
+            walks away
           </Term>
           .
         </p>
@@ -1169,32 +1182,51 @@ function TermConcessionCard({
             checked={holdValuation}
             onChange={(e) => setHoldValuation(e.target.checked)}
           />
-          Hold firm on valuation
+          Push for the lower price
         </label>
       </div>
 
-      <div className="max-chip-box rounded-lg px-3 py-2 text-sm">
-        <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
-          🧾 Investment amount — soft term
-        </p>
-        <p className="mt-0.5 text-white/70">
-          Concede: fund {formatDollars(d.raised)}. Hold firm: fund{" "}
-          {formatDollars(d.heldRaised)} instead — preserves dry powder, no risk
-          either way.
-        </p>
-        <label className="mt-2 flex items-center gap-2 text-xs font-bold text-white/80">
-          <input
-            type="checkbox"
-            checked={holdAmount}
-            onChange={(e) => setHoldAmount(e.target.checked)}
-          />
-          Hold firm on amount
-        </label>
-      </div>
+      {d.heldCheck < d.check && (
+        <div className="max-chip-box rounded-lg px-3 py-2 text-sm">
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
+            🧾 Your check
+          </p>
+          <p className="mt-0.5 text-white/70">
+            The founder wants {formatDollars(d.check)} from you. Offer{" "}
+            {formatDollars(d.heldCheck)} instead and you keep more cash for
+            other deals. Founders rarely fight over this — no risk.
+          </p>
+          <label className="mt-2 flex items-center gap-2 text-xs font-bold text-white/80">
+            <input
+              type="checkbox"
+              checked={holdAmount}
+              onChange={(e) => setHoldAmount(e.target.checked)}
+            />
+            Offer the smaller check
+          </label>
+        </div>
+      )}
+
+      <p className="text-sm text-white/70">
+        {check > 0 ? (
+          <>
+            With these terms you invest{" "}
+            <span className="font-bold text-white">{formatDollars(check)}</span>{" "}
+            and end up owning{" "}
+            <span className="font-bold text-white">{formatPercent(owned)}</span>
+          </>
+        ) : (
+          <>
+            You have no cash left to invest, so you&apos;d end up owning{" "}
+            <span className="font-bold text-white">{formatPercent(owned)}</span>
+          </>
+        )}{" "}
+        (you own {formatPercent(d.ownedNow)} today).
+      </p>
 
       <DecisionActions>
         <button type="button" disabled={pending} onClick={send} className={primaryButton}>
-          {pending ? "Sending..." : "🤝 Send terms"}
+          {pending ? "Sending..." : "🤝 Send your terms"}
         </button>
       </DecisionActions>
     </DecisionShell>
@@ -1232,19 +1264,20 @@ function PivotCard({ d }: { d: Extract<DecisionView, { type: "pivot" }> }) {
       <p className="text-sm text-white/85">
         🧭 Growth has stalled at{" "}
         <CompanyName id={d.companyId} name={d.companyName} />. The founder wants to{" "}
-        <Term def="Change the product or market while keeping the team and the money already raised. Most pivots fizzle; a famous few (Slack, Instagram) found the real business.">
+        <Term def="Same team, same money, new plan. Most pivots fail; a famous few (Slack, Instagram) turned into the real business.">
           pivot
         </Term>{" "}
-        into an adjacent market and is asking for your blessing before betting the
-        rest of the runway.
+        — switch to a different product or market — and is asking for your
+        support before spending the money they have left on it.
       </p>
 
       <PitchNotes signals={d.signals} />
 
       <p className="text-sm text-white/70">
-        Backing the pivot is a high-variance reroll of the company&apos;s odds.
-        Urging focus is the safe, small win. Either answer beats silence — an
-        unsupported founder pivots anyway, half-hearted.
+        Backing the pivot is a gamble: the company could end up much better or
+        much worse. Urging them to stay focused is the safe choice with a small
+        upside. Either answer beats no answer — an ignored founder pivots
+        anyway, without your help.
       </p>
 
       <DecisionActions>
@@ -1294,22 +1327,22 @@ function FounderSplitCard({
       <p className="text-sm text-white/85">
         💔 The co-founders at{" "}
         <CompanyName id={d.companyId} name={d.companyName} />{" "}
-        are splitting up — one wants out. They&apos;re asking you to help
-        broker the exit before it turns into a fight over equity.
+        are splitting up — one wants to leave. They&apos;re asking you to help
+        them part ways calmly before it turns into a fight over who owns what.
       </p>
 
       <PitchNotes signals={d.signals} />
 
       <p className="text-sm text-white/70">
-        You can&apos;t tell from here which of them actually carried the
-        company. Brokering a clean exit is the safe, modest win either way.
-        Staying out costs nothing today, but it&apos;s a blind bet on who
-        mattered more — and it usually isn&apos;t the one who stayed.
+        You can&apos;t tell from here which of them the company really depends
+        on. Helping them split cleanly is the safe choice with a small upside.
+        Staying out costs nothing today, but it&apos;s a blind gamble on who
+        mattered more — and it&apos;s often the one who left.
       </p>
 
       <DecisionActions>
         <button type="button" disabled={pending} onClick={broker} className={primaryButton}>
-          {pending ? "Brokering..." : "🤝 Broker a clean exit"}
+          {pending ? "Helping..." : "🤝 Help them split cleanly"}
         </button>
         <button type="button" disabled={pending} onClick={ignore} className={secondaryButton}>
           🎲 Stay out of it
@@ -1351,9 +1384,10 @@ function ExitRouteCard({ d }: { d: Extract<DecisionView, { type: "exit_route" }>
   return (
     <DecisionShell stamp="Exit strategy" exitStyle={exitRouteExitStyle(exiting)}>
       <p className="text-sm text-white/85">
-        🚪 <CompanyName id={d.companyId} name={d.companyName} /> has grown into real
-        options and the board wants your vote on how to get liquid. It last priced
-        at {formatDollars(d.postMoney)}.
+        🚪 <CompanyName id={d.companyId} name={d.companyName} /> has grown big
+        enough for investors to cash out, and the board wants your vote on how.
+        It was last valued at {formatDollars(d.postMoney)}. Each box shows what
+        you&apos;d get.
       </p>
 
       <PitchNotes signals={d.signals} />
@@ -1361,13 +1395,13 @@ function ExitRouteCard({ d }: { d: Extract<DecisionView, { type: "exit_route" }>
       <div className="grid gap-2 text-sm sm:grid-cols-3">
         <div className="max-chip-box rounded-lg px-3 py-2">
           <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
-            🔔 IPO
+            🔔 Go public
           </p>
           <p className="mt-0.5 font-bold text-white">
             {formatDollars(share(d.ipoLow))}–{formatDollars(share(d.ipoHigh))}
           </p>
           <p className="text-xs text-[color:var(--max-orange)]">
-            {Math.round(d.ipoPullChance * 100)}% chance it&apos;s pulled
+            {Math.round(d.ipoPullChance * 100)}% chance it&apos;s cancelled
           </p>
         </div>
         <div className="max-chip-box rounded-lg px-3 py-2">
@@ -1387,17 +1421,19 @@ function ExitRouteCard({ d }: { d: Extract<DecisionView, { type: "exit_route" }>
             {formatDollars(share(d.secondaryValuation))}
           </p>
           <p className="text-xs text-white/60">
-            at a discount
+            certain, but a lower price
           </p>
         </div>
       </div>
 
       <p className="text-sm text-white/70">
-        The IPO has the highest ceiling and can still be shelved.{" "}
-        <Term def="Selling your position to another investor rather than waiting for the company to exit. You get cash now; the company carries on without you — and buyers of a private stake expect a discount for the trouble.">
-          A secondary
+        Going public (an IPO — selling shares on the stock market) can pay the
+        most, but it might get cancelled. Selling the company is sure money
+        today.{" "}
+        <Term def="This is called a secondary sale: another investor buys your shares and the company carries on without you. Buyers pay less than full price because private shares are hard to resell.">
+          Selling just your stake
         </Term>{" "}
-        takes the risk off your books without forcing a sale.
+        gets you cash at a lower price without the company having to sell.
       </p>
 
       <DecisionActions>
@@ -1469,21 +1505,22 @@ function CeoReplacementCard({
     <DecisionShell stamp="Board vote" exitStyle={ceoReplacementExitStyle(exiting)}>
       <p className="text-sm text-white/85">
         🪑 The board at <CompanyName id={d.companyId} name={d.companyName} /> wants
-        to replace the founder-CEO with a professional operator, and your vote
-        decides it.
+        to replace the founder as CEO with an experienced outside executive, and
+        your vote decides it.
       </p>
 
       <PitchNotes signals={d.signals} />
 
       <p className="text-sm text-white/70">
-        An experienced operator usually steadies a company — and founders talk.
-        Ousting one costs you more standing than any single no, and the reputation
-        you spend here is the deal flow you see later.
+        An experienced CEO usually makes a company steadier. But founders talk
+        to each other: voting one out hurts your reputation more than saying no
+        to them ever does, and a worse reputation means fewer good pitches
+        later.
       </p>
 
       <DecisionActions>
         <button type="button" disabled={pending} onClick={replace} className={primaryButton}>
-          {pending ? "Voting..." : "🪑 Bring in an operator"}
+          {pending ? "Voting..." : "🪑 Replace the CEO"}
         </button>
         <button type="button" disabled={pending} onClick={keep} className={secondaryButton}>
           🤝 Back the founder
@@ -1521,13 +1558,16 @@ function PayToPlayCard({ d }: { d: Extract<DecisionView, { type: "pay_to_play" }
   return (
     <DecisionShell stamp="Pay-to-play" exitStyle={payToPlayExitStyle(exiting)}>
       <p className="text-sm text-white/85">
-        ⚖️ <CompanyName id={d.companyId} name={d.companyName} /> is raising a down
-        round — <StageBadge stage={d.stage} /> {formatDollars(d.raised)} at{" "}
-        {formatDollars(d.postMoney)} — and the insiders have imposed{" "}
-        <Term def="A down-round rule: existing investors must put in their full share or their preferred shares convert to common, losing their protections. It's designed to force insiders to keep funding the company.">
+        ⚖️ <CompanyName id={d.companyId} name={d.companyName} /> is struggling. Its{" "}
+        <StageBadge stage={d.stage} /> raises {formatDollars(d.raised)} at a{" "}
+        <Term def="This is called a down round: the company is now priced below its last round, so everyone's shares are worth less than before.">
+          lower valuation than last time
+        </Term>{" "}
+        ({formatDollars(d.postMoney)}), and it comes with a{" "}
+        <Term def="A rule that punishes existing investors who don't put more money in: their shares are swapped for a weaker kind and their stake is cut. It exists to push investors to keep funding the company.">
           pay-to-play
-        </Term>
-        . Write your share or your stake converts.
+        </Term>{" "}
+        rule: put in your share of the round, or your stake gets cut.
       </p>
 
       <PitchNotes signals={d.signals} />
@@ -1552,14 +1592,15 @@ function PayToPlayCard({ d }: { d: Extract<DecisionView, { type: "pay_to_play" }
             {formatPercent(d.ownedIfDecline)}
           </p>
           <p className="text-xs text-white/60">
-            converted, costs nothing
+            stake cut, costs nothing
           </p>
         </div>
       </div>
 
       <p className="text-sm text-white/70">
-        You hold {formatPercent(d.ownedNow)} today. Good money after bad is a real
-        risk — but this is the rule that wipes out investors who stop showing up.
+        You own {formatPercent(d.ownedNow)} today. Paying means putting more
+        money into a company that&apos;s struggling. Not paying means giving up
+        part of what you already own.
       </p>
 
       <DecisionActions>
@@ -1574,7 +1615,7 @@ function PayToPlayCard({ d }: { d: Extract<DecisionView, { type: "pay_to_play" }
         <button
           type="button"
           disabled={pending}
-          onClick={() => choose("decline", "you sat out the recap")}
+          onClick={() => choose("decline", "you sat out the round")}
           className={secondaryButton}
         >
           Sit it out
