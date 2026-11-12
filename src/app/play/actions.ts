@@ -57,6 +57,7 @@ import {
   founderWalkRisk,
   maybePayToPlay,
   maybeTermConcession,
+  termConcessionCheck,
   maybeTermSheet,
   pivotOutcome,
   rollMarket,
@@ -829,11 +830,12 @@ export async function resolveTermSheet(
 // Hold firm on the hard term (valuation) or the soft term (investment
 // amount), independently. Holding the hard term risks the founder walking —
 // final, no resurfacing — scaled down by your reputation. The soft term
-// carries no risk either way.
+// carries no risk either way. You invest in the round either way
+// (termConcessionCheck); returns whether the founder walked, for the toast.
 export async function resolveTermConcession(
   decisionId: string,
   choice: { holdValuation: boolean; holdAmount: boolean }
-) {
+): Promise<{ walked: boolean } | undefined> {
   const visitorId = await getVisitorId();
   const decision = await prisma.decision.findUnique({
     where: { id: decisionId },
@@ -858,7 +860,7 @@ export async function resolveTermConcession(
       });
       revalidatePath("/play");
       revalidatePath("/");
-      return;
+      return { walked: true };
     }
   }
 
@@ -868,9 +870,12 @@ export async function resolveTermConcession(
       companyId: decision.companyId,
       stage: payload.stage as (typeof STAGES)[number],
       date: new Date(payload.date),
-      raised: choice.holdAmount ? payload.heldRaised : payload.raised,
+      raised: payload.raised,
       postMoney: choice.holdValuation ? payload.heldPostMoney : payload.postMoney,
-      yourCheck: 0,
+      yourCheck: termConcessionCheck(
+        choice.holdAmount ? payload.heldRaised : payload.raised,
+        await remainingCapital(visitorId)
+      ),
     },
   });
   await prisma.decision.update({
@@ -881,6 +886,7 @@ export async function resolveTermConcession(
   });
   revalidatePath("/play");
   revalidatePath("/");
+  return { walked: false };
 }
 
 // Bless the pivot (a high-variance quality reroll) or urge focus (a small,
@@ -1240,8 +1246,8 @@ export async function advanceYear(): Promise<YearSummary | null> {
         },
       });
     } else if (d.type === "term_concession") {
-      // No answer from you, so the founder assumes the safe read: concede
-      // both, no risk, no reputation effect either way.
+      // No answer from you, so the round closes at the founder's price
+      // without your money — you're just diluted.
       const payload: TermConcessionPayload = JSON.parse(d.payload);
       await prisma.round.create({
         data: {

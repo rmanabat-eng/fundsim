@@ -329,12 +329,24 @@ export function maybeTermSheet(round: {
 // (hard) and investment amount (soft).
 export type TermConcessionChoice = {
   stage: string;
-  raised: number; // the founder's ask — concede to fund this
-  heldRaised: number; // your smaller check if you hold firm — preserves dry powder, no walk risk
+  raised: number; // the round's size — your check is sized off it (termConcessionCheck)
+  heldRaised: number; // sizes your smaller check if you hold firm on amount — no walk risk
   postMoney: number; // the founder's ask — concede to lock this in
   heldPostMoney: number; // the better price if you hold firm and it lands
   date: string;
 };
+
+// You're a real investor in this round: the founder asks you for this share
+// of it. It has to beat your existing ownership for a lower price to help
+// you — your check buys more, but the rest of the round dilutes you more too.
+export const TERM_CONCESSION_CHECK_SHARE = 0.2;
+// Your check for a concession round of `amount` (raised, or heldRaised if you
+// hold firm on amount), in $25k steps and never more than your dry powder.
+export function termConcessionCheck(amount: number, budget: number): number {
+  const step = 25_000;
+  const ask = Math.max(Math.round((amount * TERM_CONCESSION_CHECK_SHARE) / step) * step, step);
+  return Math.max(0, Math.min(ask, Math.floor(budget / step) * step));
+}
 
 const TERM_CONCESSION_CHANCE = 0.3;
 // Base chance the founder walks if you hold firm on the hard term (valuation).

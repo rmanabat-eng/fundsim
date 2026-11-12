@@ -1,5 +1,5 @@
 import { GAME_YEARS } from "@/lib/campaign";
-import { formatDollars, formatMultiple, formatPercent, managementFees } from "@/lib/fund-math";
+import { formatDollars, formatMultiple, formatPercent, managementFees, tvpiHint } from "@/lib/fund-math";
 import { HudStrip } from "@/components/HudStrip";
 
 export function SummaryBar({
@@ -38,7 +38,7 @@ export function SummaryBar({
       icon: "💰",
       label: "Remaining capital",
       value: formatDollars(remaining),
-      hint: `Fund size minus ${formatDollars(managementFees(fundSize, GAME_YEARS))} in lifetime management fees, minus deployed. Exits don't refill it — in a real fund, distributions go back to the LPs.`,
+      hint: `Money left to invest: the fund, minus ${formatDollars(managementFees(fundSize, GAME_YEARS))} in fees, minus what you've invested. It never refills — in a real fund, cash from a sale goes back to the fund's backers (called LPs).`,
     },
     {
       icon: "🏢",
@@ -50,31 +50,31 @@ export function SummaryBar({
       icon: "📈",
       label: "Portfolio value",
       value: formatDollars(portfolioValue),
-      hint: "Your active stakes, each marked at its company's latest post-money valuation. Paper value — nothing is cash until an exit.",
+      hint: "What your shares in active companies are worth at each one's latest price. Paper value — it isn't cash until a company is sold or goes public.",
     },
     {
       icon: "🏦",
       label: "Distributions",
       value: formatDollars(distributions),
-      hint: "Cash actually returned to the fund by exits: your ownership × the exit valuation, summed across exited companies.",
+      hint: "Cash that actually came back from companies that were sold or went public: your share × the sale price.",
     },
     {
       icon: "💵",
       label: "DPI",
       value: dpi === null ? "—" : formatMultiple(dpi),
-      hint: "Distributions to Paid-In: cash returned ÷ capital deployed. The realized multiple — “you can't eat TVPI.”",
+      hint: "Cash you got back for every $1 you invested. 1.0× means you have your money back; anything above is real profit. (DPI: Distributions to Paid-In.)",
     },
     {
       icon: "🏆",
       label: "TVPI",
       value: tvpi === null ? "—" : formatMultiple(tvpi),
-      hint: "Total Value to Paid-In: (portfolio value + distributions) ÷ capital deployed. The headline multiple — paper plus cash per dollar in.",
+      hint: tvpiHint(tvpi, dpi),
     },
     {
       icon: "⚡",
       label: "IRR (annualized)",
       value: irr === null ? "—" : formatPercent(irr * 100),
-      hint: "Internal rate of return: the annualized rate implied by your dated cash flows. Unlike multiples, it rewards getting money back fast.",
+      hint: "Your yearly rate of return, like an interest rate on the money you invested. Getting money back sooner raises it — a quick 2× can beat a slow 3×. (IRR: internal rate of return.)",
     },
   ];
 

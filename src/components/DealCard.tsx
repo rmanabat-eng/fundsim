@@ -173,10 +173,10 @@ export function DealCard({
         <p className="mt-2 text-sm text-white/70">
           <StageBadge stage={deal.stage} /> raising {formatDollars(deal.raised)} at a{" "}
           {formatDollars(deal.postMoney)}{" "}
-          <Term def="The company's valuation with the new money already counted in. Your ownership is simply your check ÷ post-money.">
+          <Term def="What the whole company is priced at once this round's money is in. Your share is your check ÷ this number: put $1 into a $10 company and you own 10%.">
             post-money
-          </Term>
-          .
+          </Term>{" "}
+          valuation.
         </p>
 
         <ul
@@ -213,7 +213,7 @@ export function DealCard({
                     <>
                       {formatDollars(check)}{" "}
                       <span className="font-normal text-white/60">
-                        · {ownership.toFixed(2)}%
+                        · you&apos;d own {ownership.toFixed(2)}%
                       </span>
                     </>
                   )}
@@ -238,7 +238,7 @@ export function DealCard({
                     ? "Out of dry powder"
                     : maxCheck < deal.raised
                       ? `${formatDollars(maxCheck)} (all you have left)`
-                      : `${formatDollars(deal.raised)} (lead it)`}
+                      : `${formatDollars(deal.raised)} (the whole round)`}
                 </span>
               </div>
             </div>
