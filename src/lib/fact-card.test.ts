@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { generateCard, FACT_POOL, EXCLUSION_PAIRS } from "@/lib/fact-card";
+import {
+  generateCard,
+  fillTemplate,
+  signalTone,
+  FACT_POOL,
+  EXCLUSION_PAIRS,
+  SENTIMENT_WEIGHT,
+} from "@/lib/fact-card";
 
 describe("generateCard", () => {
   it("returns 4 filled fact strings with no leftover placeholders", () => {
@@ -21,5 +28,16 @@ describe("generateCard", () => {
         expect(hasA && hasB).toBe(false);
       }
     }
+  });
+});
+
+describe("signalTone", () => {
+  it("recovers every fact's direction from its filled-in text", () => {
+    for (const fact of FACT_POOL) {
+      const weight = SENTIMENT_WEIGHT[fact.sentiment_tag];
+      const expected = weight > 0 ? "good" : weight < 0 ? "bad" : "neutral";
+      expect(signalTone(fillTemplate(fact)), fact.id).toBe(expected);
+    }
+    expect(signalTone("a clue from an older pool")).toBeNull();
   });
 });

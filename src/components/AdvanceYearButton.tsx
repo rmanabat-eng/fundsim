@@ -207,6 +207,12 @@ const EVENT_STYLES = {
   dead: { icon: "💀", text: "text-[color:var(--max-orange)]" },
 } as const;
 const EVENT_STAGGER_MS = 140;
+// How each pitch clue really counted, revealed once the company's story ends.
+const CLUE_MARKS = {
+  good: "👍 Good sign:",
+  bad: "👎 Warning sign:",
+  neutral: "🤷 Meant nothing:",
+} as const;
 
 export function AdvanceYearResults() {
   const { summary, pending } = useAdvanceYear();
@@ -243,6 +249,17 @@ export function AdvanceYearResults() {
               <span aria-hidden>{EVENT_STYLES[e.kind].icon}</span>
               <span className="text-white/80">
                 <strong className={EVENT_STYLES[e.kind].text}>{e.name}</strong> {e.detail}
+                {e.note && <span className="block text-xs text-white/60">{e.note}</span>}
+                {e.clues && e.clues.length > 0 && (
+                  <span className="mt-1 block text-xs text-white/60">
+                    What its pitch said:
+                    {e.clues.map((c) => (
+                      <span key={c.text} className="block pl-2">
+                        {c.tone ? CLUE_MARKS[c.tone] : "🔎"} {c.text}
+                      </span>
+                    ))}
+                  </span>
+                )}
               </span>
             </li>
           ))}

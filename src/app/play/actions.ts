@@ -9,10 +9,12 @@ import { rollYearEvent } from "@/lib/simulate";
 import {
   exitProceeds,
   formatDollars,
+  formatPercent,
   fundMetrics,
   managementFees,
   ownershipAfterRounds,
 } from "@/lib/fund-math";
+import { signalTone } from "@/lib/fact-card";
 import { currentReputation } from "@/lib/reputation";
 import { snapshotPortfolioAsScenario } from "@/lib/scenario";
 import {
@@ -1170,6 +1172,10 @@ export type YearEvent = {
   kind: "up" | "down" | "exit" | "dead";
   detail: string;
   multiple?: number; // exits only: proceeds ÷ what the fund put in
+  note?: string; // what the headline means for your own money
+  // Exits and deaths only: the original pitch clues, each marked by which
+  // way it actually counted — so the outcome teaches how to read a pitch.
+  clues?: { text: string; tone: ReturnType<typeof signalTone> }[];
 };
 
 // A macro shock hits ~1 year in 10 and temporarily reweights every company's
@@ -1314,7 +1320,7 @@ export async function advanceYear(): Promise<YearSummary | null> {
 
   const companies = await prisma.company.findMany({
     where: { visitorId },
-    include: { rounds: { orderBy: { date: "asc" } } },
+    include: { rounds: { orderBy: { date: "asc" } }, deal: true },
   });
 
   // Sum of this year's fixed-amount follow-on asks (bridges, pay-to-play
@@ -1418,10 +1424,12 @@ export async function advanceYear(): Promise<YearSummary | null> {
       summary.raised++;
       summary.newDecisions++;
       const step = event.postMoney / latest.postMoney;
+      const owned = ownershipAfterRounds([...company.rounds, round]);
       summary.events.push({
         name: company.name,
         kind: step >= 1 ? "up" : "down",
         detail: `${STAGE_LABELS[event.stage as (typeof STAGES)[number]]} at ${formatDollars(event.postMoney)} (${step >= 1 ? "up" : "down"} ${Math.abs(Math.round((step - 1) * 100))}%)`,
+        note: `Your ${formatPercent(owned)} is now worth ${formatDollars((owned / 100) * event.postMoney)} on paper.`,
       });
     } else if (event.kind === "exit" || event.kind === "writeOff") {
       const exitValue = event.kind === "exit" ? event.exitValue : 0;
@@ -1429,20 +1437,34 @@ export async function advanceYear(): Promise<YearSummary | null> {
         where: { id: company.id },
         data: { exitValue, exitDate: new Date(event.exitDate) },
       });
+      const invested = company.rounds.reduce((sum, r) => sum + r.yourCheck, 0);
+      const clues = company.deal
+        ? (JSON.parse(company.deal.signals) as string[]).map((text) => ({
+            text,
+            tone: signalTone(text),
+          }))
+        : undefined;
       if (event.kind === "exit") {
         const proceeds = exitProceeds(company.rounds, exitValue);
         summary.exited++;
         summary.distributions += proceeds;
-        const invested = company.rounds.reduce((sum, r) => sum + r.yourCheck, 0);
         summary.events.push({
           name: company.name,
           kind: "exit",
-          detail: `exited at ${formatDollars(exitValue)} — ${formatDollars(proceeds)} back to the fund`,
+          detail: `cashed out at ${formatDollars(exitValue)} — ${formatDollars(proceeds)} back to the fund`,
           multiple: invested > 0 ? proceeds / invested : 0,
+          note: `You put in ${formatDollars(invested)} and got ${formatDollars(proceeds)} back in cash.`,
+          clues,
         });
       } else {
         summary.writtenOff++;
-        summary.events.push({ name: company.name, kind: "dead", detail: "shut down" });
+        summary.events.push({
+          name: company.name,
+          kind: "dead",
+          detail: "shut down",
+          note: `The ${formatDollars(invested)} you put in is gone.`,
+          clues,
+        });
       }
       continue; // exited companies get no offers
     } else {

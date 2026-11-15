@@ -677,7 +677,7 @@ export function gradeFund(tvpi: number | null): FundGrade {
     return {
       label: "Bottom quartile",
       blurb:
-        "The fund returned less than it deployed. Your LPs would have done better in an index fund — and they'll remember that next time you raise.",
+        "The fund returned less than it invested. The people who backed you would have done better in an index fund — and they'll remember that next time you ask them for money.",
       tone: "bad",
     };
   }
@@ -685,7 +685,7 @@ export function gradeFund(tvpi: number | null): FundGrade {
     return {
       label: "Third quartile",
       blurb:
-        "Money back plus a little — but below the venture median. LPs take this risk for outliers, not savings-account returns.",
+        "You made the money back plus a little — but less than the typical venture fund. People back funds like yours for huge wins, not savings-account returns.",
       tone: "ok",
     };
   }
@@ -693,7 +693,7 @@ export function gradeFund(tvpi: number | null): FundGrade {
     return {
       label: "Second quartile",
       blurb:
-        "A solid fund, around the industry median. Respectable — but you'll need to show a path to outliers to raise Fund II easily.",
+        "A solid fund, about typical for venture. Respectable — but you'll need to show you can find big winners to raise your next fund easily.",
       tone: "good",
     };
   }
@@ -701,14 +701,14 @@ export function gradeFund(tvpi: number | null): FundGrade {
     return {
       label: "Top quartile",
       blurb:
-        "This is the business venture LPs sign up for. Fund II is oversubscribed.",
+        "This is the result people hope for when they back a venture fund. Your next fund will have more backers than room.",
       tone: "great",
     };
   }
   return {
     label: "Top decile",
     blurb:
-      "A legendary vintage. Somewhere in this portfolio you caught a power-law winner and held on. They'll teach this fund in business school.",
+      "A legendary fund. Somewhere in this portfolio you caught a huge winner and held on. They'll teach this fund in business school.",
     tone: "great",
   };
 }
