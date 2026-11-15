@@ -301,24 +301,24 @@ export default async function PlayPage() {
       const multiple = bestPosition.value / bestPosition.invested;
       lessons.push(
         multiple >= 3
-          ? `Your best call was ${bestPosition.name} — ${formatMultiple(multiple)} on ${formatDollars(bestPosition.invested)}. One winner like this is what the power law is about: it doesn't take many.`
-          : `${bestPosition.name} was your top performer, but only ${formatMultiple(multiple)} — this fund never landed the outlier that VC economics depend on.`
+          ? `Your best investment was ${bestPosition.name} — worth ${formatMultiple(multiple)} the ${formatDollars(bestPosition.invested)} you put in. Venture funds live on a few big winners like this (the power law): it doesn't take many.`
+          : `${bestPosition.name} was your best investment, but it only reached ${formatMultiple(multiple)} — this fund never found the one huge winner that venture funds depend on.`
       );
     }
     if (worstWriteOff && worstWriteOff.sunk > 0) {
       lessons.push(
-        `The priciest lesson was ${worstWriteOff.name}, which went to zero after ${formatDollars(worstWriteOff.sunk)} — a write-off that size is normal in one fund, but worth asking what the signals said going in.`
+        `Your most expensive loss was ${worstWriteOff.name}, which went to zero after you put in ${formatDollars(worstWriteOff.sunk)}. A loss that size is normal in a fund — but it's worth looking back at what its pitch clues said.`
       );
     }
     if (net !== null && metrics.tvpi !== null) {
       const carry = Math.max(0, totalValue - metrics.deployed - feesPaid) * CARRY_RATE;
       lessons.push(
-        `Your LPs saw ${formatMultiple(net)} net, not ${formatMultiple(metrics.tvpi)} — ${formatDollars(feesPaid)} went to management fees${carry > 0 ? ` and ${formatDollars(carry)} to your carry` : ", and there was no profit to take carry on"}. Gross is your skill; net is what they'll re-up on.`
+        `The people who put money in your fund got ${formatMultiple(net)}, not ${formatMultiple(metrics.tvpi)} — ${formatDollars(feesPaid)} went to management fees${carry > 0 ? ` and ${formatDollars(carry)} to your share of the profit (carry)` : ", and there was no profit for you to take a share of"}. The bigger number shows how well you invested; the smaller one is what they take home.`
       );
     }
     if (metrics.dpi !== null && metrics.tvpi !== null && metrics.dpi < metrics.tvpi * 0.5) {
       lessons.push(
-        `Most of this fund's value is still on paper — DPI (${formatMultiple(metrics.dpi)}) lags TVPI (${formatMultiple(metrics.tvpi)}) by a lot. Paper markups aren't cash; realized exits are what LPs can actually spend.`
+        `Most of this fund's value is still on paper — only ${formatMultiple(metrics.dpi)} has come back as cash (DPI), out of ${formatMultiple(metrics.tvpi)} in total (TVPI). Paper gains aren't money until companies are sold.`
       );
     }
 
@@ -351,7 +351,7 @@ export default async function PlayPage() {
             {net !== null && (
               <>
                 {" · "}
-                <CountUp from={0} to={net} delay={1300} /> net to LPs
+                <CountUp from={0} to={net} delay={1300} /> after fees
               </>
             )}
           </p>
@@ -369,7 +369,7 @@ export default async function PlayPage() {
             style={{ animationDelay: "2700ms" }}
           >
             {earlyClose
-              ? `You ended this run before year ${GAME_YEARS} — too early for a fair quartile grade against a full-length fund.`
+              ? `You ended this run before year ${GAME_YEARS} — too early for a fair grade against a full-length fund.`
               : grade!.blurb}
           </p>
           {lessons.length > 0 && (

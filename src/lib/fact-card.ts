@@ -127,6 +127,23 @@ export const SENTIMENT_WEIGHT: Record<Fact["sentiment_tag"], number> = {
   strong_negative: -0.3,
 };
 
+// Whether a pitch clue, as shown on the card, counted for or against the
+// company's hidden quality. Deals store only the filled-in text, so this
+// matches it back to its template; null for text from an older pool.
+export function signalTone(text: string): "good" | "bad" | "neutral" | null {
+  const fact = FACT_POOL.find((f) =>
+    new RegExp(
+      `^${f.text_template
+        .split(/\{\w+\}/)
+        .map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+        .join(".+")}$`
+    ).test(text)
+  );
+  if (!fact) return null;
+  const weight = SENTIMENT_WEIGHT[fact.sentiment_tag];
+  return weight > 0 ? "good" : weight < 0 ? "bad" : "neutral";
+}
+
 export function generateCard(pool: Fact[] = FACT_POOL): string[] {
   return drawFacts(pool).map(fillTemplate);
 }
