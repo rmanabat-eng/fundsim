@@ -97,11 +97,11 @@ export default async function Home() {
       {/* -------- Top nav: guide/dashboard/scenarios as links, not
           full-bleed sections — kept consistent for every visitor. -------- */}
       <nav className="sticky top-0 z-20 border-b-[3px] border-[color:var(--max-magenta)] bg-[#150f28]/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-3 gap-y-1 px-6 py-2.5">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-2.5 sm:px-6">
           <Link href="/" className="font-bungee text-lg text-white">
             <span className="text-[color:var(--max-yellow)]">★</span> FundSim
           </Link>
-          <div className="flex flex-wrap gap-1 text-xs font-bold uppercase tracking-[0.1em] text-white/75 [&>a]:rounded-full [&>a]:border-2 [&>a]:border-transparent [&>a]:px-3 [&>a]:py-1.5 [&>a:hover]:border-[color:var(--max-cyan)] [&>a:hover]:bg-[color:var(--max-cyan)]/10 [&>a:hover]:text-white">
+          <div className="flex flex-wrap gap-1 text-xs font-bold uppercase text-white/75 sm:tracking-[0.1em] [&>a]:rounded-full [&>a]:border-2 [&>a]:border-transparent [&>a]:px-2 sm:[&>a]:px-3[&>a]:py-1.5 [&>a:hover]:border-[color:var(--max-cyan)] [&>a:hover]:bg-[color:var(--max-cyan)]/10 [&>a:hover]:text-white">
             <Link href="/guide">📖 Guide</Link>
             {!campaignHoldsPortfolio(game) && <Link href="/dashboard">📊 Dashboard</Link>}
             <Link href="/scenarios">📁 Scenarios</Link>
