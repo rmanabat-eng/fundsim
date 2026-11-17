@@ -1169,7 +1169,7 @@ function TermConcessionCard({
     });
   }
 
-  // What the two checkboxes add up to: the rest of the round shrinks your
+  // What the chosen push (one at most) adds up to: the rest of the round shrinks your
   // old slice, then your own check buys some back at the agreed price.
   const post = holdValuation ? d.heldPostMoney : d.postMoney;
   const check = holdAmount ? d.heldCheck : d.check;
@@ -1213,7 +1213,10 @@ function TermConcessionCard({
           <input
             type="checkbox"
             checked={holdValuation}
-            onChange={(e) => setHoldValuation(e.target.checked)}
+            onChange={(e) => {
+              setHoldValuation(e.target.checked);
+              setHoldAmount(false);
+            }}
           />
           Push for the lower price
         </label>
@@ -1233,7 +1236,10 @@ function TermConcessionCard({
             <input
               type="checkbox"
               checked={holdAmount}
-              onChange={(e) => setHoldAmount(e.target.checked)}
+              onChange={(e) => {
+                setHoldAmount(e.target.checked);
+                setHoldValuation(false);
+              }}
             />
             Offer the smaller check
           </label>
