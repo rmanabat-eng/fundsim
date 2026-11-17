@@ -852,6 +852,7 @@ export async function resolveTermConcession(
     return;
   if (decision.company.exitValue !== null) return;
   const payload: TermConcessionPayload = JSON.parse(decision.payload);
+  if (choice.holdValuation) choice.holdAmount = false; // one push per deal
 
   if (choice.holdValuation) {
     const { rep } = await currentReputation(visitorId); // reuse — don't recompute reputation
