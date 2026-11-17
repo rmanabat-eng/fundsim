@@ -24,7 +24,7 @@ export function DismissAndHomeLink() {
           router.push("/");
         })
       }
-      className="text-xs font-bold uppercase tracking-widest text-white/60 hover:text-white disabled:opacity-50"
+      className="max-pill disabled:opacity-50"
     >
       ← Home
     </button>

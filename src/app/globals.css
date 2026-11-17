@@ -343,6 +343,28 @@ body {
     box-shadow 60ms ease-out;
 }
 
+/* Quiet outlined pill for the campaign header's Home / Menu controls. */
+.max-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  cursor: pointer;
+  border: 2px solid rgb(255 255 255 / 0.35);
+  border-radius: 9999px;
+  background: rgb(45 27 78 / 0.6);
+  padding: 0.375rem 0.875rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #fff;
+}
+.max-pill:hover,
+details[open] > .max-pill {
+  border-color: var(--max-cyan);
+  background: rgb(0 245 212 / 0.12);
+}
+
 /* Reusable card surface for the campaign screen — glass panel, clashing
    border, stacked hard shadow. Border/shadow colour is set per-instance via
    the --max-card-border / --max-card-shadow custom properties so callers

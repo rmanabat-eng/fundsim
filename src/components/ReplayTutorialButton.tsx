@@ -1,6 +1,6 @@
 "use client";
 
-// Lives in the "⋯ More" menu; CampaignTutorial listens for this event so the
+// Lives in the "☰ Menu" dropdown; CampaignTutorial listens for this event so the
 // running tour (a fixed full-screen overlay) can stay mounted at the page's
 // top level instead of nested inside a collapsible that might be closed.
 export function ReplayTutorialButton() {
