@@ -94,6 +94,20 @@ export default async function Home() {
             "radial-gradient(ellipse 90rem 60rem at 15% 0%, rgba(255,58,242,.16) 0%, transparent 55%), radial-gradient(ellipse 80rem 60rem at 90% 30%, rgba(0,245,212,.13) 0%, transparent 55%), radial-gradient(ellipse 90rem 70rem at 50% 90%, rgba(123,47,255,.16) 0%, transparent 60%)",
         }}
       />
+      {/* -------- Top nav: guide/dashboard/scenarios as links, not
+          full-bleed sections — kept consistent for every visitor. -------- */}
+      <nav className="sticky top-0 z-20 border-b-[3px] border-[color:var(--max-magenta)] bg-[#150f28]/90 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-3 gap-y-1 px-6 py-2.5">
+          <Link href="/" className="font-bungee text-lg text-white">
+            <span className="text-[color:var(--max-yellow)]">★</span> FundSim
+          </Link>
+          <div className="flex flex-wrap gap-1 text-xs font-bold uppercase tracking-[0.1em] text-white/75 [&>a]:rounded-full [&>a]:border-2 [&>a]:border-transparent [&>a]:px-3 [&>a]:py-1.5 [&>a:hover]:border-[color:var(--max-cyan)] [&>a:hover]:bg-[color:var(--max-cyan)]/10 [&>a:hover]:text-white">
+            <Link href="/guide">📖 Guide</Link>
+            {!campaignHoldsPortfolio(game) && <Link href="/dashboard">📊 Dashboard</Link>}
+            <Link href="/scenarios">📁 Scenarios</Link>
+          </div>
+        </div>
+      </nav>
       <header className="relative overflow-hidden border-b-8 border-[color:var(--max-magenta)]">
         {/* Header-only extra layer: diagonal stripes, on top of the page-wide mesh above. */}
         <div aria-hidden className="max-pattern-stripes pointer-events-none absolute inset-0" />
@@ -153,10 +167,10 @@ export default async function Home() {
                   </Link>
                 )}
                 <Link
-                  href="/scenarios"
+                  href="/leaderboard"
                   className="max-btn-outline inline-flex items-center gap-2 rounded-full border-4 border-[color:var(--max-cyan)] bg-[#2d1b4e]/60 px-8 py-[18px] text-sm font-black uppercase tracking-[0.06em] text-white"
                 >
-                  📁 Scenarios
+                  🏆 Leaderboard
                 </Link>
               </div>
 
@@ -254,24 +268,6 @@ export default async function Home() {
             ))}
           </div>
         </section>
-
-        {/* -------- Footer nav: guide/dashboard/leaderboard as links, not
-            full-bleed sections — kept consistent for every visitor. -------- */}
-        <footer className="relative left-1/2 w-screen -translate-x-1/2 border-t-2 border-white/10 bg-[#150f28]">
-          <div className="mx-auto flex max-w-6xl flex-wrap gap-6 px-6 py-5 text-sm font-bold text-white/70">
-            <Link href="/guide" className="hover:text-white">
-              📖 Learning guide
-            </Link>
-            {!campaignHoldsPortfolio(game) && (
-              <Link href="/dashboard" className="hover:text-white">
-                📊 Fund dashboard
-              </Link>
-            )}
-            <Link href="/leaderboard" className="hover:text-white">
-              🏆 Public leaderboard
-            </Link>
-          </div>
-        </footer>
       </main>
     </div>
   );
