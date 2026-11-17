@@ -882,7 +882,7 @@ export default async function PlayPage() {
       <Shell year={game.year} market={game.market as Market}>
       {/* Mounted every year, not just year 1: it only auto-runs the tour
           once (tracked in localStorage), but it also owns the
-          fundsim:replay-tutorial listener the "More" menu's button
+          fundsim:replay-tutorial listener the "Menu" dropdown's button
           dispatches — unmounting it after year 1 would silently break
           replay from every later year. */}
       <CampaignTutorial gameId={game.id} />
@@ -1154,45 +1154,22 @@ function Shell({
           </span>
         </div>
         <div className="relative mx-auto max-w-5xl px-6 py-8">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              {ended ? (
-                <DismissAndHomeLink />
-              ) : (
-                <Link
-                  href="/"
-                  className="text-xs font-bold uppercase tracking-widest text-white/60 hover:text-white"
-                >
-                  ← Home
-                </Link>
-              )}
-              <p className="mt-2 text-[10px] font-black uppercase tracking-[0.35em] text-[color:var(--max-magenta)]">
-                ★ FundSim presents ★
-              </p>
-              <h1 className="font-bungee text-4xl font-normal uppercase tracking-tight text-white [text-shadow:2px_2px_0_var(--max-purple),4px_4px_0_var(--max-magenta),6px_6px_0_var(--max-cyan)]">
-                Campaign
-              </h1>
-              <p className="mt-1 text-sm text-white/80">
-                {market !== null && year !== null ? (
-                  <span
-                    data-tour="market"
-                    className={`inline-flex items-center gap-1 rounded-full border-2 px-2.5 py-0.5 text-xs font-bold ${MARKET_CHIP_STYLES[market]}`}
-                  >
-                    {MARKET_LABELS[market]}
-                  </span>
-                ) : (
-                  "A 10-year fund, dealt one year at a time."
-                )}
-              </p>
-            </div>
+          <div className="flex items-center justify-between gap-4">
+            {ended ? (
+              <DismissAndHomeLink />
+            ) : (
+              <Link href="/" className="max-pill">
+                ← Home
+              </Link>
+            )}
             {year !== null && (
-              // Quiet dropdown instead of loud pill buttons: these are
+              // Quiet pill + dropdown instead of loud CTA buttons: these are
               // rare actions (or, for the tutorial, a one-time replay), not
               // primary CTAs, so they shouldn't shout as loud as the game's
               // own identity on every load.
               <details className="group relative">
-                <summary className="cursor-pointer select-none rounded-md px-2 py-1 text-xs font-bold uppercase tracking-widest text-white/60 outline-none [&::-webkit-details-marker]:hidden hover:text-white">
-                  ⋯ More
+                <summary className="max-pill select-none outline-none [&::-webkit-details-marker]:hidden">
+                  ☰ Menu <span className="group-open:rotate-180">▾</span>
                 </summary>
                 <div className="max-card-flat absolute right-0 top-full z-30 mt-1.5 w-56 rounded-xl p-1.5">
                   <ReplayTutorialButton />
@@ -1206,6 +1183,24 @@ function Shell({
               </details>
             )}
           </div>
+          <p className="mt-3 text-[10px] font-black uppercase tracking-[0.35em] text-[color:var(--max-magenta)]">
+            ★ FundSim presents ★
+          </p>
+          <h1 className="font-bungee text-4xl font-normal uppercase tracking-tight text-white [text-shadow:2px_2px_0_var(--max-purple),4px_4px_0_var(--max-magenta),6px_6px_0_var(--max-cyan)]">
+            Campaign
+          </h1>
+          <p className="mt-1 text-sm text-white/80">
+            {market !== null && year !== null ? (
+              <span
+                data-tour="market"
+                className={`inline-flex items-center gap-1 rounded-full border-2 px-2.5 py-0.5 text-xs font-bold ${MARKET_CHIP_STYLES[market]}`}
+              >
+                {MARKET_LABELS[market]}
+              </span>
+            ) : (
+              "A 10-year fund, dealt one year at a time."
+            )}
+          </p>
           {year !== null && (
             <div className="mt-4">
               <YearPips year={year} />

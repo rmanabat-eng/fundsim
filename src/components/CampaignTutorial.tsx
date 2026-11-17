@@ -134,7 +134,7 @@ export function CampaignTutorial({ gameId }: { gameId: string }) {
     setOverride("running");
   }, []);
 
-  // The trigger lives in the "⋯ More" menu now, outside this component (the
+  // The trigger lives in the "☰ Menu" dropdown now, outside this component (the
   // running tour is a fixed full-screen overlay — nesting it inside a
   // collapsible <details> would hide it if the menu ever closed). The menu
   // item just dispatches this event instead.
